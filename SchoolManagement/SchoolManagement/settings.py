@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     
  
     # My application
-    
+    "testapp",
     # Dashboard app
     'dashboard',
 

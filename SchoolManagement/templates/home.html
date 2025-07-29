@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Tailwind</title>
+  <!-- Intégration correcte de Tailwind compilé -->
+  <link rel="stylesheet" href="{% static 'build/output.css' %}">
+</head>
+<body class="bg-gray-100 p-6">
+
+  <h1 class="text-3xl font-bold text-center text-blue-600">
+    Tailwind fonctionne correctement 🎉
+  </h1>
+
+  <div class="mt-8 text-center">
+   <button class="text-blue-600 p-6 bg-white rounded-2xl shadow-md hover:shadow-2xl">Test</button>
+  </div>
+
+</body>
+</html>

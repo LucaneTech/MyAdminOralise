@@ -14,6 +14,9 @@ urlpatterns = [
     
     #include dashboard urls
     path('', include('dashboard.urls')),
+
+    #testapp
+    path('test/',include('testapp.urls'))
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
