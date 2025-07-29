@@ -1,0 +1,77 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Ressources et Documents</h3>
+                </div>
+                <div class="card-body">
+                    {% if resources %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Module</th>
+                                        <th>Date d'ajout</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for resource in resources %}
+                                    <tr>
+                                        <td>{{ resource.title }}</td>
+                                        <td>
+                                            <span class="badge badge-primary">
+                                                {{ resource.get_resource_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ resource.description|truncatewords:20 }}</td>
+                                        <td>
+                                            {% for skill in resource.skills.all %}
+                                                <span class="badge badge-info">{{ skill.name }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>{{ resource.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if resource.file %}
+                                                <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary" target="_blank" download>
+                                                    <i class="ni ni-cloud-download-95"></i> Télécharger
+                                                </a>
+                                            {% endif %}
+                                            {% if resource.url %}
+                                                <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                    <i class="ni ni-world-2"></i> Accéder
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Aucune ressource disponible pour le moment.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
+<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+{% endblock javascripts %} 

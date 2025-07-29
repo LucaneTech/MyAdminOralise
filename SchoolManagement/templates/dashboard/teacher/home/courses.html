@@ -1,0 +1,224 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Mes Cours {% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Mes Cours</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Mes Cours</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <a href="#" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#addCourseModal">
+                        <i class="fas fa-plus"></i> Nouveau Cours
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Filtres -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-3">Filtres</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Niveau</label>
+                                <select class="form-control" id="filterLevel">
+                                    <option value="">Tous</option>
+                                    <option value="1">1ère année</option>
+                                    <option value="2">2ème année</option>
+                                    <option value="3">3ème année</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Matière</label>
+                                <select class="form-control" id="filterSubject">
+                                    <option value="">Toutes</option>
+                                    <option value="math">Mathématiques</option>
+                                    <option value="physics">Physique</option>
+                                    <option value="chemistry">Chimie</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Statut</label>
+                                <select class="form-control" id="filterStatus">
+                                    <option value="">Tous</option>
+                                    <option value="active">En cours</option>
+                                    <option value="upcoming">À venir</option>
+                                    <option value="completed">Terminé</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des cours -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <!-- Card image -->
+                <img class="card-img-top" src="/static/assets/img/theme/math-bg.jpg" alt="Image du cours">
+                <!-- Card body -->
+                <div class="card-body">
+                    <span class="badge badge-success">En cours</span>
+                    <h5 class="h2 card-title mb-0">Mathématiques</h5>
+                    <small class="text-muted">1ère année - Groupe A</small>
+                    <p class="card-text mt-4">Introduction à l'algèbre linéaire et aux équations différentielles.</p>
+                    <div class="row">
+                        <div class="col">
+                            <span class="h5"><i class="ni ni-single-02 mr-1"></i> 30 étudiants</span>
+                        </div>
+                        <div class="col">
+                            <span class="h5"><i class="ni ni-time-alarm mr-1"></i> 2h/semaine</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card footer -->
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <a href="#" class="btn btn-sm btn-primary">Gérer</a>
+                            <a href="#" class="btn btn-sm btn-info">Ressources</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <img class="card-img-top" src="/static/assets/img/theme/physics-bg.jpg" alt="Image du cours">
+                <div class="card-body">
+                    <span class="badge badge-warning">À venir</span>
+                    <h5 class="h2 card-title mb-0">Physique</h5>
+                    <small class="text-muted">2ème année - Groupe B</small>
+                    <p class="card-text mt-4">Mécanique quantique et physique moderne.</p>
+                    <div class="row">
+                        <div class="col">
+                            <span class="h5"><i class="ni ni-single-02 mr-1"></i> 25 étudiants</span>
+                        </div>
+                        <div class="col">
+                            <span class="h5"><i class="ni ni-time-alarm mr-1"></i> 3h/semaine</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <a href="#" class="btn btn-sm btn-primary">Gérer</a>
+                            <a href="#" class="btn btn-sm btn-info">Ressources</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouveau Cours -->
+<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCourseModalLabel">Nouveau Cours</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label">Titre du cours</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Description</label>
+                        <textarea class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Niveau</label>
+                                <select class="form-control" required>
+                                    <option value="1">1ère année</option>
+                                    <option value="2">2ème année</option>
+                                    <option value="3">3ème année</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Groupe</label>
+                                <select class="form-control" required>
+                                    <option value="A">Groupe A</option>
+                                    <option value="B">Groupe B</option>
+                                    <option value="C">Groupe C</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Durée hebdomadaire (heures)</label>
+                        <input type="number" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Image du cours</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="courseImage">
+                            <label class="custom-file-label" for="courseImage">Choisir une image</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer le cours</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    // Gestion des filtres
+    $('#filterLevel, #filterSubject, #filterStatus').change(function() {
+        // Logique de filtrage à implémenter
+    });
+
+    // Gestion du formulaire d'ajout de cours
+    $('form').on('submit', function(e) {
+        e.preventDefault();
+        // Logique d'ajout de cours à implémenter
+    });
+
+    // Gestion de l'upload d'image
+    $('.custom-file-input').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName);
+    });
+</script>
+{% endblock javascripts %} 

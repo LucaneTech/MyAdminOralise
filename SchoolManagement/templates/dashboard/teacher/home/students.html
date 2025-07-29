@@ -1,0 +1,206 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+{% load dashboard_extras %}
+
+{% block title %} Mes Étudiants {% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Mes Étudiants</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Étudiants</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Filtres -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-3">Filtres</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Classe</label>
+                                <select class="form-control" id="filterClass">
+                                    <option value="">Toutes</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Filière</label>
+                                <select class="form-control" id="filterFiliere">
+                                    <option value="">Toutes</option>
+                                    {% for filiere in filieres %}
+                                    <option value="{{ filiere.id }}">{{ filiere.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Recherche</label>
+                                <input type="text" class="form-control" id="searchStudent" placeholder="Nom, prénom...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des étudiants -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <!-- Card header -->
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Liste des étudiants</h3>
+                </div>
+                <!-- Light table -->
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col" class="sort" data-sort="name">Nom</th>
+                                <th scope="col" class="sort" data-sort="class">Classe</th>
+                                <th scope="col" class="sort" data-sort="branch">Filière</th>
+                                <th scope="col" class="sort" data-sort="performance">Performance</th>
+                                <th scope="col" class="sort" data-sort="attendance">Présence</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="list">
+                            {% for student in students %}
+                            <tr>
+                                <th scope="row">
+                                    <div class="media align-items-center">
+                                        <a href="#" class="avatar rounded-circle mr-3">
+                                            {% if student.user.profile.profile_picture %}
+                                            <img alt="Image placeholder" src="{{ student.user.profile.profile_picture.url }}">
+                                            {% else %}
+                                            <img alt="Image placeholder" src="{% static 'assets/img/theme/team-4.jpg' %}">
+                                            {% endif %}
+                                        </a>
+                                        <div class="media-body">
+                                            <span class="name mb-0 text-sm">{{ student.user.get_full_name }}</span>
+                                        </div>
+                                    </div>
+                                </th>
+                                <td>{{ student.class_name }}</td>
+                                <td>{{ student.filiere }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-2">{{ student.average }}/20</span>
+                                        <div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-{% if student.average >= 10 %}success{% else %}danger{% endif %}"
+                                                    role="progressbar"
+                                                    aria-valuenow="{{ student.average|multiply:5 }}"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                    style="width: {{ student.average|multiply:5 }}%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-2">{{ student.attendance }}%</span>
+                                        <div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-{% if student.attendance >= 75 %}success{% elif student.attendance >= 50 %}warning{% else %}danger{% endif %}"
+                                                    role="progressbar"
+                                                    aria-valuenow="{{ student.attendance }}"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                    style="width: {{ student.attendance }}%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <div class="dropdown">
+                                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                                            <a class="dropdown-item" href="#">Voir le profil</a>
+                                            <a class="dropdown-item" href="#">Voir les notes</a>
+                                            <a class="dropdown-item" href="#">Voir les présences</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Card footer -->
+                <div class="card-footer py-4">
+                    <nav aria-label="...">
+                        <ul class="pagination justify-content-end mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">
+                                    <i class="fas fa-angle-left"></i>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                            </li>
+                            <li class="page-item active">
+                                <a class="page-link" href="#">1</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">
+                                    <i class="fas fa-angle-right"></i>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    // Gestion des filtres
+    $('#filterClass, #filterFiliere').change(function() {
+        // Logique de filtrage à implémenter
+    });
+
+    // Recherche d'étudiants
+    $('#searchStudent').on('keyup', function() {
+        // Logique de recherche à implémenter
+    });
+</script>
+{% endblock javascripts %} 

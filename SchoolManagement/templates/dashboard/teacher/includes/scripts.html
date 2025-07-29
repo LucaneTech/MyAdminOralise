@@ -1,0 +1,51 @@
+<!--   Core   -->
+<script src="/static/assets/vendor/jquery/dist/jquery.min.js"></script>
+<script src="/static/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/vendor/js-cookie/js.cookie.js"></script>
+<script src="/static/assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
+<script src="/static/assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
+<!-- Optional JS -->
+<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
+<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+<!-- Argon JS -->
+<script src="/static/assets/js/argon.js?v=1.2.0"></script>
+
+<!-- Custom Scripts -->
+<script>
+    // Initialisation de la barre de défilement personnalisée
+    $('.scrollbar-inner').scrollbar();
+
+    // Gestion du menu mobile
+    $('.sidenav-toggler').on('click', function() {
+        $('body').toggleClass('nav-open');
+    });
+
+    // Fermeture du menu mobile lors du clic en dehors
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.navbar-collapse, .sidenav-toggler').length) {
+            $('body').removeClass('nav-open');
+        }
+    });
+
+    // Gestion des notifications
+    $('.dropdown-menu').on('click', function(e) {
+        e.stopPropagation();
+    });
+
+    // Animation des cartes
+    $('.card').hover(
+        function() { $(this).addClass('shadow-lg'); },
+        function() { $(this).removeClass('shadow-lg'); }
+    );
+
+    // Gestion des formulaires
+    $('form').on('submit', function() {
+        $(this).find('button[type="submit"]').prop('disabled', true);
+    });
+
+    // Initialisation des tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Initialisation des popovers
+    $('[data-toggle="popover"]').popover();
+</script> 

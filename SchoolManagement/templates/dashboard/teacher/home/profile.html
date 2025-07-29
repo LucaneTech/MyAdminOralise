@@ -1,0 +1,189 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Mon Profil {% endblock %}
+
+{% block content %}
+<div class="header pb-6 d-flex align-items-center" 
+     style="min-height: 500px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+  <!-- Masque -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Conteneur d'en-tête -->
+  <div class="container-fluid d-flex align-items-center">
+    <div class="row">
+      <div class="col-lg-7 col-md-10">
+        <h1 class="display-2 text-white">Bonjour {{ user.first_name }} !</h1>
+        <p class="text-white mt-0 mb-5">Voici votre page de profil. Vous pouvez consulter vos statistiques et gérer vos informations personnelles.</p>
+        <a href="{% url 'profile_edit' %}" class="btn btn-neutral">Modifier le profil</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contenu de la page -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-4 order-xl-2">
+      <div class="card card-profile">
+        <img src="/static/assets/img/theme/img-1-1000x600.jpg" alt="Image de couverture" class="card-img-top">
+        <div class="row justify-content-center">
+          <div class="col-lg-3 order-lg-2">
+            <div class="card-profile-image">
+              <a href="#">
+                {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="90px" height="90px"
+                class="rounded-circle" style="
+                object-fit: cover;
+                border: 1px solid #fff;
+                padding: 0.5px;
+                ">
+                {% else %}
+                <span width="50px" height="50px"
+                class="rounded-circle" style="
+                
+                border: 1px solid #fff;
+                padding: 0.5px;
+                background-color: gray;
+                "></span>
+                {% endif %}
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
+          <div class="d-flex justify-content-between">
+            <a href="{% url 'teacher_courses' %}" class="btn btn-sm btn-info mr-4">Mes cours</a>
+            <a href="{% url 'teacher_students' %}" class="btn btn-sm btn-default float-right ml-4">Mes étudiants</a>
+          </div>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row">
+            <div class="col">
+              <div class="card-profile-stats d-flex justify-content-center">
+                <div>
+                  <span class="heading">{{ teacher.total_courses }}</span>
+                  <span class="description">Cours</span>
+                </div>
+                <div>
+                  <span class="heading">{{ teacher.total_students }}</span>
+                  <span class="description">Étudiants</span>
+                </div>
+                <div>
+                  <span class="heading">{{ teacher.total_assignments }}</span>
+                  <span class="description">Devoirs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="text-center">
+            <h5 class="h3">
+              {{ user.get_full_name }}<span class="font-weight-light">, {{ teacher.speciality }}</span>
+            </h5>
+            <div class="h5 font-weight-300">
+              <i class="ni location_pin mr-2"></i>{{ profile.city|default:"Non renseigné" }}, {{ profile.country|default:"Non renseigné" }}
+            </div>
+            <div class="h5 mt-4">
+              <i class="ni business_briefcase-24 mr-2"></i>Enseignant
+            </div>
+            <div>
+              <i class="ni education_hat mr-2"></i>{{ school_name|default:"Ecole Européenne de Management et de commerce International" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-8 order-xl-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Mon profil</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form>
+            <!-- Informations utilisateur -->
+            <h6 class="heading-small text-muted mb-4">Informations personnelles</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-username">Nom d'utilisateur</label>
+                    <input type="text" id="input-username" class="form-control" value="{{ user.username }}" readonly>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-email">Adresse email</label>
+                    <input type="email" id="input-email" class="form-control" value="{{ user.email }}" readonly>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-first-name">Prénom</label>
+                    <input type="text" id="input-first-name" class="form-control" value="{{ user.first_name }}" readonly>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-last-name">Nom</label>
+                    <input type="text" id="input-last-name" class="form-control" value="{{ user.last_name }}" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr class="my-4" />
+            <!-- Coordonnées -->
+            <h6 class="heading-small text-muted mb-4">Coordonnées</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-address">Adresse</label>
+                    <input id="input-address" class="form-control" type="text" value="{{ profile.address|default:'' }}" readonly>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-lg-4">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-city">Ville</label>
+                    <input type="text" id="input-city" class="form-control" value="{{ profile.city|default:'' }}" readonly>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-country">Pays</label>
+                    <input type="text" id="input-country" class="form-control" value="{{ profile.country|default:'' }}" readonly>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="form-group">
+                    <label class="form-control-label" for="input-postal-code">Code postal</label>
+                    <input type="text" id="input-postal-code" class="form-control" value="{{ profile.postal_code|default:'' }}" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr class="my-4" />
+            <!-- Description -->
+            <h6 class="heading-small text-muted mb-4">À propos de moi</h6>
+            <div class="pl-lg-4">
+              <div class="form-group">
+                <label class="form-control-label">Biographie</label>
+                <textarea rows="4" class="form-control" readonly>{{ profile.about|default:'' }}</textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+<!-- JavaScript Spécifique --> 
+{% block javascripts %}{% endblock javascripts %} 

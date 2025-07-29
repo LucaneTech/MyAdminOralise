@@ -1,0 +1,278 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <!-- Statistiques des demandes -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Total des demandes</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ total_requests }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                                <i class="ni ni-paper-diploma"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">En attente</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ pending_requests }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                                <i class="ni ni-time-alarm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Approuvées</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ approved_requests }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                                <i class="ni ni-check-bold"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Rejetées</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ rejected_requests }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
+                                <i class="ni ni-fat-remove"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des demandes -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Mes demandes</h3>
+                        </div>
+                        <div class="col text-right">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newRequestModal">
+                                <i class="ni ni-fat-add"></i> Nouvelle demande
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if requests %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Sujet</th>
+                                        <th>Description</th>
+                                        <th>Statut</th>
+                                        <th>Date de création</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in requests %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge badge-primary">
+                                                {{ request.get_request_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ request.subject }}</td>
+                                        <td>{{ request.description|truncatewords:20 }}</td>
+                                        <td>
+                                            {% if request.status == 'pending' %}
+                                                <span class="badge badge-warning">En attente</span>
+                                            {% elif request.status == 'processing' %}
+                                                <span class="badge badge-info">En traitement</span>
+                                            {% elif request.status == 'approved' %}
+                                                <span class="badge badge-success">Approuvée</span>
+                                            {% else %}
+                                                <span class="badge badge-danger">Rejetée</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ request.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {% if request.attachment %}
+                                                <a href="{{ request.attachment.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                    <i class="ni ni-single-copy-04"></i> Pièce jointe
+                                                </a>
+                                            {% endif %}
+                                            {% if request.response %}
+                                                <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#responseModal{{ request.id }}">
+                                                    <i class="ni ni-email-83"></i> Voir réponse
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Vous n'avez pas encore fait de demandes.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour nouvelle demande -->
+<div class="modal fade" id="newRequestModal" tabindex="-1" role="dialog" aria-labelledby="newRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newRequestModalLabel">Nouvelle demande</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="requestType" class="form-control-label">Type de demande</label>
+                        <select class="form-control" id="requestType" name="request_type" required>
+                            <option value="">Sélectionnez un type</option>
+                            <option value="absence">Justification d'absence</option>
+                            <option value="document">Demande de document</option>
+                            <option value="meeting">Demande de rendez-vous</option>
+                            <option value="other">Autre</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Veuillez sélectionner un type de demande.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject" class="form-control-label">Sujet</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                        <div class="invalid-feedback">
+                            Veuillez entrer un sujet.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description" class="form-control-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                        <div class="invalid-feedback">
+                            Veuillez entrer une description.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="attachment" class="form-control-label">Pièce jointe (optionnel)</label>
+                        <input type="file" class="form-control-file" id="attachment" name="attachment">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Envoyer la demande</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modals pour les réponses -->
+{% for request in requests %}
+    {% if request.response %}
+    <div class="modal fade" id="responseModal{{ request.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Réponse à votre demande</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Demande :</strong> {{ request.subject }}</p>
+                    <hr>
+                    <p><strong>Réponse :</strong></p>
+                    <p>{{ request.response }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block javascripts %}
+<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
+<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+<script>
+// Validation des formulaires
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Réinitialiser le formulaire quand le modal est fermé
+$('#newRequestModal').on('hidden.bs.modal', function () {
+    var form = $(this).find('form')[0];
+    form.reset();
+    form.classList.remove('was-validated');
+});
+
+// S'assurer que le modal est bien initialisé
+$(document).ready(function() {
+    $('#newRequestModal').modal({
+        show: false,
+        backdrop: 'static',
+        keyboard: false
+    });
+});
+</script>
+{% endblock javascripts %} 

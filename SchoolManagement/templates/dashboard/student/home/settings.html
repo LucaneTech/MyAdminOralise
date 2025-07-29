@@ -1,0 +1,181 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Paramètres</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Paramètres</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8 order-xl-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Paramètres du dashboard</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <!-- Thème -->
+            <h6 class="heading-small text-muted mb-4">Apparence</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Thème</label>
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="darkModeSwitch" name="theme" value="dark" {% if current_theme == 'dark' %}checked{% endif %}>
+                      <label class="custom-control-label" for="darkModeSwitch">Mode sombre</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-4" />
+            
+            <!-- Langue -->
+            <h6 class="heading-small text-muted mb-4">Langue</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="language">Langue de l'interface</label>
+                    <select class="form-control" id="language" name="language">
+                      <option value="fr" {% if current_language == 'fr' %}selected{% endif %}>Français</option>
+                      <option value="en" {% if current_language == 'en' %}selected{% endif %}>English</option>
+                      <option value="ar" {% if current_language == 'ar' %}selected{% endif %}>العربية</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-4" />
+            
+            <!-- Notifications -->
+            <h6 class="heading-small text-muted mb-4">Notifications</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="notifications">Notifications du dashboard</label>
+                    <select class="form-control" id="notifications" name="notifications">
+                      <option value="all" {% if current_notifications == 'all' %}selected{% endif %}>Toutes les notifications</option>
+                      <option value="important" {% if current_notifications == 'important' %}selected{% endif %}>Notifications importantes uniquement</option>
+                      <option value="none" {% if current_notifications == 'none' %}selected{% endif %}>Aucune notification</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <label class="form-control-label">Notifications par email</label>
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="emailSwitch" name="email_notifications" value="true" {% if current_email_notifications == 'true' %}checked{% endif %}>
+                      <label class="custom-control-label" for="emailSwitch">Activer les notifications par email</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-4" />
+            
+            <!-- Confidentialité -->
+            <h6 class="heading-small text-muted mb-4">Confidentialité</h6>
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="activitySwitch" name="activity_visible" checked>
+                      <label class="custom-control-label" for="activitySwitch">Afficher mon activité aux autres utilisateurs</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    <div class="custom-control custom-switch">
+                      <input type="checkbox" class="custom-control-input" id="profileSwitch" name="profile_visible" checked>
+                      <label class="custom-control-label" for="profileSwitch">Profil public</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <hr class="my-4" />
+            
+            <div class="row align-items-center">
+              <div class="col-8">
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Carte d'informations -->
+    <div class="col-xl-4 order-xl-2">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Informations</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info mb-4">
+            <h4 class="alert-heading"><i class="ni ni-bulb-61 mr-2"></i>Mode sombre</h4>
+            <p class="mb-0">Le mode sombre permet de réduire la fatigue oculaire et d'économiser la batterie sur les appareils mobiles.</p>
+          </div>
+          
+          <div class="alert alert-primary mb-4">
+            <h4 class="alert-heading"><i class="ni ni-bell-55 mr-2"></i>Notifications</h4>
+            <p class="mb-0">Personnalisez vos notifications pour rester informé des événements importants sans être submergé.</p>
+          </div>
+          
+          <div class="alert alert-success mb-0">
+            <h4 class="alert-heading"><i class="ni ni-lock-circle-open mr-2"></i>Confidentialité</h4>
+            <p class="mb-0">Gérez la visibilité de votre profil et de vos activités sur la plateforme.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du mode sombre
+    const darkModeSwitch = document.getElementById('darkModeSwitch');
+    const body = document.body;
+    
+    darkModeSwitch.addEventListener('change', function() {
+        if (this.checked) {
+            body.classList.add('dark-mode');
+        } else {
+            body.classList.remove('dark-mode');
+        }
+    });
+});
+</script>
+{% endblock javascripts %} 

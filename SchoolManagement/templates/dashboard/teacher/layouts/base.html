@@ -1,0 +1,267 @@
+{% load static %}
+{% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <title>
+    Dashboard Enseignant - {% block title %}{% endblock %}
+  </title>
+
+  <!-- Favicon - loaded as static -->
+  <link rel="icon" href="/static/assets/img/brand/favicon.png" type="image/png">
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+  <!-- Icons -->
+  {% compress css %}
+  <link rel="stylesheet" href="/static/assets/vendor/nucleo/css/nucleo.css" type="text/css">
+  <link rel="stylesheet" href="/static/assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" type="text/css">
+  <!-- Page plugins -->
+  <!-- Argon CSS -->
+  <link rel="stylesheet" href="/static/assets/css/argon.css?v=1.2.0" type="text/css">
+  {% endcompress %}
+  <!-- Specific CSS goes HERE -->
+  {% block stylesheets %}{% endblock stylesheets %}
+  
+  <!-- Custom Modern Styles -->
+  <style>
+    /* Variables de couleurs pour le mode sombre */
+    :root {
+        --dark-bg-primary: #1a1c1e;
+        --dark-bg-secondary: #242526;
+        --dark-bg-tertiary: #2d3436;
+        --dark-bg-elevated: #3a3b3c;
+        --dark-text-primary: #e4e6eb;
+        --dark-text-secondary: #b0b3b8;
+        --dark-border: #4a4a4a;
+        --dark-hover: #3d4246;
+        
+        /* Couleurs d'accent pour le mode sombre */
+        --dark-accent-blue: #4a9eff;
+        --dark-accent-green: #00b894;
+        --dark-accent-purple: #a55eea;
+        --dark-accent-orange: #f39c12;
+        --dark-accent-red: #ff7675;
+        --dark-accent-teal: #00cec9;
+    }
+
+    /* Styles généraux du mode sombre */
+    body.dark-mode {
+        background-color: var(--dark-bg-primary);
+        color: var(--dark-text-primary);
+    }
+
+    /* Cards en mode sombre */
+    body.dark-mode .card {
+        background-color: var(--dark-bg-secondary);
+        border-color: var(--dark-border);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    body.dark-mode .card-header {
+        background-color: var(--dark-bg-tertiary);
+        border-bottom-color: var(--dark-border);
+    }
+
+    /* Tables en mode sombre */
+    body.dark-mode .table {
+        color: var(--dark-text-primary);
+    }
+
+    body.dark-mode .table thead th {
+        background-color: var(--dark-bg-tertiary);
+        color: var(--dark-text-primary);
+        border-bottom-color: var(--dark-border);
+    }
+
+    body.dark-mode .table td {
+        border-top-color: var(--dark-border);
+    }
+
+    /* Inputs et forms en mode sombre */
+    body.dark-mode .form-control {
+        background-color: var(--dark-bg-elevated);
+        border-color: var(--dark-border);
+        color: var(--dark-text-primary);
+    }
+
+    body.dark-mode .form-control:focus {
+        background-color: var(--dark-bg-elevated);
+        border-color: var(--dark-accent-blue);
+        box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25);
+    }
+
+    /* Navigation en mode sombre */
+    body.dark-mode .navbar {
+        background-color: var(--dark-bg-secondary) !important;
+    }
+
+    body.dark-mode .sidenav {
+        background-color: var(--dark-bg-secondary) !important;
+    }
+
+    body.dark-mode .nav-link {
+        color: var(--dark-text-primary) !important;
+    }
+
+    body.dark-mode .nav-link:hover {
+        background-color: var(--dark-hover) !important;
+        color: var(--dark-accent-blue) !important;
+    }
+
+    body.dark-mode .nav-link.active {
+        background-color: var(--dark-accent-blue) !important;
+        color: white !important;
+    }
+
+    body.dark-mode .nav-link i {
+        color: inherit !important;
+    }
+
+    body.dark-mode .navbar-heading {
+        color: var(--dark-text-secondary) !important;
+    }
+
+    body.dark-mode .sidenav hr {
+        border-color: var(--dark-border) !important;
+    }
+
+    /* Badges et étiquettes en mode sombre */
+    body.dark-mode .badge {
+        background-color: var(--dark-bg-elevated);
+        color: var(--dark-text-primary);
+    }
+
+    body.dark-mode .badge-primary {
+        background-color: var(--dark-accent-blue);
+    }
+
+    body.dark-mode .badge-success {
+        background-color: var(--dark-accent-green);
+    }
+
+    body.dark-mode .badge-info {
+        background-color: var(--dark-accent-teal);
+    }
+
+    body.dark-mode .badge-warning {
+        background-color: var(--dark-accent-orange);
+        color: #2d3436;
+    }
+
+    /* Alertes en mode sombre */
+    body.dark-mode .alert {
+        background-color: var(--dark-bg-elevated);
+        border-color: var(--dark-border);
+        color: var(--dark-text-primary);
+    }
+
+    /* Boutons en mode sombre */
+    body.dark-mode .btn {
+        border: none;
+    }
+
+    body.dark-mode .btn-primary {
+        background-color: var(--dark-accent-blue);
+    }
+
+    body.dark-mode .btn-success {
+        background-color: var(--dark-accent-green);
+    }
+
+    body.dark-mode .btn-info {
+        background-color: var(--dark-accent-teal);
+    }
+
+    /* Effets de survol améliorés */
+    body.dark-mode .card:hover,
+    body.dark-mode .btn:hover,
+    body.dark-mode .nav-link:hover {
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
+    /* Textes et typographie en mode sombre */
+    body.dark-mode h1, 
+    body.dark-mode h2, 
+    body.dark-mode h3, 
+    body.dark-mode h4, 
+    body.dark-mode h5, 
+    body.dark-mode h6 {
+        color: var(--dark-text-primary);
+    }
+
+    body.dark-mode .text-muted {
+        color: var(--dark-text-secondary) !important;
+    }
+
+    /* Scrollbar personnalisée pour le mode sombre */
+    body.dark-mode ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-track {
+        background: var(--dark-bg-primary);
+    }
+
+    body.dark-mode ::-webkit-scrollbar-thumb {
+        background: var(--dark-bg-elevated);
+        border-radius: 4px;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-thumb:hover {
+        background: var(--dark-accent-blue);
+    }
+  </style>
+</head>
+
+<body class="{% block body_class %}{% endblock body_class %}">
+
+  {% include "dashboard/teacher/includes/sidenav.html" %}
+
+  <div class="main-content" id="panel">
+
+    {% include "dashboard/teacher/includes/navigation.html" %}
+
+    {% block content %}{% endblock content %}
+
+    {% include "dashboard/teacher/includes/footer.html" %}
+
+  </div>
+
+  {% include "dashboard/teacher/includes/scripts.html" %}
+
+  <!-- Specific JS goes HERE --> 
+  {% block javascripts %}{% endblock javascripts %}
+
+  <script>
+    // Script pour le mode sombre
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+
+    // Vérifie si le mode sombre était activé précédemment
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      body.classList.add('dark-mode');
+    }
+
+    // Gère le basculement du mode sombre
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        
+        // Sauvegarde la préférence
+        if (body.classList.contains('dark-mode')) {
+          localStorage.setItem('darkMode', 'enabled');
+        } else {
+          localStorage.setItem('darkMode', 'disabled');
+        }
+      });
+    }
+  </script>
+
+</body>
+</html> 

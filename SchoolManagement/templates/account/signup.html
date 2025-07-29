@@ -1,0 +1,78 @@
+<!-- filepath: e:\PFE_Dev\SchoolManagement\Edusco\templates\account\signup.html -->
+{% extends "account/base.html" %}
+{% load socialaccount %}
+{% load static%}
+{% load i18n %}
+{% block content %}
+<div class="form-container ">
+    <!-- Section left image -->
+   <div class="image-container">
+       <img id="login-image"  src="" alt="student">
+   
+       <div class="text mt-3">  
+           <h1>Bienvenue sur Edusco</h1>
+           <p>{%trans "Lancez-vous sans plus attendre!" %}</p>
+       </div>
+   </div>
+   <div class="login-container ">
+    <h2 class="text-center">S'enregister</h2>
+            <form method="post" action="{% url 'account_signup' %}" >
+                
+                {% csrf_token %}
+                <div class="input-group">
+    
+                    {{ form.username }}
+                </div>
+                <div class="input-group">
+                  
+                    {{ form.email }}
+                </div>
+                {% comment %} <div class="input-group">
+                    
+                    {{ form.role }}
+
+                </div>  {% endcomment %}
+                <div class="input-group">
+            
+                    {{ form.password1 }}
+                </div>
+
+                <div class="input-group">
+                   
+                    {{ form.password2 }}
+                </div>
+
+                <button type="submit" class="log-btn signup-btn">Enregistrer</button>
+                <div class="separator">ou</div>
+        
+                <!-- button google and github -->
+                <div class="social-login">
+                    <button class="google-btn">
+                                <a href="{% provider_login_url 'google' %}">
+                                <img src="{% static 'public/img/google.png' %}" alt="Google"> Connexion avec Google </a>
+                            </button>
+                    <button class="github-btn">
+                        <a href="{% provider_login_url 'github' %}">
+                      <img src="{% static 'public/img/github.png' %}" alt="GitHub"> S'enregister avec GitHub  </a> 
+                   </button> 
+                
+                    
+                        {% comment %} <button class="google-btn">
+                            <a href="{% provider_login_url 'facebook' %}">
+                            <img src="{% static 'public/img/facebook.png' %}" alt="Google"> Connexion avec Facebook
+                        </a>
+                        </button>  {% endcomment %}
+                </div>
+                <div class="links">
+                    <a>{% trans "Already have an account?" %}</a>
+                    <a href="{% url 'account_login' %}">{% trans "Login" %}</a>
+                </div>
+            </form>
+            <div class="container conditions mt-4 text-center">
+                <a href="#">Condition d'utilisation</a> |
+                <a href="#">Politique de confidentialité</a>
+              </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

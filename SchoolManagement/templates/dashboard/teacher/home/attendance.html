@@ -1,0 +1,260 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+
+{% block title %} Gestion des Présences {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Gestion des Présences</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Présences</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Filtres -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-3">Filtres</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Classe</label>
+                                <select class="form-control" id="filterClass">
+                                    <option value="">Toutes</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Date</label>
+                                <input type="text" class="form-control datepicker" id="filterDate">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Cours</label>
+                                <select class="form-control" id="filterCourse">
+                                    <option value="">Tous</option>
+                                    {% for course in courses %}
+                                    <option value="{{ course.id }}">{{ course.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feuille de présence -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <!-- Card header -->
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Feuille de présence</h3>
+                        </div>
+                        <div class="col text-right">
+                            <button type="button" class="btn btn-sm btn-primary" id="saveAttendance">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Light table -->
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Étudiant</th>
+                                <th scope="col">Statut</th>
+                                <th scope="col">Heure d'arrivée</th>
+                                <th scope="col">Remarque</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <th scope="row">
+                                    <div class="media align-items-center">
+                                        <a href="#" class="avatar rounded-circle mr-3">
+                                            {% if student.photo %}
+                                            <img alt="{{ student.full_name }}" src="{{ student.photo.url }}">
+                                            {% else %}
+                                            <img alt="Default" src="{% static 'assets/img/theme/team-4.jpg' %}">
+                                            {% endif %}
+                                        </a>
+                                        <div class="media-body">
+                                            <span class="name mb-0 text-sm">{{ student.full_name }}</span>
+                                        </div>
+                                    </div>
+                                </th>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-success attendance-btn" data-status="present">
+                                            <i class="fas fa-check"></i> Présent
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-warning attendance-btn" data-status="late">
+                                            <i class="fas fa-clock"></i> Retard
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger attendance-btn" data-status="absent">
+                                            <i class="fas fa-times"></i> Absent
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm timepicker" placeholder="HH:mm">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm" placeholder="Remarque...">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques de présence -->
+    <div class="row mt-4">
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Statistiques globales</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="attendance-stats" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Évolution des présences</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="attendance-evolution" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialisation des date/time pickers
+    flatpickr(".datepicker", {
+        locale: "fr",
+        dateFormat: "d/m/Y"
+    });
+
+    flatpickr(".timepicker", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true
+    });
+
+    // Gestion des boutons de présence
+    $('.attendance-btn').click(function() {
+        $(this).siblings().removeClass('active');
+        $(this).addClass('active');
+    });
+
+    // Statistiques globales
+    var ctx1 = document.getElementById('attendance-stats').getContext('2d');
+    new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+            labels: ['Présents', 'Retards', 'Absents'],
+            datasets: [{
+                data: [75, 15, 10],
+                backgroundColor: ['#2dce89', '#fb6340', '#f5365c']
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%'
+        }
+    });
+
+    // Évolution des présences
+    var ctx2 = document.getElementById('attendance-evolution').getContext('2d');
+    new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
+            datasets: [{
+                label: 'Taux de présence',
+                data: [95, 88, 92, 85, 90],
+                borderColor: '#2dce89',
+                tension: 0.4,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Gestion des filtres
+    $('#filterClass, #filterDate, #filterCourse').change(function() {
+        // Logique de filtrage à implémenter
+    });
+
+    // Sauvegarde des présences
+    $('#saveAttendance').click(function() {
+        // Logique de sauvegarde à implémenter
+    });
+</script>
+{% endblock javascripts %} 

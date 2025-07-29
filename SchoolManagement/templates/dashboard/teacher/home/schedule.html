@@ -1,0 +1,244 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Emploi du temps {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event:hover {
+        opacity: 0.9;
+    }
+    .course-math { background-color: #5e72e4 !important; }
+    .course-physics { background-color: #fb6340 !important; }
+    .course-chemistry { background-color: #2dce89 !important; }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Emploi du temps</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Emploi du temps</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <a href="#" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#addEventModal">
+                        <i class="fas fa-plus"></i> Ajouter un cours
+                    </a>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-neutral" id="calendar-prev">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-neutral" id="calendar-today">
+                            Aujourd'hui
+                        </button>
+                        <button type="button" class="btn btn-sm btn-neutral" id="calendar-next">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col-xl-3">
+            <!-- Légende des cours -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Légende</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="badge badge-pill badge-primary mr-2">&nbsp;</span>
+                        <span>Mathématiques</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge badge-pill badge-warning mr-2">&nbsp;</span>
+                        <span>Physique</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge badge-pill badge-success mr-2">&nbsp;</span>
+                        <span>Chimie</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des prochains cours -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Prochains cours</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Mathématiques</h6>
+                                    <small>Lundi - 10:00</small>
+                                </div>
+                                <span class="badge badge-primary">1h30</span>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Physique</h6>
+                                    <small>Mardi - 14:30</small>
+                                </div>
+                                <span class="badge badge-warning">2h00</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-9">
+            <!-- Calendrier -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Calendrier des cours</h5>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Cours -->
+<div class="modal fade" id="addEventModal" tabindex="-1" role="dialog" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEventModalLabel">Ajouter un cours</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addEventForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label">Cours</label>
+                        <select class="form-control" required>
+                            <option value="math">Mathématiques</option>
+                            <option value="physics">Physique</option>
+                            <option value="chemistry">Chimie</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Classe</label>
+                        <select class="form-control" required>
+                            <option value="1A">1ère année - Groupe A</option>
+                            <option value="2B">2ème année - Groupe B</option>
+                            <option value="3C">3ème année - Groupe C</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Date</label>
+                                <input type="date" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Heure de début</label>
+                                <input type="time" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Durée (minutes)</label>
+                        <input type="number" class="form-control" value="90" min="30" step="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Salle</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Description</label>
+                        <textarea class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/locales/fr.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            locale: 'fr',
+            headerToolbar: false,
+            slotMinTime: '08:00:00',
+            slotMaxTime: '20:00:00',
+            allDaySlot: false,
+            slotDuration: '00:30:00',
+            events: [
+                {
+                    title: 'Mathématiques - 1A',
+                    start: '2024-03-18T10:00:00',
+                    end: '2024-03-18T11:30:00',
+                    className: 'course-math'
+                },
+                {
+                    title: 'Physique - 2B',
+                    start: '2024-03-19T14:30:00',
+                    end: '2024-03-19T16:30:00',
+                    className: 'course-physics'
+                }
+            ],
+            eventClick: function(info) {
+                // Afficher les détails du cours
+                alert('Cours: ' + info.event.title);
+            }
+        });
+        calendar.render();
+
+        // Gestion des boutons de navigation
+        document.getElementById('calendar-prev').addEventListener('click', function() {
+            calendar.prev();
+        });
+        document.getElementById('calendar-next').addEventListener('click', function() {
+            calendar.next();
+        });
+        document.getElementById('calendar-today').addEventListener('click', function() {
+            calendar.today();
+        });
+
+        // Gestion du formulaire d'ajout de cours
+        document.getElementById('addEventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Logique d'ajout de cours à implémenter
+            $('#addEventModal').modal('hide');
+        });
+    });
+</script>
+{% endblock javascripts %} 

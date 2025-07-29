@@ -1,0 +1,113 @@
+<!-- Sidenav -->
+<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+    <div class="scrollbar-inner">
+      
+      <!-- Brand -->
+      <div class="sidenav-header align-items-center">
+        <a class="navbar-brand" href="{% url 'teacher_view' username=request.user.username %}">
+          <img src="/static/assets/img/brand/blue.png" class="navbar-brand-img" alt="...">
+        </a>
+      </div>
+      
+      <div class="navbar-inner">
+        <!-- Collapse -->
+        <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+          
+          <!-- Nav items -->
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'index' %}active{% endif %}" href="{% url 'teacher_view' username=request.user.username %}">
+                <i class="ni ni-tv-2 text-primary"></i>
+                <span class="nav-link-text">Dashboard</span>
+              </a>
+            </li>
+            
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'courses' %}active{% endif %}" href="{% url 'teacher_courses' %}">
+                <i class="ni ni-books text-orange"></i>
+                <span class="nav-link-text">Mes Cours</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}">
+                <i class="ni ni-calendar-grid-58 text-primary"></i>
+                <span class="nav-link-text">Emploi du temps</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'assignments' %}active{% endif %}" href="{% url 'teacher_assignments' %}">
+                <i class="ni ni-single-copy-04 text-info"></i>
+                <span class="nav-link-text">Devoirs & Examens</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'students' %}active{% endif %}" href="{% url 'teacher_students' %}">
+                <i class="ni ni-single-02 text-yellow"></i>
+                <span class="nav-link-text">Mes Étudiants</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'attendance' %}active{% endif %}" href="{% url 'teacher_attendance' %}">
+                <i class="ni ni-check-bold text-success"></i>
+                <span class="nav-link-text">Présences</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'marks' %}active{% endif %}" href="{% url 'teacher_marks' %}">
+                <i class="ni ni-chart-bar-32 text-danger"></i>
+                <span class="nav-link-text">Notes</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'skills' %}active{% endif %}" href="{% url 'teacher_skills' %}">
+                <i class="ni ni-trophy text-purple"></i>
+                <span class="nav-link-text">Compétences</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'resources' %}active{% endif %}" href="{% url 'teacher_resources' %}">
+                <i class="ni ni-folder-17 text-info"></i>
+                <span class="nav-link-text">Ressources</span>
+              </a>
+            </li>
+          </ul>
+
+          <!-- Divider -->
+          <hr class="my-3">
+          
+          <!-- Heading -->
+          <h6 class="navbar-heading p-0 text-muted">Paramètres</h6>
+          
+          <!-- Navigation -->
+          <ul class="navbar-nav mb-md-3">
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'profile' %}active{% endif %}" href="{% url 'profile_view' %}">
+                <i class="ni ni-single-02"></i>
+                <span class="nav-link-text">Mon Profil</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if segment == 'settings' %}active{% endif %}" href="{% url 'settings_view' %}">
+                <i class="ni ni-settings"></i>
+                <span class="nav-link-text">Paramètres</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'account_logout' %}">
+                <i class="ni ni-user-run text-danger"></i>
+                <span class="nav-link-text">Déconnexion</span>
+              </a>
+            </li>
+          </ul>
+          
+        </div>
+      </div>
+    </div>
+</nav> 

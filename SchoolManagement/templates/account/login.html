@@ -1,0 +1,85 @@
+
+
+{% extends "account/base.html" %}
+{% load socialaccount %}
+
+{% load static%}
+{% load i18n %}
+
+
+{% block content %}
+
+<div class="form-container ">
+                 <!-- Section left image -->
+                <div class="image-container">
+                    <img id="login-image"  src="" alt="student">
+                
+                    <div class="text mt-3">  
+                        <h1>{% trans "Ravi de vous revoir!" %}</h1>
+                        <p>{%trans "Retrouvez vos activités bien gérées!" %}</p>
+                    </div>
+                </div>
+
+                <div class="login-container ">
+                    <h2>Connexion</h2>
+                    <form method="post" action="{% url 'account_login' %}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                        {% comment %} {{ form.login.label_tag }} {% endcomment %}
+                           {{ form.login }}
+                        </div>
+
+                        <div class="input-group">
+                            {% comment %} {{ form.password.label_tag }} {% endcomment %}
+                            {{ form.password }}
+                        </div>
+                        
+                        {% if form.errors %}
+                        <p style="color:red;font-size:0.9rem; margin-bottom: 5px;">Email ou mot de passe incorrect!</p>
+                        {% endif %}
+
+                        <button type="submit" class="log-btn login-btn">Se connecter</button>
+        
+                        <div class="separator">ou</div>
+          
+                        <!-- button google and github -->
+                        <div class="social-login">
+                            <button class="google-btn">
+                                <a href="{% provider_login_url 'google' %}">
+                                <img src="{% static 'public/img/google.png' %}" alt="Google"> Connexion avec Google </a>
+                            </button>
+                           
+                                <button class="github-btn">
+                                    <a href="{% provider_login_url 'github' %}">
+                                  <img src="{% static 'public/img/github.png' %}" alt="GitHub"> Connexion avec GitHub  </a> 
+                               </button> 
+                            
+                                
+                                    {% comment %} <button class="google-btn">
+                                        <a href="{% provider_login_url 'facebook' %}">
+                                        <img src="{% static 'public/img/facebook.png' %}" alt="Google"> Connexion avec Facebook
+                                    </a>
+                                    </button>   {% endcomment %}
+                               
+                        </div>
+                        
+                        <div class="links">
+                            <a href="{% url 'account_reset_password' %}">Mot de passe oublié ?</a>
+                            <a href="{% url 'account_signup' %}">Créer un compte</a>
+                        </div>
+
+                    </form>
+
+                    <div class="container conditions mt-4 text-center">
+                        <a href="#">Condition d'utilisation</a> |
+                        <a href="#">Politique de confidentialité</a>
+                      </div>
+                     
+                      
+                
+                    
+                </div>
+
+                
+               
+{% endblock content %}

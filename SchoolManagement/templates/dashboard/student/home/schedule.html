@@ -1,0 +1,67 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Mon Emploi du Temps</h3>
+                </div>
+                <div class="card-body">
+                    {% regroup schedule by day as schedule_by_day %}
+                    {% for day in schedule_by_day %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">{{ day.grouper }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Horaire</th>
+                                            <th>Compétence</th>
+                                            <th>Enseignant</th>
+                                            <th>Salle</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for session in day.list %}
+                                        <tr>
+                                            <td>{{ session.start_time|time:"H:i" }}h - {{ session.end_time|time:"H:i" }}h</td>
+                                            <td>{{ session.skill.name }}</td>
+                                            <td>{{ session.teacher.user.full_name }}</td>
+                                            <td>{{ session.classroom }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucun cours prévu</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info">
+                        Aucun emploi du temps disponible pour le moment.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+  <script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
+  <script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+{% endblock javascripts %}

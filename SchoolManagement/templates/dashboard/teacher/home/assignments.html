@@ -1,0 +1,232 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+
+{% block title %} Devoirs & Examens {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Devoirs & Examens</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Devoirs & Examens</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <button type="button" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#addAssignmentModal">
+                        <i class="fas fa-plus"></i> Nouveau Devoir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Filtres -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-3">Filtres</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Type</label>
+                                <select class="form-control" id="filterType">
+                                    <option value="">Tous</option>
+                                    <option value="devoir">Devoir</option>
+                                    <option value="examen">Examen</option>
+                                    <option value="projet">Projet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Classe</label>
+                                <select class="form-control" id="filterClass">
+                                    <option value="">Toutes</option>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Statut</label>
+                                <select class="form-control" id="filterStatus">
+                                    <option value="">Tous</option>
+                                    <option value="pending">À venir</option>
+                                    <option value="active">En cours</option>
+                                    <option value="completed">Terminé</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des devoirs -->
+    <div class="row">
+        {% for assignment in assignments %}
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <!-- Card body -->
+                <div class="card-body">
+                    <div class="row align-items-center mb-3">
+                        <div class="col">
+                            <span class="badge badge-dot mr-4">
+                                {% if assignment.status == 'pending' %}
+                                <i class="bg-warning"></i>
+                                <span>À venir</span>
+                                {% elif assignment.status == 'active' %}
+                                <i class="bg-info"></i>
+                                <span>En cours</span>
+                                {% else %}
+                                <i class="bg-success"></i>
+                                <span>Terminé</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge badge-primary">{{ assignment.type }}</span>
+                        </div>
+                    </div>
+                    <h5 class="card-title mb-0">{{ assignment.title }}</h5>
+                    <small class="text-muted">{{ assignment.class.name }}</small>
+                    <p class="mt-3">{{ assignment.description|truncatewords:30 }}</p>
+                    <div class="row">
+                        <div class="col">
+                            <small class="text-muted">Date limite :</small><br>
+                            <strong>{{ assignment.due_date }}</strong>
+                        </div>
+                        <div class="col">
+                            <small class="text-muted">Soumissions :</small><br>
+                            <strong>{{ assignment.submissions_count }}/{{ assignment.total_students }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card footer -->
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <a href="#" class="btn btn-sm btn-primary">Voir les soumissions</a>
+                            <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#editAssignmentModal{{ assignment.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Nouveau Devoir -->
+<div class="modal fade" id="addAssignmentModal" tabindex="-1" role="dialog" aria-labelledby="addAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAssignmentModalLabel">Nouveau Devoir</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label">Titre</label>
+                        <input type="text" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Description</label>
+                        <textarea class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Type</label>
+                                <select class="form-control" required>
+                                    <option value="devoir">Devoir</option>
+                                    <option value="examen">Examen</option>
+                                    <option value="projet">Projet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Classe</label>
+                                <select class="form-control" required>
+                                    {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Date limite</label>
+                        <input type="text" class="form-control datepicker" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Documents</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="assignmentFiles" multiple>
+                            <label class="custom-file-label" for="assignmentFiles">Choisir des fichiers</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+    // Initialisation du date picker
+    flatpickr(".datepicker", {
+        locale: "fr",
+        dateFormat: "d/m/Y",
+        minDate: "today"
+    });
+
+    // Gestion des filtres
+    $('#filterType, #filterClass, #filterStatus').change(function() {
+        // Logique de filtrage à implémenter
+    });
+
+    // Gestion de l'upload de fichiers
+    $('.custom-file-input').on('change', function() {
+        var fileNames = Array.from(this.files).map(file => file.name).join(', ');
+        $(this).next('.custom-file-label').html(fileNames || 'Choisir des fichiers');
+    });
+
+    // Gestion du formulaire d'ajout
+    $('form').on('submit', function(e) {
+        e.preventDefault();
+        // Logique d'ajout à implémenter
+    });
+</script>
+{% endblock javascripts %} 

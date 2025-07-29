@@ -1,0 +1,226 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Résultats de recherche pour "{{ query }}"</h3>
+                </div>
+                <div class="card-body">
+                    {% if not skills and not marks and not resources and not requests and not schedule %}
+                        <div class="alert alert-info">
+                            Aucun résultat trouvé pour votre recherche.
+                        </div>
+                    {% else %}
+                        <!-- Résultats des compétences -->
+                        {% if skills %}
+                        <div class="mb-5">
+                            <h4 class="mb-3">
+                                <i class="ni ni-books text-success"></i> 
+                                Compétences ({{ skills.count }})
+                            </h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for skill in skills %}
+                                        <tr>
+                                            <td>{{ skill.name }}</td>
+                                            <td>
+                                                <a href="{% url 'skills_view' %}" class="btn btn-sm btn-primary">
+                                                    <i class="ni ni-bullet-list-67"></i> Voir détails
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Résultats des notes -->
+                        {% if marks %}
+                        <div class="mb-5">
+                            <h4 class="mb-3">
+                                <i class="ni ni-chart-bar-32 text-warning"></i>
+                                Notes ({{ marks.count }})
+                            </h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Compétence</th>
+                                            <th>Note</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for mark in marks %}
+                                        <tr>
+                                            <td>{{ mark.skill.name }}</td>
+                                            <td>{{ mark.mark }}/20</td>
+                                            <td>
+                                                <a href="{% url 'marks_view' %}" class="btn btn-sm btn-primary">
+                                                    <i class="ni ni-bullet-list-67"></i> Voir toutes les notes
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Résultats des ressources -->
+                        {% if resources %}
+                        <div class="mb-5">
+                            <h4 class="mb-3">
+                                <i class="ni ni-folder-17 text-primary"></i>
+                                Ressources ({{ resources.count }})
+                            </h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Titre</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for resource in resources %}
+                                        <tr>
+                                            <td>{{ resource.title }}</td>
+                                            <td>
+                                                <span class="badge badge-primary">
+                                                    {{ resource.get_resource_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ resource.description|truncatewords:20 }}</td>
+                                            <td>
+                                                {% if resource.file %}
+                                                    <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary" target="_blank" download>
+                                                        <i class="ni ni-cloud-download-95"></i> Télécharger
+                                                    </a>
+                                                {% endif %}
+                                                {% if resource.url %}
+                                                    <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                        <i class="ni ni-world-2"></i> Accéder
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Résultats des demandes -->
+                        {% if requests %}
+                        <div class="mb-5">
+                            <h4 class="mb-3">
+                                <i class="ni ni-send text-pink"></i>
+                                Demandes ({{ requests.count }})
+                            </h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Sujet</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for request in requests %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge badge-primary">
+                                                    {{ request.get_request_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ request.subject }}</td>
+                                            <td>
+                                                {% if request.status == 'pending' %}
+                                                    <span class="badge badge-warning">En attente</span>
+                                                {% elif request.status == 'processing' %}
+                                                    <span class="badge badge-info">En traitement</span>
+                                                {% elif request.status == 'approved' %}
+                                                    <span class="badge badge-success">Approuvée</span>
+                                                {% else %}
+                                                    <span class="badge badge-danger">Rejetée</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'requests_view' %}" class="btn btn-sm btn-primary">
+                                                    <i class="ni ni-bullet-list-67"></i> Voir détails
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Résultats de l'emploi du temps -->
+                        {% if schedule %}
+                        <div class="mb-5">
+                            <h4 class="mb-3">
+                                <i class="ni ni-calendar-grid-58 text-info"></i>
+                                Emploi du temps ({{ schedule.count }})
+                            </h4>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Jour</th>
+                                            <th>Horaire</th>
+                                            <th>Compétence</th>
+                                            <th>Enseignant</th>
+                                            <th>Salle</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for session in schedule %}
+                                        <tr>
+                                            <td>{{ session.day }}</td>
+                                            <td>{{ session.start_time|time:"H:i" }}h - {{ session.end_time|time:"H:i" }}h</td>
+                                            <td>{{ session.skill.name }}</td>
+                                            <td>{{ session.teacher.user.full_name }}</td>
+                                            <td>{{ session.classroom }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
+<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+{% endblock javascripts %} 

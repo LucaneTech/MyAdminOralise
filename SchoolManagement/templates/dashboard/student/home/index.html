@@ -1,0 +1,162 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <!-- Header -->
+    <div class="header bg-primary pb-6">
+      <div class="container-fluid">
+        <div class="header-body">
+          <div class="row align-items-center py-4">
+            <div class="col-lg-6 col-7">
+              <h6 class="h2 text-white d-inline-block mb-0">Tableau de bord</h6>
+              <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                  <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                  <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">{{ student.user.full_name }}</li>
+                </ol>
+              </nav>
+            </div>
+          </div>
+          <!-- Card stats -->
+          <div class="row">
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Nombre de Matières</h5>
+                      <span class="h2 font-weight-bold mb-0 text-danger">{{ total_skills }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                        <i class="ni ni-books"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Nombre d'étudiants</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                        <i class="ni ni-hat-3"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Matières du jour</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ today_skills.count }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-book-bookmark"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Performance</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ average_performance }}%</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                        <i class="ni ni-chart-bar-32"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="container-fluid mt--6">
+      <div class="row">
+        <!-- Emploi du temps du jour -->
+        <div class="col-xl-8">
+          <div class="card bg-default">
+            <div class="card-header bg-transparent">
+              <h5 class="h3 text-white mb-0">Emploi du temps du jour</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group">
+                {% for schedule in today_schedule %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span>
+                    <i class="ni ni-book-bookmark text-primary"></i>
+                    {{ schedule.skill.name }} ({{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }})
+                  </span>
+                  <span class="badge badge-info">{{ schedule.teacher.user.full_name }}</span>
+                  <span class="badge badge-secondary">Salle {{ schedule.classroom }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center">
+                  Pas de cours aujourd'hui
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- Notes récentes -->
+        <div class="col-xl-4">
+          <div class="card">
+            <div class="card-header bg-transparent">
+              <h5 class="mb-0">Notes récentes</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group">
+                {% for mark in recent_marks %}
+                <li class="list-group-item">
+                  <strong>{{ mark.skill.name }} :</strong> {{ mark.mark }}/20<br>
+                  <small class="text-muted">{{ mark.skill.teachers.first.user.full_name }}</small>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center">
+                  Pas de notes récentes
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}
