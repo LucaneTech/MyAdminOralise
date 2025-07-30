@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "testapp",
     # Dashboard app
     'dashboard',
+    'widget_tweaks',
 
     #for django-allauth
    
@@ -66,7 +67,6 @@ INSTALLED_APPS = [
     
     #django-compressor to compress css and js files
     'compressor',
-    
     
 ]
 

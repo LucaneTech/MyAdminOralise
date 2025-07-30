@@ -1,85 +1,70 @@
-
-
 {% extends "account/base.html" %}
 {% load socialaccount %}
-
-{% load static%}
+{% load widget_tweaks %}
+{% load static %}
 {% load i18n %}
 
-
 {% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 py-10">
+  <div class="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300">
 
-<div class="form-container ">
-                 <!-- Section left image -->
-                <div class="image-container">
-                    <img id="login-image"  src="" alt="student">
-                
-                    <div class="text mt-3">  
-                        <h1>{% trans "Ravi de vous revoir!" %}</h1>
-                        <p>{%trans "Retrouvez vos activités bien gérées!" %}</p>
-                    </div>
-                </div>
+    <!-- IMAGE + MESSAGE -->
+    <div class="bg-blue-700 text-white p-10 flex flex-col items-center justify-center space-y-6 relative">
+      <img src="{% static '/assets/img/theme/forest.jpg' %}" alt="student" class="w-52 h-52 object-contain drop-shadow-md animate-fade-in">
+      <div class="text-center">
+        <h1 class="text-3xl font-extrabold tracking-tight mb-2">{% trans "Ravi de vous revoir!" %}</h1>
+        <p class="text-sm opacity-90">{% trans "Retrouvez vos activités bien gérées!" %}</p>
+      </div>
+      <div class="absolute bottom-4 text-xs opacity-60">© {{ year|default:"2025" }} YourCompany</div>
+    </div>
 
-                <div class="login-container ">
-                    <h2>Connexion</h2>
-                    <form method="post" action="{% url 'account_login' %}">
-                        {% csrf_token %}
-                        <div class="input-group">
-                        {% comment %} {{ form.login.label_tag }} {% endcomment %}
-                           {{ form.login }}
-                        </div>
+    <!-- FORMULAIRE -->
+    <div class="p-10">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Connexion à votre espace</h2>
 
-                        <div class="input-group">
-                            {% comment %} {{ form.password.label_tag }} {% endcomment %}
-                            {{ form.password }}
-                        </div>
-                        
-                        {% if form.errors %}
-                        <p style="color:red;font-size:0.9rem; margin-bottom: 5px;">Email ou mot de passe incorrect!</p>
-                        {% endif %}
+      <form method="post" action="{% url 'account_login' %}" class="space-y-5 animate-slide-in">
+        {% csrf_token %}
 
-                        <button type="submit" class="log-btn login-btn">Se connecter</button>
-        
-                        <div class="separator">ou</div>
-          
-                        <!-- button google and github -->
-                        <div class="social-login">
-                            <button class="google-btn">
-                                <a href="{% provider_login_url 'google' %}">
-                                <img src="{% static 'public/img/google.png' %}" alt="Google"> Connexion avec Google </a>
-                            </button>
-                           
-                                <button class="github-btn">
-                                    <a href="{% provider_login_url 'github' %}">
-                                  <img src="{% static 'public/img/github.png' %}" alt="GitHub"> Connexion avec GitHub  </a> 
-                               </button> 
-                            
-                                
-                                    {% comment %} <button class="google-btn">
-                                        <a href="{% provider_login_url 'facebook' %}">
-                                        <img src="{% static 'public/img/facebook.png' %}" alt="Google"> Connexion avec Facebook
-                                    </a>
-                                    </button>   {% endcomment %}
-                               
-                        </div>
-                        
-                        <div class="links">
-                            <a href="{% url 'account_reset_password' %}">Mot de passe oublié ?</a>
-                            <a href="{% url 'account_signup' %}">Créer un compte</a>
-                        </div>
+        <div>
+          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" }}
+        </div>
 
-                    </form>
+        <div>
+          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" }}
+        </div>
 
-                    <div class="container conditions mt-4 text-center">
-                        <a href="#">Condition d'utilisation</a> |
-                        <a href="#">Politique de confidentialité</a>
-                      </div>
-                     
-                      
-                
-                    
-                </div>
+        {% if form.errors %}
+        <p class="text-red-600 text-sm mt-1">Email ou mot de passe incorrect !</p>
+        {% endif %}
 
-                
-               
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-md transition-all duration-300">
+          Se connecter
+        </button>
+
+        <div class="text-center text-gray-400 text-sm">— ou connectez-vous avec —</div>
+
+        <!-- SOCIAL LOGIN -->
+        <div class="space-y-3">
+          <a href="{% provider_login_url 'google' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
+            <img src="{% static 'assets/img/icons/google.svg' %}" alt="google" class="w-5 h-5"> Connexion avec Google
+          </a>
+          <a href="{% provider_login_url 'github' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
+            <img src="{% static 'public/img/github.png' %}" alt="github" class="w-5 h-5"> Connexion avec GitHub
+          </a>
+        </div>
+
+        <!-- LIENS BAS -->
+        <div class="flex justify-between text-sm text-blue-600 mt-6 font-medium">
+          <a href="{% url 'account_reset_password' %}" class="hover:underline">Mot de passe oublié ?</a>
+          <a href="{% url 'account_signup' %}" class="hover:underline">Créer un compte</a>
+        </div>
+
+        <div class="text-center text-xs text-gray-400 mt-8">
+          <a href="#" class="hover:underline">Conditions d'utilisation</a> |
+          <a href="#" class="hover:underline">Politique de confidentialité</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock content %}
