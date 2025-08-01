@@ -6,17 +6,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    #django-allauth urls
+    #admin urls
     path('admin/', admin.site.urls),
     
-    #admin urls
+    #django-allauth urls
     path('accounts/', include('allauth.urls')), 
     
     #include dashboard urls
     path('', include('dashboard.urls')),
 
-    #testapp
-    path('test/',include('testapp.urls'))
-    
+        
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

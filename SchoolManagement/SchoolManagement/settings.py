@@ -48,8 +48,7 @@ INSTALLED_APPS = [
 
     
  
-    # My application
-    "testapp",
+   
     # Dashboard app
     'dashboard',
     'widget_tweaks',
