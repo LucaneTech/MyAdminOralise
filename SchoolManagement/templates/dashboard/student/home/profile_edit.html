@@ -251,7 +251,11 @@
             <div class="profile-picture-preview">
                 {% if form.instance.profile_picture %}
                     <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle" id="profile-picture-preview" class="current-profile-picture">
+                {% else %}
+                     <img src="{static 'assets/img/profile.png'}" alt="photo de profil">
+
                 {% endif %}
+               
             </div>
             <input type="file" 
                    name="{{ form.profile_picture.name }}" 
@@ -281,6 +285,16 @@
                    value="{{ form.country.value|default_if_none:'' }}"
                    class="form-input country-input"
                    placeholder="Entrez votre pays">
+        </div>
+        <!--whatsapp num-->
+        <div class="form-group">
+            <label for="{{ form.number.id_for_label }}" class="form-label">Numéro Whatsapp</label>
+            <input type="text" 
+                   name="{{ form.number.name }}" 
+                   id="{{ form.number.id_for_label }}" 
+                   value="{{ form.number.value|default_if_none:'' }}"
+                   class="form-input address-input"
+                   placeholder="Entrez votre numéro whatsapp">
         </div>
         
         <!-- Adresse -->
@@ -314,8 +328,9 @@
     </div>
   </div>
 
-  {% include "dashboard/student/includes/footer.html" %}
 </div>
+  {% include "dashboard/student/includes/footer.html" %}
+
 <script>
 
 document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function(e) {

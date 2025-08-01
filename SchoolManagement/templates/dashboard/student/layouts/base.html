@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 {% load compress %}
 <!DOCTYPE html>
 <html lang="en">
@@ -289,9 +290,7 @@
         border-bottom-color: var(--dark-border);
     }
 
-    body.dark-mode .modal-footer {
-        border-top-color: var(--dark-border);
-    }
+   
 
     /* Styles modernes pour les cartes */
     .card {
@@ -501,7 +500,6 @@
     /* Assurer que tous les éléments du modal sont cliquables */
     .modal-header,
     .modal-body,
-    .modal-footer,
     .modal .form-control,
     .modal .btn,
     .modal .close {
@@ -759,162 +757,7 @@
         animation: dropdownAnimation 0.2s ease forwards;
     }
 
-    /* Styles du footer moderne */
-    footer {
-        width: 100% !important;
-        padding: 2rem 0;
-        margin-top: 3rem;
-        position: relative;
-        overflow: hidden;
-    }
-
-    footer::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(to right, 
-            rgba(0,0,0,0), 
-            rgba(0,0,0,0.1), 
-            rgba(0,0,0,0));
-    }
-
-    .footer-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        flex-wrap: wrap;
-        padding: 0 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .footer-section {
-        flex: 1;
-        min-width: 250px;
-        margin: 1rem;
-    }
-
-    .footer-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        position: relative;
-        padding-bottom: 0.5rem;
-    }
-
-    .footer-title::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 50px;
-        height: 2px;
-        background: #5e72e4;
-        transition: width 0.3s ease;
-    }
-
-    .footer-section:hover .footer-title::after {
-        width: 75px;
-    }
-
-    .footer-links {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .footer-links li {
-        margin-bottom: 0.8rem;
-    }
-
-    .footer-links a {
-        color: inherit;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .footer-links a i {
-        margin-right: 0.5rem;
-        font-size: 0.9rem;
-    }
-
-    .footer-links a:hover {
-        transform: translateX(5px);
-        color: #5e72e4;
-    }
-
-    .footer-social {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .social-icon {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        background: rgba(94, 114, 228, 0.1);
-    }
-
-    .social-icon:hover {
-        transform: translateY(-3px);
-        background: #5e72e4;
-        color: white;
-    }
-
-    .footer-bottom {
-        text-align: center;
-        padding-top: 2rem;
-        margin-top: 2rem;
-        position: relative;
-    }
-
-    .footer-bottom::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 25%;
-        right: 25%;
-        height: 1px;
-        background: linear-gradient(to right, 
-            rgba(0,0,0,0), 
-            rgba(0,0,0,0.1), 
-            rgba(0,0,0,0));
-    }
-
-    /* Styles du footer en mode sombre */
-    body.dark-mode footer {
-        background-color: var(--dark-bg-secondary);
-        color: var(--dark-text-primary);
-    }
-
-    body.dark-mode footer::before {
-        background: linear-gradient(to right, 
-            rgba(255,255,255,0), 
-            rgba(255,255,255,0.1), 
-            rgba(255,255,255,0));
-    }
-
-    body.dark-mode .footer-title::after {
-        background: var(--dark-accent-blue);
-    }
-
-    body.dark-mode .footer-links a {
-        color: var(--dark-text-secondary);
-    }
-
-    body.dark-mode .footer-links a:hover {
-        color: var(--dark-accent-blue);
-    }
+   
 
     body.dark-mode .social-icon {
         background: rgba(74, 158, 255, 0.1);
@@ -926,61 +769,9 @@
         color: var(--dark-bg-primary);
     }
 
-    body.dark-mode .footer-bottom::before {
-        background: linear-gradient(to right, 
-            rgba(255,255,255,0), 
-            rgba(255,255,255,0.1), 
-            rgba(255,255,255,0));
-    }
+   
 
-    /* Animation du footer */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .footer-section {
-        animation: fadeInUp 0.5s ease forwards;
-        opacity: 0;
-    }
-
-    .footer-section:nth-child(1) { animation-delay: 0.1s; }
-    .footer-section:nth-child(2) { animation-delay: 0.2s; }
-    .footer-section:nth-child(3) { animation-delay: 0.3s; }
-    .footer-section:nth-child(4) { animation-delay: 0.4s; }
-
-    /* Responsive footer */
-    @media (max-width: 768px) {
-        .footer-content {
-            flex-direction: column;
-            padding: 0 1rem;
-        }
-
-        .footer-section {
-            width: 100%;
-            margin: 1rem 0;
-            text-align: center;
-        }
-
-        .footer-title::after {
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .footer-links a:hover {
-            transform: translateX(0) scale(1.05);
-        }
-
-        .footer-social {
-            justify-content: center;
-        }
-    }
+   
 
     /* Réinitialisation des z-index pour la hiérarchie correcte */
     .sidenav {

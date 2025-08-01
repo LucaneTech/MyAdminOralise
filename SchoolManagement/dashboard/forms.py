@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = [ 'profile_picture', 'city', 'country', 'address', 'about']
+        fields = [ 'profile_picture', 'city', 'country','number', 'address', 'about']
         widgets = {
             'about': forms.Textarea(attrs={'rows': 4}),
         }
@@ -15,6 +15,7 @@ class ProfileUpdateForm(forms.ModelForm):
             'profile_picture': 'Photo de profil',
             'city': 'Ville',
             'country': 'Pays',
+            'number': 'Numéro',
             'address': 'Adresse',
             'about': 'À propos de moi'
         }
@@ -26,7 +27,7 @@ class CustomLoginForm(LoginForm):
         super(CustomLoginForm, self).__init__(*args, **kwargs)
         self.fields['login'].widget = forms.TextInput(attrs={'placeholder': 'Entrez votre Email'})
         self.fields['password'].widget = forms.PasswordInput(attrs={'placeholder': 'Entrez votre mot de passe'})
-        #self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
 
     def clean(self):
         cleaned_data = super(CustomLoginForm, self).clean()

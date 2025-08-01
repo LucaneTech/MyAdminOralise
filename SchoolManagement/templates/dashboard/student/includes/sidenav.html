@@ -1,11 +1,12 @@
 {% load static %}
-<nav class="sidenav navbar navbar-vertical  fixed-left  navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+{% load i18n %}
+{% load compress %}<nav class="sidenav navbar navbar-vertical  fixed-left  navbar-expand-xs navbar-light bg-white" id="sidenav-main">
   <div class="scrollbar-inner">
     <!-- Brand -->
     <div class="sidenav-header  align-items-center">
       <a class="navbar-brand" href="{% url 'dashboard_view' username=request.user.username %}">
       
-        <img src="{% static 'public/img/logo.png' %}" class="navbar-brand-img" alt="logo Edusco">
+        <img src="{% static 'assets/img/icons/logo.png' %}" class="w-full object-cover align-items-left" alt="logo Edusco">
       </a>
     </div>
     <div class="navbar-inner">
@@ -34,7 +35,7 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'marks_view' %}">
               <i class="ni ni-chart-bar-32 text-warning"></i>
-              <span class="nav-link-text">Mes notes / bulletins</span>
+              <span class="nav-link-text">Heures / Progression</span>
             </a>
           </li>
           <li class="nav-item">

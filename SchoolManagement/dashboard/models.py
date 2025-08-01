@@ -12,10 +12,9 @@ class CustomUser(AbstractUser):
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
         ('student', 'Student'),
-        ('visitor', 'Visitor'),
     )
 
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='visitor')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -45,6 +44,7 @@ class Profile(models.Model):
     )
     city = models.CharField(max_length=50, default="Entrez votre ville")
     country = models.CharField(max_length=50, default="Entrez votre pays")
+    number = models.CharField(max_length=20, default="(+xxx) xxxxxxxxx")
     address = models.CharField(max_length=100, default="Entrez votre adresse")
     about = models.TextField(
         max_length=1000, 
