@@ -22,10 +22,11 @@ class ProfileUpdateForm(forms.ModelForm):
 
 class CustomLoginForm(LoginForm):
     def __init__(self, *args, **kwargs):
+        #heritage of father class
         super(CustomLoginForm, self).__init__(*args, **kwargs)
         self.fields['login'].widget = forms.TextInput(attrs={'placeholder': 'Entrez votre Email'})
         self.fields['password'].widget = forms.PasswordInput(attrs={'placeholder': 'Entrez votre mot de passe'})
-        # self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        #self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
 
     def clean(self):
         cleaned_data = super(CustomLoginForm, self).clean()

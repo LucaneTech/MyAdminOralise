@@ -1,78 +1,75 @@
-<!-- filepath: e:\PFE_Dev\SchoolManagement\Edusco\templates\account\signup.html -->
 {% extends "account/base.html" %}
 {% load socialaccount %}
-{% load static%}
+{% load static %}
+{% load widget_tweaks %}
+
 {% load i18n %}
+
+{% block title %} Oralise | Inscription {% endblock title %}
+
 {% block content %}
-<div class="form-container ">
-    <!-- Section left image -->
-   <div class="image-container">
-       <img id="login-image"  src="" alt="student">
-   
-       <div class="text mt-3">  
-           <h1>Bienvenue sur Edusco</h1>
-           <p>{%trans "Lancez-vous sans plus attendre!" %}</p>
-       </div>
-   </div>
-   <div class="login-container ">
-    <h2 class="text-center">S'enregister</h2>
-            <form method="post" action="{% url 'account_signup' %}" >
-                
-                {% csrf_token %}
-                <div class="input-group">
-    
-                    {{ form.username }}
-                </div>
-                <div class="input-group">
-                  
-                    {{ form.email }}
-                </div>
-                {% comment %} <div class="input-group">
-                    
-                    {{ form.role }}
+<div class="min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="md:bg-white md:rounded-3xl md:shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300 min-h-[600px]">
 
-                </div>  {% endcomment %}
-                <div class="input-group">
-            
-                    {{ form.password1 }}
-                </div>
-
-                <div class="input-group">
-                   
-                    {{ form.password2 }}
-                </div>
-
-                <button type="submit" class="log-btn signup-btn">Enregistrer</button>
-                <div class="separator">ou</div>
-        
-                <!-- button google and github -->
-                <div class="social-login">
-                    <button class="google-btn">
-                                <a href="{% provider_login_url 'google' %}">
-                                <img src="{% static 'public/img/google.png' %}" alt="Google"> Connexion avec Google </a>
-                            </button>
-                    <button class="github-btn">
-                        <a href="{% provider_login_url 'github' %}">
-                      <img src="{% static 'public/img/github.png' %}" alt="GitHub"> S'enregister avec GitHub  </a> 
-                   </button> 
-                
-                    
-                        {% comment %} <button class="google-btn">
-                            <a href="{% provider_login_url 'facebook' %}">
-                            <img src="{% static 'public/img/facebook.png' %}" alt="Google"> Connexion avec Facebook
-                        </a>
-                        </button>  {% endcomment %}
-                </div>
-                <div class="links">
-                    <a>{% trans "Already have an account?" %}</a>
-                    <a href="{% url 'account_login' %}">{% trans "Login" %}</a>
-                </div>
-            </form>
-            <div class="container conditions mt-4 text-center">
-                <a href="#">Condition d'utilisation</a> |
-                <a href="#">Politique de confidentialité</a>
-              </div>
-        </div>
+    <!-- IMAGE À GAUCHE -->
+    <div class="h-full w-full hidden md:block">
+      <img src="{% static 'assets/img/account/login.jpg' %}" alt="Étudiants" class="object-cover w-full h-full">
     </div>
+
+    <!-- FORMULAIRE -->
+    <div class="p-10 flex flex-col justify-center h-full">
+      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="logo Oralise" class="w-24 mb-3 mx-auto">
+      <h2 class="text-base md:text-3xl main-color text-center mb-4 font-bold">{% trans "Créer un compte" %}</h2>
+
+      <form method="post" action="{% url 'account_signup' %}" class="space-y-5 animate-slide-in">
+        {% csrf_token %}
+
+        <div>
+          {{ form.username|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+        </div>
+
+        <div>
+          {{ form.email|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+        </div>
+
+        <div>
+          {{ form.password1|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+        </div>
+
+        <div>
+          {{ form.password2|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+        </div>
+
+        {% if form.errors %}
+        <p class="text-red-600 text-sm mt-1">{% trans 'Veuillez corriger les erreurs ci-dessus.' %}</p>
+        {% endif %}
+
+        <button type="submit" class="w-full bg-main-color hover:bg-main-color-opacity text-white font-medium py-2.5 rounded-xl shadow-md hover:shadow-xl transition-all duration-300">
+          {% trans "S'enregistrer" %}
+        </button>
+
+        <div class="text-center text-gray-400 text-sm">— {% trans 'ou inscrivez-vous avec' %} —</div>
+
+        <!-- SOCIAL LOGIN -->
+        <div class="space-y-3">
+          <a href="{% provider_login_url 'google' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
+            <img src="{% static 'assets/img/icons/google.svg' %}" alt="google" class="w-5 h-5"> {% trans 'Google' %}
+          </a>
+        
+        </div>
+
+        <!-- LIENS -->
+        <div class="flex justify-between text-sm text-blue-600 mt-6 font-medium">
+          <span>{% trans "Déjà inscrit ?" %}</span>
+          <a href="{% url 'account_login' %}" class="hover:underline">{% trans "Se connecter" %}</a>
+        </div>
+
+        <div class="text-center text-xs text-gray-400 mt-8">
+          <a href="#" class="hover:underline">Conditions d'utilisation</a> |
+          <a href="#" class="hover:underline">Politique de confidentialité</a>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
-{% endblock %}
+{% endblock content %}

@@ -1,60 +1,44 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edusco</title>
-    <!-- Favicon -->
-    <link rel="icon" href="{% static 'public/img/favic.png' %}">
-        
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Poppins:200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" rel="stylesheet">
+    <title> {% block title %} {%endblock title%}
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/bootstrap.min.css' %}">
-    <!-- Nice Select CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/nice-select.css' %}">
+    </title>
+    <!-- Favicon -->
+<link rel="icon" href="{% static 'assets/img/icons/favicon.png' %}">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css?family=Poppins:200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap"
+        rel="stylesheet">
+
     <!-- Font Awesome CSS -->
     <link rel="stylesheet" href="{% static 'public/css/font-awesome.min.css' %}">
     <!-- icofont CSS -->
     <link rel="stylesheet" href="{% static 'public/css/icofont.css' %}">
-    <!-- Slicknav -->
-    <link rel="stylesheet" href="{% static 'public/css/slicknav.min.css' %}">
-    <!-- Owl Carousel CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/owl-carousel.css' %}">
-    <!-- Datepicker CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/datepicker.css' %}">
-    <!-- Animate CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/animate.min.css' %}">
-    <!-- Magnific Popup CSS -->
-    <link rel="stylesheet" href="{% static 'public/css/magnific-popup.css' %}">
-    
-    <!-- Medipro CSS -->
-  
-    <link rel="stylesheet" type="text/css" href="{% static 'account/password_reset.css' %}">
-    <link rel="stylesheet" href="{% static 'public/css/responsive.css' %}">
-   <link rel="stylesheet" href="{% static 'build/output.css' %}">
-    <style>
-        body{
-            background-color: #2c2c2c;
-        }
-    </style>
-    
+
+    <link rel="stylesheet" href="{% static 'build/output.css' %}">
+
 </head>
+
 <body>
-    
 
-    
+
+
     {% block content %}
-        
+
     {% endblock content %}
-        
 
 
 
-    
-   <script src="{% static 'account/js/login.js' %}"></script> 
+
+
+    <script src="{% static 'account/js/login.js' %}"></script>
 </body>
+
 </html>

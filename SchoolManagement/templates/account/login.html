@@ -4,56 +4,46 @@
 {% load static %}
 {% load i18n %}
 
-{% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 py-10">
-  <div class="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300">
+{% block title %} Oralise | Login {% endblock title %}
 
-    <!-- IMAGE + MESSAGE -->
-    <div class="bg-blue-700 text-white p-10 flex flex-col items-center justify-center space-y-6 relative">
-      <img src="{% static '/assets/img/theme/forest.jpg' %}" alt="student" class="w-52 h-52 object-contain drop-shadow-md animate-fade-in">
-      <div class="text-center">
-        <h1 class="text-3xl font-extrabold tracking-tight mb-2">{% trans "Ravi de vous revoir!" %}</h1>
-        <p class="text-sm opacity-90">{% trans "Retrouvez vos activités bien gérées!" %}</p>
-      </div>
-      <div class="absolute bottom-4 text-xs opacity-60">© {{ year|default:"2025" }} YourCompany</div>
-    </div>
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="md:bg-white md:rounded-3xl md:shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300 min-h-[600px]">
 
     <!-- FORMULAIRE -->
-    <div class="p-10">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Connexion à votre espace</h2>
+    <div class="p-10 flex flex-col justify-center h-full">
+      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="logo Oralise" class="w-24 mb-3 mx-auto">
+      <h2 class="text-base md:text-3xl main-color text-center mb-4 font-bold">{% trans 'Connexion' %}</h2>
 
       <form method="post" action="{% url 'account_login' %}" class="space-y-5 animate-slide-in">
         {% csrf_token %}
 
         <div>
-          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" }}
+          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
         </div>
 
         <div>
-          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" }}
+          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
         </div>
 
         {% if form.errors %}
-        <p class="text-red-600 text-sm mt-1">Email ou mot de passe incorrect !</p>
+        <p class="text-red-600 text-sm mt-1">{% trans 'Email ou mot de passe incorrect !' %}</p>
         {% endif %}
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-md transition-all duration-300">
+        <button type="submit" class="w-full bg-main-color hover:bg-main-color-opacity text-white font-medium py-2.5 rounded-xl shadow-md hover:shadow-xl transition-all duration-300">
           Se connecter
         </button>
 
-        <div class="text-center text-gray-400 text-sm">— ou connectez-vous avec —</div>
+        <div class="text-center text-gray-400 text-sm">— {% trans 'ou connectez-vous avec' %} —</div>
 
         <!-- SOCIAL LOGIN -->
         <div class="space-y-3">
           <a href="{% provider_login_url 'google' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
-            <img src="{% static 'assets/img/icons/google.svg' %}" alt="google" class="w-5 h-5"> Connexion avec Google
-          </a>
-          <a href="{% provider_login_url 'github' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
-            <img src="{% static 'public/img/github.png' %}" alt="github" class="w-5 h-5"> Connexion avec GitHub
+            <img src="{% static 'assets/img/icons/google.svg' %}" alt="google" class="w-5 h-5"> {% trans 'Connexion avec Google' %}
           </a>
         </div>
 
-        <!-- LIENS BAS -->
+        <!-- LIENS -->
         <div class="flex justify-between text-sm text-blue-600 mt-6 font-medium">
           <a href="{% url 'account_reset_password' %}" class="hover:underline">Mot de passe oublié ?</a>
           <a href="{% url 'account_signup' %}" class="hover:underline">Créer un compte</a>
@@ -65,6 +55,12 @@
         </div>
       </form>
     </div>
+
+    <!-- IMAGE -->
+    <div class="h-full w-full hidden md:block">
+      <img src="{% static 'assets/img/account/login.jpg' %}" alt="Langues étrangères" class="object-cover w-full h-full">
+    </div>
+
   </div>
 </div>
 {% endblock content %}

@@ -1,92 +1,40 @@
-<!-- filepath: e:\PFE_Dev\SchoolManagement\Edusco\templates\account\logout.html -->
 {% extends "account/base.html" %}
 {% load i18n %}
 {% load static %}
 
 {% block head_title %}
-    {% trans "Sign Out" %}
+    {% trans "Déconnexion" %}
 {% endblock head_title %}
 
-
 {% block content %}
-<style>
-    .form-section{
-        display: flex;
-        flex-direction: column;
-        justify-self: center;
-        align-items: center;
-        margin: 100px auto;
+<div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 py-8">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden w-full max-w-md p-8">
+    
+    <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+      {% trans "Êtes-vous sûr de vouloir vous déconnecter ?" %}
+    </h2>
 
-    }
-    .logout-container {
-        background-color: transparent;
-        padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 0 10px  #04C4D9;
-        width: 350px;
-        height: auto;
-        text-align: center;
-        color: white;
-      
-    }
-    
-    /* Title */
-    h2 {
-        margin-bottom: 20px;
-        color: white;
-    }
-    
-    
-    /* Button */
-    .logout-btn {
-        background-color: rgb(202, 0, 0);
-       
-    }
-    
-    .logout-btn:hover {
-        background-color: rgb(141, 0, 0);
-    }
-    
-    /* Liens */
-    .links {
-        margin-top: 15px;
-    }
-    
-    .links a {
-        color: #04C4D9;
-        text-decoration: none;
-        font-size: 14px;
-    }
-    
-    .links a:hover {
-        text-decoration: underline;
-    }
-    .conditions a{
-        color: white;
-    }
-</style>
-
-<div class="form-section">
-
-
-<div class="logout-container">
-    <h2>{% trans "Logout" %}</h2>
     {% url 'account_logout' as action_url %}
-    <form action="{{ action_url }}" method="POST">
-        {% csrf_token %}
-        {{ redirect_field }}
+    <form method="post" action="{{ action_url }}">
+      {% csrf_token %}
+      {{ redirect_field }}
 
-        <button type="submit" class="log-btn logout-btn">Se deconnecter</button>
+      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition">
+        {% trans "Se déconnecter" %}
+      </button>
 
-        <div class="links">
-            <a>{% trans "Souhaitez-vous faire un retour?" %}</a>
-            <a href="{% url 'dashboard_home' %}">{% trans "Home page" %}</a>
-        </div>
+      <div class="text-sm text-center mt-4 text-gray-600 dark:text-gray-300">
+        <p>{% trans "Souhaitez-vous faire un retour ?" %}</p>
+        <a href="{% url 'dashboard_home' %}" class="text-main-color font-medium hover:underline">
+          {% trans "Revenir à l'accueil" %}
+        </a>
+      </div>
     </form>
-</div>
-  <div class="container conditions mt-4 text-center">
-    <a href="#">Condition d'utilisation</a> |
-    <a href="#">Politique de confidentialité</a>
+
+    <div class="text-xs text-center text-gray-500 dark:text-gray-400 mt-6">
+      <a href="#" class="hover:underline">Conditions d'utilisation</a> |
+      <a href="#" class="hover:underline">Politique de confidentialité</a>
+    </div>
   </div>
 </div>
 {% endblock content %}

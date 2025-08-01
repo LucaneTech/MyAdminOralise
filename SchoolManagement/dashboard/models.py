@@ -43,12 +43,12 @@ class Profile(models.Model):
         blank=True,
         null=True
     )
-    city = models.CharField(max_length=50, default="Meknes")
-    country = models.CharField(max_length=50, default="Maroc")
-    address = models.CharField(max_length=100, default="hamria")
+    city = models.CharField(max_length=50, default="Entrez votre ville")
+    country = models.CharField(max_length=50, default="Entrez votre pays")
+    address = models.CharField(max_length=100, default="Entrez votre adresse")
     about = models.TextField(
         max_length=1000, 
-        default="Je suis étudiant en deuxieme anne developpement informatique"
+        default=" "
     )
     theme_preference = models.CharField(max_length=10, choices=[('light', 'Light'), ('dark', 'Dark')], default='light')
 
