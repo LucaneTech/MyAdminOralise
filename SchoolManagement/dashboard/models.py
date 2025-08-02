@@ -2,10 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.templatetags.static import static
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save,pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
 from django.utils import timezone
+
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -38,14 +39,14 @@ class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='user_profile')
     profile_picture = models.ImageField(
         upload_to='profile_pics/',
-        default='profile_pics/default.jpg',
+        default='profile_pics/profile.png',
         blank=True,
         null=True
     )
-    city = models.CharField(max_length=50, default="Entrez votre ville")
-    country = models.CharField(max_length=50, default="Entrez votre pays")
-    number = models.CharField(max_length=20, default="(+xxx) xxxxxxxxx")
-    address = models.CharField(max_length=100, default="Entrez votre adresse")
+    city = models.CharField(max_length=50)
+    country = models.CharField(max_length=50)
+    number = models.CharField(max_length=20)
+    address = models.CharField(max_length=100)
     about = models.TextField(
         max_length=1000, 
         default=" "
@@ -70,13 +71,15 @@ class Branch(models.Model):
     def __str__(self):
         return f"{self.name} ({self.type_formation.name})"
 
-# Étudiant
+
+
 class Student(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    matricule = models.CharField(max_length=20, unique=True)
+    matricule = models.CharField(max_length=20, unique=True, editable=False)  # Modification ici
     branch = models.ManyToManyField('Branch')
     date_joined = models.DateField(default=timezone.now)
     
+    # Méthodes existantes inchangées
     @property
     def average(self):
         marks = Mark.objects.filter(student=self)
@@ -102,6 +105,24 @@ class Student(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.matricule})"
+
+@receiver(pre_save, sender=Student)
+def generate_student_matricule(sender, instance, **kwargs):
+    if not instance.matricule:
+        ecole_nom = "Oralise" 
+        annee_courante = timezone.now().year
+        
+        dernier_etudiant = Student.objects.filter(
+            matricule__startswith=f"{ecole_nom}-{annee_courante}-"
+        ).order_by('-matricule').first()
+        
+        if dernier_etudiant:
+            dernier_numero = int(dernier_etudiant.matricule.split('-')[-1])
+            nouveau_numero = dernier_numero + 1
+        else:
+            nouveau_numero = 1
+        
+        instance.matricule = f"{ecole_nom}-{annee_courante}-{nouveau_numero:03d}"
 
 # Enseignant
 class Teacher(models.Model):

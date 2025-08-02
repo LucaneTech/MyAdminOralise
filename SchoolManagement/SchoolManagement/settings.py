@@ -168,7 +168,7 @@ SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
 
 #redirection url after login
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = 'dashboard_home'
 #redirection url after logout
 LOGOUT_REDIRECT_URL = 'account_login'
 
