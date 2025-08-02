@@ -31,12 +31,12 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">Nombre de langues</h5>
-                      <span class="h2 font-weight-bold mb-0 text-danger">{{ total_skills }}</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Heures restantes</h5>
+                      <span class="h2 font-weight-bold mb-0 text-danger">{{ hours_remaining }}h</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
-                        <i class="ni ni-books"></i>
+                        <i class="ni ni-time-alarm"></i>
                       </div>
                     </div>
                   </div>
@@ -49,12 +49,12 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">Nombre d'étudiants</h5>
-                      <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Séances terminées</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ completed_sessions_count }}/{{ total_sessions }}</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
-                        <i class="ni ni-hat-3"></i>
+                        <i class="ni ni-check-bold"></i>
                       </div>
                     </div>
                   </div>
@@ -67,12 +67,12 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">Matières du jour</h5>
-                      <span class="h2 font-weight-bold mb-0">{{ today_skills.count }}</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Taux de présence</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ attendance_rate }}%</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
-                        <i class="ni ni-book-bookmark"></i>
+                        <i class="ni ni-chart-bar-32"></i>
                       </div>
                     </div>
                   </div>
@@ -85,12 +85,12 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col">
-                      <h5 class="card-title text-uppercase text-muted mb-0">Performance</h5>
-                      <span class="h2 font-weight-bold mb-0">{{ average_performance }}%</span>
+                      <h5 class="card-title text-uppercase text-muted mb-0">Langues</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ languages.count }}</span>
                     </div>
                     <div class="col-auto">
                       <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                        <i class="ni ni-chart-bar-32"></i>
+                        <i class="ni ni-books"></i>
                       </div>
                     </div>
                   </div>
@@ -101,60 +101,186 @@
         </div>
       </div>
     </div>
-
     <!-- Page content -->
     <div class="container-fluid mt--6">
       <div class="row">
-        <!-- Emploi du temps du jour -->
         <div class="col-xl-8">
-          <div class="card bg-default">
-            <div class="card-header bg-transparent">
-              <h5 class="h3 text-white mb-0">Emploi du temps du jour</h5>
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Planning personnel</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'student_sessions' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-              <ul class="list-group">
-                {% for schedule in today_schedule %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span>
-                    <i class="ni ni-book-bookmark text-primary"></i>
-                    {{ schedule.skill.name }} ({{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }})
-                  </span>
-                  <span class="badge badge-info">{{ schedule.teacher.user.full_name }}</span>
-                  <span class="badge badge-secondary">Salle {{ schedule.classroom }}</span>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-center">
-                  Pas de cours aujourd'hui
-                </li>
-                {% endfor %}
-              </ul>
+            <div class="table-responsive">
+              <!-- Projects table -->
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Langue</th>
+                    <th scope="col">Enseignant</th>
+                    <th scope="col">Heure</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for session in upcoming_sessions|slice:":5" %}
+                  <tr>
+                    <th scope="row">
+                      {{ session.date|date:"d/m/Y" }}
+                    </th>
+                    <td>
+                      {{ session.language.name }}
+                    </td>
+                    <td>
+                      {{ session.teacher.user.get_full_name }}
+                    </td>
+                    <td>
+                      {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                    </td>
+                    <td>
+                      <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                        {{ session.get_status_display }}
+                      </span>
+                    </td>
+                    <td>
+                      <a href="{% url 'session_detail' session.id %}" class="btn btn-sm btn-info">Détails</a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center">Aucune séance prévue</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-        <!-- Notes récentes -->
         <div class="col-xl-4">
           <div class="card">
-            <div class="card-header bg-transparent">
-              <h5 class="mb-0">Progression des heures</h5>
-              <span>Mois : Aout</span>
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Séances du jour</h3>
+                </div>
+              </div>
             </div>
             <div class="card-body">
-              <ul class="list-group">
-                {% for mark in recent_marks %}
-                <li class="list-group-item">
-                  <strong>{{ mark.skill.name }} :</strong> {{ mark.mark }}/20<br>
-                  <small class="text-muted">{{ mark.skill.teachers.first.user.full_name }}</small>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-center">
-                  Pas de notes récentes
-                </li>
-                {% endfor %}
-              </ul>
+              {% for session in today_sessions %}
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-0">{{ session.language.name }}</h6>
+                  <small class="text-muted">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</small>
+                </div>
+                <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                  {{ session.get_status_display }}
+                </span>
+              </div>
+              {% empty %}
+              <p class="text-muted">Aucune séance aujourd'hui</p>
+              {% endfor %}
             </div>
           </div>
         </div>
       </div>
+      
+      <div class="row">
+        <div class="col-xl-6">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Évaluations récentes</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'evaluations_view' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for evaluation in recent_evaluations %}
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-0">{{ evaluation.language.name }} - {{ evaluation.get_evaluation_type_display }}</h6>
+                  <small class="text-muted">{{ evaluation.evaluation_date|date:"d/m/Y" }}</small>
+                </div>
+                <span class="badge badge-success">{{ evaluation.score }}/20</span>
+              </div>
+              {% empty %}
+              <p class="text-muted">Aucune évaluation récente</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Certificats</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'certificates_view' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for certificate in recent_certificates %}
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-0">{{ certificate.language.name }} - {{ certificate.level }}</h6>
+                  <small class="text-muted">{{ certificate.issued_date|date:"d/m/Y" }}</small>
+                </div>
+                {% if certificate.certificate_file %}
+                <a href="{{ certificate.certificate_file.url }}" class="btn btn-sm btn-success" target="_blank">Télécharger</a>
+                {% else %}
+                <span class="badge badge-warning">En cours</span>
+                {% endif %}
+              </div>
+              {% empty %}
+              <p class="text-muted">Aucun certificat disponible</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {% if unread_notifications %}
+      <div class="row">
+        <div class="col-xl-12">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Notifications</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'notifications_view' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for notification in unread_notifications %}
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <strong>{{ notification.title }}</strong><br>
+                {{ notification.message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
 {% endblock content %}

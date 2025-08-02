@@ -20,24 +20,15 @@
               <span class="nav-link-text">Dashboard</span>
             </a>
           </li>
+          
+          <!-- Planning personnel -->
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'profile_view' %}">
-              <i class="ni ni-single-02 text-red"></i>
-              <span class="nav-link-text">Mes informations</span>
+            <a class="nav-link" href="{% url 'student_sessions' %}">
+              <i class="ni ni-calendar-grid-58 text-info"></i>
+              <span class="nav-link-text">Mes séances</span>
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'skills_view' %}">
-              <i class="ni ni-books text-success"></i>
-              <span class="nav-link-text">Mes matières / cours</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'marks_view' %}">
-              <i class="ni ni-chart-bar-32 text-warning"></i>
-              <span class="nav-link-text">Heures / Progression</span>
-            </a>
-          </li>
+          
           <li class="nav-item">
             <a class="nav-link" href="{% url 'schedule_view' %}">
               <i class="ni ni-calendar-grid-58 text-info"></i>
@@ -45,6 +36,30 @@
             </a>
           </li>
 
+          <!-- Évaluations et certificats -->
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'evaluations_view' %}">
+              <i class="ni ni-chart-bar-32 text-warning"></i>
+              <span class="nav-link-text">Mes évaluations</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'certificates_view' %}">
+              <i class="ni ni-badge text-success"></i>
+              <span class="nav-link-text">Mes certificats</span>
+            </a>
+          </li>
+
+          <!-- Paiements -->
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'payments_view' %}">
+              <i class="ni ni-money-coins text-success"></i>
+              <span class="nav-link-text">Mes paiements</span>
+            </a>
+          </li>
+
+          <!-- Ressources et demandes -->
           <li class="nav-item">
             <a class="nav-link" href="{% url 'resources_view' %}">
               <i class="ni ni-folder-17 text-primary"></i>
@@ -56,6 +71,22 @@
             <a class="nav-link" href="{% url 'requests_view' %}">
               <i class="ni ni-send text-pink"></i>
               <span class="nav-link-text">Demandes / Requêtes</span>
+            </a>
+          </li>
+
+          <!-- Notifications -->
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'notifications_view' %}">
+              <i class="ni ni-bell-55 text-warning"></i>
+              <span class="nav-link-text">Notifications</span>
+            </a>
+          </li>
+
+          <!-- Profil -->
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile_view' %}">
+              <i class="ni ni-single-02 text-red"></i>
+              <span class="nav-link-text">Mon profil</span>
             </a>
           </li>
 
@@ -76,7 +107,7 @@
         <hr class="my-3">
         <!-- Heading -->
         <h6 class="navbar-heading p-0 text-muted">
-          <span class="docs-normal">Resources</span>
+          <span class="docs-normal">Paramètres</span>
         </h6>
         <!-- Navigation -->
         <ul class="navbar-nav mb-md-3">
@@ -86,7 +117,7 @@
                target="_blank" 
                href="{% url 'settings_view' %}">
               <i class="ni ni-settings-gear-65 text-dark"></i>
-              <span class="nav-link-text">Parametres</span>
+              <span class="nav-link-text">Paramètres</span>
             </a>
           </li>
 

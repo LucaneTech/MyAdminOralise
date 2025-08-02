@@ -1,0 +1,171 @@
+{% extends 'dashboard/teacher/layouts/base.html' %}
+
+{% block title %} Détails de la séance {% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Détails de la séance</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'teacher_sessions' %}">Mes séances</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Détails</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Informations de la séance</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Détails</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Date :</strong></td>
+                  <td>{{ session.date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Heure :</strong></td>
+                  <td>{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Durée :</strong></td>
+                  <td>{{ session.duration_hours|floatformat:1 }} heures</td>
+                </tr>
+                <tr>
+                  <td><strong>Langue :</strong></td>
+                  <td>{{ session.language.name }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Statut :</strong></td>
+                  <td>
+                    <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                      {{ session.get_status_display }}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h5>Participants</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Étudiant :</strong></td>
+                  <td>{{ session.student.user.get_full_name }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Enseignant :</strong></td>
+                  <td>{{ session.teacher.user.get_full_name }}</td>
+                </tr>
+                {% if session.meeting_link %}
+                <tr>
+                  <td><strong>Lien de réunion :</strong></td>
+                  <td><a href="{{ session.meeting_link }}" target="_blank" class="btn btn-sm btn-primary">Rejoindre</a></td>
+                </tr>
+                {% endif %}
+              </table>
+            </div>
+          </div>
+          
+          {% if session.notes %}
+          <div class="mt-4">
+            <h5>Notes</h5>
+            <p>{{ session.notes }}</p>
+          </div>
+          {% endif %}
+          
+          {% if session.feedback %}
+          <div class="mt-4">
+            <h5>Feedback</h5>
+            <p>{{ session.feedback }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4">
+      {% if session.status == 'scheduled' %}
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Actions</h3>
+        </div>
+        <div class="card-body">
+          <div class="btn-group-vertical w-100" role="group">
+            <button type="button" class="btn btn-success mb-2 session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+              <i class="ni ni-check-bold"></i> Marquer comme terminée
+            </button>
+            <button type="button" class="btn btn-warning mb-2 session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+              <i class="ni ni-calendar-grid-58"></i> Reporter
+            </button>
+            <button type="button" class="btn btn-danger mb-2 session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
+              <i class="ni ni-fat-remove"></i> Marquer absence
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Ajouter un feedback</h3>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="feedback">Feedback</label>
+              <textarea class="form-control" id="feedback" name="feedback" rows="4" placeholder="Ajouter un commentaire ou feedback...">{{ session.feedback }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    $('.session-status-btn').click(function() {
+        var sessionId = $(this).data('session-id');
+        var status = $(this).data('status');
+        
+        $.ajax({
+            url: '/dashboard/session/' + sessionId + '/status/',
+            method: 'POST',
+            data: {
+                'status': status,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function(xhr) {
+                alert('Erreur lors de la mise à jour du statut');
+            }
+        });
+    });
+});
+</script>
+{% endblock javascripts %} 

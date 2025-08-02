@@ -175,7 +175,7 @@ LOGOUT_REDIRECT_URL = 'account_login'
 # django-allauth settings
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporairement désactivé pour le développement
 
 ROOT_URLCONF = 'SchoolManagement.urls'
 
@@ -269,6 +269,21 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour le développement
+
+# Configuration SMTP (pour la production)
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='dev@example.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='dev_password')
+
+# Configuration pour django-allauth
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporairement désactivé pour le développement
+
 
 #django-jazzmin settings for admin dashboard
 JAZZMIN_UI_TWEAKS = {
@@ -343,11 +358,15 @@ JAZZMIN_SETTINGS = {
         "dashboard.customuser": "fas fa-user-cog",         # CustomUser
         "dashboard.student": "fas fa-user-graduate",       # Student
         "dashboard.teacher": "fas fa-chalkboard-teacher",  # Teacher
-        "dashboard.trainingtype": "fas fa-layer-group",    # TrainingType
-        "dashboard.branch": "fas fa-code-branch",          # Branch
         "dashboard.skill": "fas fa-lightbulb",             # Skill
         "dashboard.schedule": "fas fa-calendar-alt",       # Schedule
         "dashboard.mark": "fas fa-star",                   # Mark
+        "dashboard.language": "fas fa-language",           # Language
+        "dashboard.session": "fas fa-clock",               # Session
+        "dashboard.payment": "fas fa-money-bill",          # Payment
+        "dashboard.certificate": "fas fa-certificate",     # Certificate
+        "dashboard.evaluation": "fas fa-chart-line",       # Evaluation
+        "dashboard.notification": "fas fa-bell",           # Notification
 
         # Sites
         "sites": "fas fa-globe",

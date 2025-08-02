@@ -1,385 +1,356 @@
-{% extends "dashboard/teacher/layouts/base.html" %}
-{% load static %}
-{% load humanize %}
+{% extends 'dashboard/teacher/layouts/base.html' %}
 
-{% block title %} Dashboard {% endblock %}
+{% block title %} Dashboard Enseignant {% endblock title %}
 
-{% block stylesheets %}
-<style>
-.progress {
-    display: flex;
-    height: 8px;
-    overflow: hidden;
-    font-size: .75rem;
-    background-color: #e9ecef;
-    border-radius: .25rem;
-}
-
-.progress-bar {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-    color: #fff;
-    text-align: center;
-    white-space: nowrap;
-    transition: width .6s ease;
-}
-
-.chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-</style>
-{% endblock stylesheets %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
-<!-- Header -->
-<div class="header bg-primary pb-6">
-    <div class="container-fluid">
+
+    <!-- Header -->
+    <div class="header pb-6" style="  background-color:#147a81;">
+      <div class="container-fluid">
         <div class="header-body">
-            <div class="row align-items-center py-4">
-                <div class="col-lg-6 col-7">
-                    <h6 class="h2 text-white d-inline-block mb-0">Tableau de bord</h6>
-                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-                        </ol>
-                    </nav>
-                </div>
+          <div class="row align-items-center py-4">
+            <div class="col-lg-6 col-7">
+              <h6 class="h2 text-white d-inline-block mb-0">Tableau de bord Enseignant</h6>
+              <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                  <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                  <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">{{ teacher.user.full_name }}</li>
+                </ol>
+              </nav>
             </div>
-            <!-- Card stats -->
-            <div class="row">
-                <div class="col-xl-4 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Matières</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ total_skills }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
-                                        <i class="ni ni-books"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0 text-sm">
-                                <span class="text-nowrap">Total des matières enseignées</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Étudiants</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
-                                        <i class="ni ni-single-02"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0 text-sm">
-                                <span class="text-nowrap">Total des étudiants</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Devoirs</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ total_assignments }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
-                                        <i class="ni ni-calendar-grid-58"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0 text-sm">
-                                <span class="text-nowrap">Total des devoirs assignés</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Page content -->
-<div class="container-fluid mt--6">
-    <div class="row">
-        <div class="col-xl-8">
-            <!-- Performance Chart -->
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h6 class="text-uppercase text-muted ls-1 mb-1">Performance</h6>
-                            <h5 class="h3 mb-0">Statistiques par matière</h5>
-                        </div>
-                    </div>
-                </div>
+          </div>
+          <!-- Card stats -->
+          <div class="row">
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="skills-stats-chart"></canvas>
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Étudiants</h5>
+                      <span class="h2 font-weight-bold mb-0 text-danger">{{ total_students }}</span>
                     </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                        <i class="ni ni-single-02"></i>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Langues enseignées</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ languages.count }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                        <i class="ni ni-books"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Séances aujourd'hui</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ today_sessions.count }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-calendar-grid-58"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+              <div class="card card-stats">
+                <!-- Card body -->
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Taux horaire</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ hourly_rate }}€/h</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                        <i class="ni ni-money-coins"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Page content -->
+    <div class="container-fluid mt--6">
+      <div class="row">
+        <div class="col-xl-8">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Séances à cocher aujourd'hui</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'teacher_sessions' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <!-- Projects table -->
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">Heure</th>
+                    <th scope="col">Étudiant</th>
+                    <th scope="col">Langue</th>
+                    <th scope="col">Durée</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for session in sessions_to_check %}
+                  <tr>
+                    <th scope="row">
+                      {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                    </th>
+                    <td>
+                      {{ session.student.user.get_full_name }}
+                    </td>
+                    <td>
+                      {{ session.language.name }}
+                    </td>
+                    <td>
+                      {{ session.duration_hours|floatformat:1 }}h
+                    </td>
+                    <td>
+                      <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                        {{ session.get_status_display }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                          <i class="ni ni-check-bold"></i> Terminée
+                        </button>
+                        <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+                          <i class="ni ni-calendar-grid-58"></i> Reporter
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
+                          <i class="ni ni-fat-remove"></i> Absence
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center">Aucune séance à cocher aujourd'hui</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
         <div class="col-xl-4">
-            <!-- Attendance Chart -->
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h6 class="text-uppercase text-muted ls-1 mb-1">Présence</h6>
-                            <h5 class="h3 mb-0">Statistiques mensuelles</h5>
-                        </div>
-                    </div>
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Filtres par langue</h3>
                 </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="attendance-chart"></canvas>
-                    </div>
-                </div>
+              </div>
             </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="languageFilter" class="form-label">Sélectionner une langue</label>
+                <select class="form-control" id="languageFilter">
+                  <option value="">Toutes les langues</option>
+                  {% for language in languages %}
+                  <option value="{{ language.code }}" {% if selected_language == language.code %}selected{% endif %}>
+                    {{ language.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <a href="{% url 'teacher_sessions' %}" class="btn btn-primary btn-block">Voir l'emploi du temps</a>
+            </div>
+          </div>
         </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-xl-6">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Statistiques par langue</h3>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for stat in language_stats %}
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-0">{{ stat.language.name }}</h6>
+                  <small class="text-muted">{{ stat.students_count }} étudiants</small>
+                </div>
+                <div class="text-right">
+                  <span class="badge badge-success">{{ stat.completed_sessions }}/{{ stat.total_sessions }}</span>
+                  <br>
+                  <small class="text-muted">{{ stat.completion_rate|floatformat:1 }}%</small>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-muted">Aucune statistique disponible</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Séances récentes terminées</h3>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for session in recent_completed_sessions %}
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <h6 class="mb-0">{{ session.student.user.get_full_name }} - {{ session.language.name }}</h6>
+                  <small class="text-muted">{{ session.date|date:"d/m/Y" }} {{ session.start_time|time:"H:i" }}</small>
+                </div>
+                <span class="badge badge-success">{{ session.duration_hours|floatformat:1 }}h</span>
+              </div>
+              {% empty %}
+              <p class="text-muted">Aucune séance terminée récemment</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {% if rescheduled_sessions %}
+      <div class="row">
+        <div class="col-xl-12">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Séances reportées</h3>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for session in rescheduled_sessions %}
+              <div class="alert alert-warning" role="alert">
+                <strong>{{ session.student.user.get_full_name }}</strong> - {{ session.language.name }} 
+                ({{ session.date|date:"d/m/Y" }} {{ session.start_time|time:"H:i" }})
+                <br>
+                <small class="text-muted">{{ session.notes|default:"Aucun commentaire" }}</small>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      {% if unread_notifications %}
+      <div class="row">
+        <div class="col-xl-12">
+          <div class="card">
+            <div class="card-header border-0">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="mb-0">Notifications</h3>
+                </div>
+                <div class="col text-right">
+                  <a href="{% url 'notifications_view' %}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              {% for notification in unread_notifications %}
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <strong>{{ notification.title }}</strong><br>
+                {{ notification.message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
-    <!-- Recent assignments and schedule -->
-    <div class="row">
-        <div class="col-xl-8">
-            <!-- Recent assignments -->
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Devoirs récents</h3>
-                        </div>
-                        <div class="col text-right">
-                            <a href="{% url 'teacher_assignments' %}" class="btn btn-sm btn-primary">Voir tout</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Titre</th>
-                                <th scope="col">Matière</th>
-                                <th scope="col">Type</th>
-                                <th scope="col">Date limite</th>
-                                <th scope="col">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for assignment in recent_assignments %}
-                            <tr>
-                                <th scope="row">
-                                    {{ assignment.title }}
-                                </th>
-                                <td>
-                                    {{ assignment.skill.name }}
-                                </td>
-                                <td>
-                                    {{ assignment.get_type_display }}
-                                </td>
-                                <td>
-                                    {{ assignment.due_date|date:"d/m/Y" }}
-                                </td>
-                                <td>
-                                    <span class="badge badge-dot mr-4">
-                                        {% if assignment.status == 'published' %}
-                                        <i class="bg-success"></i>
-                                        <span class="status">Publié</span>
-                                        {% elif assignment.status == 'draft' %}
-                                        <i class="bg-warning"></i>
-                                        <span class="status">Brouillon</span>
-                                        {% else %}
-                                        <i class="bg-danger"></i>
-                                        <span class="status">Terminé</span>
-                                        {% endif %}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-4">
-            <!-- Today's schedule -->
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Emploi du temps du jour</h3>
-                        </div>
-                        <div class="col text-right">
-                            <a href="{% url 'teacher_schedule' %}" class="btn btn-sm btn-primary">Voir tout</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Heure</th>
-                                <th scope="col">Matière</th>
-                                <th scope="col">Salle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for schedule in today_schedule %}
-                            <tr>
-                                <th scope="row">
-                                    {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
-                                </th>
-                                <td>
-                                    {{ schedule.skill.name }}
-                                </td>
-                                <td>
-                                    {{ schedule.classroom }}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center">
-                                    Aucun cours aujourd'hui
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock content %}
 
+<!-- Specific JS goes HERE --> 
 {% block javascripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Configuration des couleurs
-    const colors = {
-        success: '#2dce89',
-        warning: '#fb6340',
-        danger: '#f5365c',
-        primary: '#5e72e4',
-        info: '#11cdef'
-    };
-
-    // Données pour le graphique des matières
-    const skillsData = {{ skills_stats|safe }};
-    
-    // Graphique des statistiques par matière
-    const skillsCtx = document.getElementById('skills-stats-chart').getContext('2d');
-    new Chart(skillsCtx, {
-        type: 'bar',
-        data: {
-            labels: skillsData.map(stat => stat.name),
-            datasets: [{
-                label: 'Moyenne',
-                data: skillsData.map(stat => stat.average),
-                backgroundColor: colors.success,
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const stat = skillsData[context.dataIndex];
-                            return [
-                                `Moyenne: ${stat.average}/20`,
-                                `Étudiants: ${stat.students_count}`,
-                                `Devoirs: ${stat.assignments_count}`,
-                                `Taux de présence: ${stat.attendance_rate.toFixed(1)}%`
-                            ];
-                        }
-                    }
+$(document).ready(function() {
+    // Gestion des changements de statut des séances
+    $('.session-status-btn').click(function() {
+        var sessionId = $(this).data('session-id');
+        var status = $(this).data('status');
+        
+        $.ajax({
+            url: '/dashboard/session/' + sessionId + '/status/',
+            method: 'POST',
+            data: {
+                'status': status,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 20,
-                    grid: {
-                        drawBorder: false,
-                        color: '#f2f2f2'
-                    },
-                    ticks: {
-                        stepSize: 5
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
+            error: function(xhr) {
+                alert('Erreur lors de la mise à jour du statut');
             }
-        }
+        });
     });
-
-    // Graphique des statistiques de présence
-    const attendanceCtx = document.getElementById('attendance-chart').getContext('2d');
-    new Chart(attendanceCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Présents', 'Retards', 'Absents'],
-            datasets: [{
-                data: [
-                    {{ attendance_stats.present_rate }},
-                    {{ attendance_stats.late_rate }},
-                    {{ attendance_stats.absent_rate }}
-                ],
-                backgroundColor: [colors.success, colors.warning, colors.danger],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.label}: ${context.raw.toFixed(1)}%`;
-                        }
-                    }
-                }
-            }
+    
+    // Filtre par langue
+    $('#languageFilter').change(function() {
+        var language = $(this).val();
+        var currentUrl = new URL(window.location);
+        if (language) {
+            currentUrl.searchParams.set('language', language);
+        } else {
+            currentUrl.searchParams.delete('language');
         }
+        window.location = currentUrl;
     });
 });
 </script>

@@ -2,10 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.templatetags.static import static
 from django.conf import settings
-from django.db.models.signals import post_save,pre_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
 from django.utils import timezone
+from datetime import datetime, timedelta
 
 
 class CustomUser(AbstractUser):
@@ -56,52 +57,42 @@ class Profile(models.Model):
     def __str__(self):
         return f"Profile of {self.user.username}"
 
-# Type de formation (BTS, Licence, etc.)
-class TrainingType(models.Model):
+# Langues enseignées
+class Language(models.Model):
     name = models.CharField(max_length=100, unique=True)
-
+    code = models.CharField(max_length=10, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    
     def __str__(self):
         return self.name
 
-# Filière
-class Branch(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    type_formation = models.ForeignKey(TrainingType, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.name} ({self.type_formation.name})"
-
-
-
+# Étudiant
 class Student(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    matricule = models.CharField(max_length=20, unique=True, editable=False)  # Modification ici
-    branch = models.ManyToManyField('Branch')
+    matricule = models.CharField(max_length=20, unique=True, editable=False)
+    languages = models.ManyToManyField(Language, related_name='students')
     date_joined = models.DateField(default=timezone.now)
-    
-    # Méthodes existantes inchangées
-    @property
-    def average(self):
-        marks = Mark.objects.filter(student=self)
-        if marks.exists():
-            avg = marks.aggregate(Avg('mark'))['mark__avg']
-            return round(avg, 2) if avg else 0
-        return 0
+    total_hours_purchased = models.IntegerField(default=0)
+    total_hours_used = models.IntegerField(default=0)
+    current_teacher = models.ForeignKey('Teacher', on_delete=models.SET_NULL, null=True, blank=True, related_name='current_students')
     
     @property
-    def attendance_rate(self):
+    def hours_remaining(self):
+        return self.total_hours_purchased - self.total_hours_used
+    
+    @property
+    def recent_sessions(self):
+        return Session.objects.filter(student=self).order_by('-date')[:5]
+    
+    @property
+    def upcoming_sessions(self):
         today = timezone.now().date()
-        start_of_month = today.replace(day=1)
-        attendances = Attendance.objects.filter(
+        return Session.objects.filter(
             student=self,
-            date__gte=start_of_month,
-            date__lte=today
-        )
-        if attendances.exists():
-            present_count = attendances.filter(status='present').count()
-            total_count = attendances.count()
-            return round((present_count / total_count) * 100, 2)
-        return 0
+            date__gte=today,
+            status='scheduled'
+        ).order_by('date', 'start_time')
     
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.matricule})"
@@ -129,53 +120,37 @@ class Teacher(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     speciality = models.CharField(max_length=100)
     date_joined = models.DateField(default=timezone.now)
+    languages = models.ManyToManyField(Language, related_name='teachers')
+    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    is_available = models.BooleanField(default=True)
     
     @property
     def total_students(self):
-        return Student.objects.filter(skill__in=self.skill_set.all()).distinct().count()
+        return Student.objects.filter(current_teacher=self).count()
     
     @property
-    def total_courses(self):
-        return self.skill_set.count()
-    
-    @property
-    def total_assignments(self):
-        return Assignment.objects.filter(skill__in=self.skill_set.all()).count()
-    
-    @property
-    def monthly_attendance_stats(self):
+    def today_sessions(self):
         today = timezone.now().date()
-        start_of_month = today.replace(day=1)
-        attendances = Attendance.objects.filter(
-            skill__in=self.skill_set.all(),
-            date__gte=start_of_month,
-            date__lte=today
-        )
-        total = attendances.count()
-        if total > 0:
-            present = attendances.filter(status='present').count()
-            late = attendances.filter(status='late').count()
-            absent = attendances.filter(status='absent').count()
-            return {
-                'present_rate': round((present / total) * 100, 2),
-                'late_rate': round((late / total) * 100, 2),
-                'absent_rate': round((absent / total) * 100, 2)
-            }
-        return {'present_rate': 0, 'late_rate': 0, 'absent_rate': 0}
+        return Session.objects.filter(
+            teacher=self,
+            date=today,
+            status='scheduled'
+        ).order_by('start_time')
     
     @property
-    def class_performance(self):
-        skills = self.skill_set.all()
-        marks = Mark.objects.filter(skill__in=skills)
-        if marks.exists():
-            avg = marks.aggregate(Avg('mark'))['mark__avg']
-            return round(avg, 2) if avg else 0
-        return 0
+    def weekly_sessions(self):
+        today = timezone.now().date()
+        end_of_week = today + timedelta(days=7)
+        return Session.objects.filter(
+            teacher=self,
+            date__gte=today,
+            date__lte=end_of_week
+        ).order_by('date', 'start_time')
     
     def __str__(self):
         return self.user.get_full_name()
 
-# Compétences
+# Compétences/Skills
 class Skill(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -195,6 +170,7 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
+# Notes
 class Mark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
@@ -206,6 +182,7 @@ class Mark(models.Model):
     def __str__(self):
         return f"{self.student} - {self.skill}: {self.mark}"
 
+# Emploi du temps
 class Schedule(models.Model): 
     DAY_CHOICES = [
         ('Lundi', 'Lundi'),
@@ -216,74 +193,39 @@ class Schedule(models.Model):
         ('Samedi', 'Samedi'),
     ]
 
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     day = models.CharField(max_length=10, choices=DAY_CHOICES)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True)
-    classroom = models.CharField(max_length=30, blank=True, null=True)  # J'ai renommé 'salle' en 'classroom'
+    classroom = models.CharField(max_length=30, blank=True, null=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
 
     def __str__(self):
-        return f"{self.branch.name} - {self.day} ({self.start_time} - {self.end_time})"
+        return f"{self.skill.name} - {self.day} ({self.start_time} - {self.end_time})"
 
-class Resource(models.Model):
-    RESOURCE_TYPES = [
-        ('document', 'Document'),
-        ('link', 'Lien'),
-        ('video', 'Vidéo'),
-        ('other', 'Autre')
-    ]
+# Présence
+class Attendance(models.Model):
+    STATUS = (
+        ('present', 'Présent'),
+        ('absent', 'Absent'),
+        ('late', 'En retard'),
+    )
     
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    file = models.FileField(upload_to='resources/', null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
-    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES)
-    skills = models.ManyToManyField(Skill, related_name='resources')
-    uploaded_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    assignments = models.ManyToManyField('Assignment', related_name='resources', blank=True)
-
-    def __str__(self):
-        return f"{self.uploaded_by.username} - {self.title}"
-
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS)
+    arrival_time = models.TimeField(null=True, blank=True)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    
     class Meta:
-        ordering = ['-created_at']
-
-class Request(models.Model):
-    REQUEST_TYPES = [
-        ('absence', 'Justification d\'absence'),
-        ('document', 'Demande de document'),
-        ('meeting', 'Demande de rendez-vous'),
-        ('other', 'Autre')
-    ]
+        unique_together = ('student', 'skill', 'date')
     
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('processing', 'En cours de traitement'),
-        ('approved', 'Approuvée'),
-        ('rejected', 'Rejetée')
-    ]
-    
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='requests')
-    request_type = models.CharField(max_length=20, choices=REQUEST_TYPES)
-    subject = models.CharField(max_length=200)
-    description = models.TextField()
-    attachment = models.FileField(upload_to='request_attachments/', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    response = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     def __str__(self):
-        return f"{self.student.user.username} - {self.subject} ({self.get_status_display()})"
+        return f"{self.student} - {self.skill} - {self.date}: {self.status}"
 
-    class Meta:
-        ordering = ['-created_at']
-
-# Nouveaux modèles pour le dashboard enseignant
+# Devoirs
 class Assignment(models.Model):
     TYPES = (
         ('homework', 'Devoir'),
@@ -335,26 +277,193 @@ class Submission(models.Model):
     class Meta:
         unique_together = ['assignment', 'student']
 
-class Attendance(models.Model):
-    STATUS = (
-        ('present', 'Présent'),
-        ('absent', 'Absent'),
-        ('late', 'En retard'),
-    )
+# Séances de cours
+class Session(models.Model):
+    STATUS_CHOICES = [
+        ('scheduled', 'Prévue'),
+        ('completed', 'Terminée'),
+        ('cancelled', 'Annulée'),
+        ('rescheduled', 'Reportée'),
+        ('absent', 'Absence')
+    ]
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='sessions')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='sessions')
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
     date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS)
-    arrival_time = models.TimeField(null=True, blank=True)
-    note = models.TextField(blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    notes = models.TextField(blank=True)
+    feedback = models.TextField(blank=True)
+    meeting_link = models.URLField(blank=True, null=True)  # Pour les cours en ligne
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
-    class Meta:
-        unique_together = ('student', 'skill', 'date')
+    @property
+    def duration_hours(self):
+        start = datetime.combine(self.date, self.start_time)
+        end = datetime.combine(self.date, self.end_time)
+        duration = end - start
+        return duration.total_seconds() / 3600
     
     def __str__(self):
-        return f"{self.student} - {self.skill} - {self.date}: {self.status}"
+        return f"{self.student} - {self.language} - {self.date} ({self.get_status_display()})"
+    
+    class Meta:
+        ordering = ['-date', '-start_time']
+
+# Paiements
+class Payment(models.Model):
+    PAYMENT_TYPES = [
+        ('hourly', 'À l\'heure'),
+        ('package', 'Pack d\'heures'),
+        ('subscription', 'Abonnement')
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('paid', 'Payé'),
+        ('cancelled', 'Annulé'),
+        ('refunded', 'Remboursé')
+    ]
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    hours_purchased = models.IntegerField()
+    hours_remaining = models.IntegerField()
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_date = models.DateTimeField(auto_now_add=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    invoice_number = models.CharField(max_length=50, unique=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.student} - {self.amount}€ ({self.get_status_display()})"
+    
+    class Meta:
+        ordering = ['-payment_date']
+
+# Certificats
+class Certificate(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='certificates')
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    level = models.CharField(max_length=50)
+    issued_date = models.DateField(auto_now_add=True)
+    certificate_file = models.FileField(upload_to='certificates/', null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.student} - {self.language} - {self.level}"
+    
+    class Meta:
+        ordering = ['-issued_date']
+
+# Évaluations
+class Evaluation(models.Model):
+    EVALUATION_TYPES = [
+        ('pronunciation', 'Prononciation'),
+        ('grammar', 'Grammaire'),
+        ('vocabulary', 'Vocabulaire'),
+        ('fluency', 'Fluidité'),
+        ('comprehension', 'Compréhension')
+    ]
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='evaluations')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='evaluations')
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    evaluation_type = models.CharField(max_length=20, choices=EVALUATION_TYPES)
+    score = models.DecimalField(max_digits=4, decimal_places=2)
+    comments = models.TextField(blank=True)
+    evaluation_date = models.DateField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.student} - {self.language} - {self.get_evaluation_type_display()}: {self.score}"
+    
+    class Meta:
+        ordering = ['-evaluation_date']
+
+# Ressources pédagogiques
+class Resource(models.Model):
+    RESOURCE_TYPES = [
+        ('document', 'Document'),
+        ('link', 'Lien'),
+        ('video', 'Vidéo'),
+        ('other', 'Autre')
+    ]
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    file = models.FileField(upload_to='resources/', null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES)
+    languages = models.ManyToManyField(Language, related_name='resources')
+    uploaded_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.uploaded_by.username} - {self.title}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+# Demandes/Réquêtes
+class Request(models.Model):
+    REQUEST_TYPES = [
+        ('absence', 'Justification d\'absence'),
+        ('document', 'Demande de document'),
+        ('meeting', 'Demande de rendez-vous'),
+        ('other', 'Autre')
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('processing', 'En cours de traitement'),
+        ('approved', 'Approuvée'),
+        ('rejected', 'Rejetée')
+    ]
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='requests')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPES)
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+    attachment = models.FileField(upload_to='request_attachments/', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    response = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.subject} ({self.get_status_display()})"
+
+    class Meta:
+        ordering = ['-created_at']
+
+# Notifications
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('session_reminder', 'Rappel de séance'),
+        ('payment_due', 'Paiement dû'),
+        ('certificate_ready', 'Certificat disponible'),
+        ('evaluation_ready', 'Évaluation disponible'),
+        ('system', 'Système')
+    ]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    related_object_id = models.IntegerField(null=True, blank=True)
+    related_object_type = models.CharField(max_length=50, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.user} - {self.title}"
+    
+    class Meta:
+        ordering = ['-created_at']
 
 # Signaux pour créer automatiquement les profils
 @receiver(post_save, sender=CustomUser)

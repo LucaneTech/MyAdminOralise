@@ -1,0 +1,180 @@
+{% extends 'dashboard/teacher/layouts/base.html' %}
+
+{% block title %} Mes séances {% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Mes séances</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Séances</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <!-- Filtres -->
+  <div class="row mb-4">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-body">
+          <form method="get" class="row">
+            <div class="col-md-2">
+              <label for="language">Langue</label>
+              <select name="language" id="language" class="form-control">
+                <option value="">Toutes les langues</option>
+                {% for language in languages %}
+                <option value="{{ language.code }}" {% if filters.language == language.code %}selected{% endif %}>{{ language.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="status">Statut</label>
+              <select name="status" id="status" class="form-control">
+                <option value="">Tous les statuts</option>
+                <option value="scheduled" {% if filters.status == 'scheduled' %}selected{% endif %}>Prévue</option>
+                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Terminée</option>
+                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Annulée</option>
+                <option value="rescheduled" {% if filters.status == 'rescheduled' %}selected{% endif %}>Reportée</option>
+                <option value="absent" {% if filters.status == 'absent' %}selected{% endif %}>Absence</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="date">Date</label>
+              <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
+            </div>
+            <div class="col-md-2">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-primary btn-block">
+                <i class="ni ni-zoom-split-in"></i> Filtrer
+              </button>
+            </div>
+            <div class="col-md-2">
+              <label>&nbsp;</label>
+              <a href="{% url 'teacher_sessions' %}" class="btn btn-secondary btn-block">
+                <i class="ni ni-refresh"></i> Réinitialiser
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Liste des séances</h3>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Heure</th>
+                <th scope="col">Étudiant</th>
+                <th scope="col">Langue</th>
+                <th scope="col">Durée</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for session in sessions %}
+              <tr>
+                <th scope="row">
+                  {{ session.date|date:"d/m/Y" }}
+                </th>
+                <td>
+                  {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                </td>
+                <td>
+                  {{ session.student.user.get_full_name }}
+                </td>
+                <td>
+                  {{ session.language.name }}
+                </td>
+                <td>
+                  {{ session.duration_hours|floatformat:1 }}h
+                </td>
+                <td>
+                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                    {{ session.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a href="{% url 'session_detail' session.id %}" class="btn btn-sm btn-info">
+                      <i class="ni ni-ruler-pencil"></i> Détails
+                    </a>
+                    {% if session.status == 'scheduled' %}
+                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                      <i class="ni ni-check-bold"></i> Terminée
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+                      <i class="ni ni-calendar-grid-58"></i> Reporter
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
+                      <i class="ni ni-fat-remove"></i> Absence
+                    </button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center">Aucune séance trouvée</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    $('.session-status-btn').click(function() {
+        var sessionId = $(this).data('session-id');
+        var status = $(this).data('status');
+        
+        $.ajax({
+            url: '/dashboard/session/' + sessionId + '/status/',
+            method: 'POST',
+            data: {
+                'status': status,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function(xhr) {
+                alert('Erreur lors de la mise à jour du statut');
+            }
+        });
+    });
+});
+</script>
+{% endblock javascripts %} 

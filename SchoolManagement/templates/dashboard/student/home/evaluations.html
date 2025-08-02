@@ -1,0 +1,159 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block title %} Évaluations {% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Évaluations</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Évaluations</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Historique des évaluations</h3>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Langue</th>
+                <th scope="col">Type d'évaluation</th>
+                <th scope="col">Note</th>
+                <th scope="col">Enseignant</th>
+                <th scope="col">Commentaires</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for evaluation in evaluations %}
+              <tr>
+                <th scope="row">
+                  {{ evaluation.evaluation_date|date:"d/m/Y" }}
+                </th>
+                <td>
+                  {{ evaluation.language.name }}
+                </td>
+                <td>
+                  {{ evaluation.get_evaluation_type_display }}
+                </td>
+                <td>
+                  <span class="badge badge-{% if evaluation.score >= 16 %}success{% elif evaluation.score >= 12 %}warning{% else %}danger{% endif %}">
+                    {{ evaluation.score }}/20
+                  </span>
+                </td>
+                <td>
+                  {{ evaluation.teacher.user.get_full_name }}
+                </td>
+                <td>
+                  {% if evaluation.comments %}
+                  <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#commentModal{{ evaluation.id }}">
+                    Voir
+                  </button>
+                  {% else %}
+                  <span class="text-muted">Aucun</span>
+                  {% endif %}
+                </td>
+              </tr>
+              
+              <!-- Modal pour les commentaires -->
+              {% if evaluation.comments %}
+              <div class="modal fade" id="commentModal{{ evaluation.id }}" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="commentModalLabel">Commentaires - {{ evaluation.get_evaluation_type_display }}</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      {{ evaluation.comments|linebreaks }}
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center">Aucune évaluation disponible</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {% if evaluations %}
+  <div class="row mt-4">
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Statistiques par langue</h3>
+        </div>
+        <div class="card-body">
+          {% regroup evaluations by language as language_list %}
+          {% for language in language_list %}
+          <div class="mb-3">
+            <h6>{{ language.grouper.name }}</h6>
+            {% for evaluation in language.list %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span>{{ evaluation.get_evaluation_type_display }}</span>
+              <span class="badge badge-{% if evaluation.score >= 16 %}success{% elif evaluation.score >= 12 %}warning{% else %}danger{% endif %}">
+                {{ evaluation.score }}/20
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Moyenne générale</h3>
+        </div>
+        <div class="card-body text-center">
+          {% if average_score %}
+          <h2 class="text-primary">{{ average_score }}/20</h2>
+          <p class="text-muted">Basé sur {{ evaluations.count }} évaluation{{ evaluations.count|pluralize }}</p>
+          {% else %}
+          <p class="text-muted">Aucune évaluation</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %} 

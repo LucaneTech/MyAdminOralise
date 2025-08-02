@@ -10,9 +10,10 @@ from django.utils import timezone
 from django.contrib import messages
 # from .decorators import teacher_required, student_required
 from dashboard.models import (
-    CustomUser, Student, Teacher, Profile, Branch, 
+    CustomUser, Student, Teacher, Profile, 
     Skill, Mark, Schedule, Resource, Request, Assignment, 
-    Submission, Attendance
+    Submission, Attendance, Language, Session, Payment, Certificate, 
+    Evaluation, Notification
 )
 from .forms import ProfileUpdateForm
 import json
@@ -46,60 +47,75 @@ def dashboard_view(request, username=None):
         student = get_object_or_404(Student, user=requested_user)
         today = timezone.now().date()
         
-        # Nombre total de matières
-        total_skills = Skill.objects.filter(students=student).count()
+        # Informations principales selon le cahier des charges
+        context.update({
+            'student': student,
+            'hours_remaining': student.hours_remaining,
+            'total_hours_purchased': student.total_hours_purchased,
+            'total_hours_used': student.total_hours_used,
+            'languages': student.languages.all(),
+            'current_teacher': student.current_teacher,
+        })
         
-        # Nombre total d'étudiants dans les mêmes branches
-        total_students = Student.objects.filter(branch__in=student.branch.all()).distinct().count()
+        # Planning personnel (séances à venir)
+        upcoming_sessions = student.upcoming_sessions
+        context['upcoming_sessions'] = upcoming_sessions
         
-        # Emploi du temps du jour
-        from datetime import datetime
-        DAYS_MAPPING = {
-            'Monday': 'Lundi',
-            'Tuesday': 'Mardi',
-            'Wednesday': 'Mercredi',
-            'Thursday': 'Jeudi',
-            'Friday': 'Vendredi',
-            'Saturday': 'Samedi',
-            'Sunday': 'Dimanche'
-        }
-        today_name = DAYS_MAPPING[datetime.now().strftime('%A')]
+        # Historique des séances (faites / reportées)
+        completed_sessions = Session.objects.filter(
+            student=student,
+            status='completed'
+        ).order_by('-date')[:10]
+        context['completed_sessions'] = completed_sessions
         
-        today_schedule = Schedule.objects.filter(
-            branch__in=student.branch.all(),
-            day=today_name
+        rescheduled_sessions = Session.objects.filter(
+            student=student,
+            status='rescheduled'
+        ).order_by('-date')[:5]
+        context['rescheduled_sessions'] = rescheduled_sessions
+        
+        # Séances du jour
+        today_sessions = Session.objects.filter(
+            student=student,
+            date=today
         ).order_by('start_time')
+        context['today_sessions'] = today_sessions
         
-        # Notes récentes
-        recent_marks = Mark.objects.filter(student=student).order_by('-id')[:5]
+        # Notifications non lues
+        unread_notifications = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).order_by('-created_at')[:5]
+        context['unread_notifications'] = unread_notifications
         
-        # Performance moyenne
-        average_performance = Mark.objects.filter(student=student).aggregate(Avg('mark'))['mark__avg']
-        if average_performance:
-            average_performance = round(average_performance, 2)
-        else:
-            average_performance = 0
+        # Certificats récents
+        recent_certificates = Certificate.objects.filter(
+            student=student,
+            is_active=True
+        ).order_by('-issued_date')[:3]
+        context['recent_certificates'] = recent_certificates
         
-        # Matières du jour
-        today_skills = Skill.objects.filter(
-            schedule__branch__in=student.branch.all(),
-            schedule__day=today_name
-        ).distinct()
+        # Évaluations récentes
+        recent_evaluations = Evaluation.objects.filter(
+            student=student
+        ).order_by('-evaluation_date')[:5]
+        context['recent_evaluations'] = recent_evaluations
+        
+        # Statistiques de progression
+        total_sessions = Session.objects.filter(student=student).count()
+        completed_count = Session.objects.filter(student=student, status='completed').count()
+        attendance_rate = (completed_count / total_sessions * 100) if total_sessions > 0 else 0
         
         context.update({
-            'total_skills': total_skills,
-            'total_students': total_students,
-            'today_schedule': today_schedule,
-            'recent_marks': recent_marks,
-            'average_performance': average_performance,
-            'today_skills': today_skills,
-            'student': student,
+            'total_sessions': total_sessions,
+            'completed_sessions_count': completed_count,
+            'attendance_rate': round(attendance_rate, 2),
         })
         
         return render(request, 'dashboard/student/home/index.html', context)
-            
-    except Http404:
-        messages.error(request, "Cet utilisateur n'existe pas ou n'a pas les permissions nécessaires.")
+        
+    except Exception as e:
+        messages.error(request, f"Erreur lors du chargement du dashboard: {str(e)}")
         return redirect('dashboard_home')
 
 
@@ -117,104 +133,100 @@ def teacher_view(request, username=None):
         teacher = get_object_or_404(Teacher, user=requested_user)
         today = timezone.now().date()
         
-        # Récupération des statistiques via les propriétés du modèle
-        total_skills = teacher.total_courses
-        total_students = teacher.total_students
-        total_assignments = teacher.total_assignments
-        
-        # Emploi du temps du jour
-        today_schedule = Schedule.objects.filter(
-            teacher=teacher,
-            day=today.strftime('%A')
-        ).order_by('start_time')
-        
-        # Devoirs récents et à venir
-        recent_assignments = Assignment.objects.filter(
-            skill__in=teacher.skill_set.all()
-        ).order_by('-created_at')[:5]
-        
-        upcoming_assignments = Assignment.objects.filter(
-            skill__in=teacher.skill_set.all(),
-            due_date__gt=today,
-            status='published'
-        ).order_by('due_date')[:5]
-        
-        # Statistiques de présence du mois
-        attendance_stats = teacher.monthly_attendance_stats
-        
-        # Performance moyenne de la classe
-        class_performance = teacher.class_performance
-        
-        # Évolution des présences sur la semaine
-        week_stats = []
-        for i in range(7):
-            date = today - timedelta(days=i)
-            presence = Attendance.objects.filter(
-                skill__in=teacher.skill_set.all(),
-                date=date,
-                status='present'
-            ).count()
-            total = Attendance.objects.filter(
-                skill__in=teacher.skill_set.all(),
-                date=date
-            ).count()
-            if total > 0:
-                percentage = (presence / total) * 100
-            else:
-                percentage = 0
-            week_stats.append({
-                'date': date.strftime('%a'),
-                'percentage': percentage
-            })
-        
-        # Notes récentes
-        recent_marks = Mark.objects.filter(
-            skill__in=teacher.skill_set.all()
-        ).select_related('student', 'skill').order_by('-created_at')[:10]
-        
-        # Statistiques par matière
-        skills_stats = []
-        for skill in teacher.skill_set.all():
-            stats = {
-                'name': skill.name,
-                'average': float(skill.average_mark),
-                'students_count': skill.students.count(),
-                'assignments_count': Assignment.objects.filter(skill=skill).count(),
-                'attendance_rate': float(Attendance.objects.filter(
-                    skill=skill,
-                    date__gte=today.replace(day=1),
-                    status='present'
-                ).count() / max(Attendance.objects.filter(
-                    skill=skill,
-                    date__gte=today.replace(day=1)
-                ).count(), 1) * 100)
-            }
-            skills_stats.append(stats)
-        
+        # Informations principales selon le cahier des charges
         context = {
             'profile': profile,
             'user': request.user,
             'username': username,
             'teacher': teacher,
-            'total_skills': total_skills,
-            'total_students': total_students,
-            'total_assignments': total_assignments,
-            'today_schedule': today_schedule,
-            'recent_assignments': recent_assignments,
-            'upcoming_assignments': upcoming_assignments,
-            'attendance_stats': attendance_stats,
-            'class_performance': class_performance,
-            'week_stats': week_stats,
-            'recent_marks': recent_marks,
-            'skills_stats': skills_stats,
-            'skills_stats_json': json.dumps(skills_stats),
-            'segment': 'index'
+            'languages': teacher.languages.all(),
+            'total_students': teacher.total_students,
+            'hourly_rate': teacher.hourly_rate,
+            'is_available': teacher.is_available,
         }
         
-        return render(request, 'dashboard/teacher/home/index.html', context)
+        # Emploi du temps avec filtres par langue
+        selected_language = request.GET.get('language')
+        if selected_language:
+            today_sessions = Session.objects.filter(
+                teacher=teacher,
+                date=today,
+                language__code=selected_language
+            ).order_by('start_time')
+        else:
+            today_sessions = teacher.today_sessions
+        context['today_sessions'] = today_sessions
+        context['selected_language'] = selected_language
+        
+        # Séances de la semaine
+        weekly_sessions = teacher.weekly_sessions
+        context['weekly_sessions'] = weekly_sessions
+        
+        # Séances récentes (faites)
+        recent_completed_sessions = Session.objects.filter(
+            teacher=teacher,
+            status='completed'
+        ).order_by('-date')[:10]
+        context['recent_completed_sessions'] = recent_completed_sessions
+        
+        # Séances à cocher (prévues pour aujourd'hui)
+        sessions_to_check = Session.objects.filter(
+            teacher=teacher,
+            date=today,
+            status='scheduled'
+        ).order_by('start_time')
+        context['sessions_to_check'] = sessions_to_check
+        
+        # Séances reportées
+        rescheduled_sessions = Session.objects.filter(
+            teacher=teacher,
+            status='rescheduled'
+        ).order_by('-date')[:5]
+        context['rescheduled_sessions'] = rescheduled_sessions
+        
+        # Statistiques par langue
+        language_stats = []
+        for language in teacher.languages.all():
+            sessions_count = Session.objects.filter(
+                teacher=teacher,
+                language=language
+            ).count()
+            completed_count = Session.objects.filter(
+                teacher=teacher,
+                language=language,
+                status='completed'
+            ).count()
+            students_count = Student.objects.filter(
+                current_teacher=teacher,
+                languages=language
+            ).count()
             
-    except Http404:
-        messages.error(request, "Cet utilisateur n'existe pas ou n'a pas les permissions nécessaires.")
+            language_stats.append({
+                'language': language,
+                'total_sessions': sessions_count,
+                'completed_sessions': completed_count,
+                'students_count': students_count,
+                'completion_rate': (completed_count / sessions_count * 100) if sessions_count > 0 else 0
+            })
+        context['language_stats'] = language_stats
+        
+        # Évaluations récentes
+        recent_evaluations = Evaluation.objects.filter(
+            teacher=teacher
+        ).order_by('-evaluation_date')[:5]
+        context['recent_evaluations'] = recent_evaluations
+        
+        # Notifications
+        unread_notifications = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).order_by('-created_at')[:5]
+        context['unread_notifications'] = unread_notifications
+        
+        return render(request, 'dashboard/teacher/home/index.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Erreur lors du chargement du dashboard enseignant: {str(e)}")
         return redirect('dashboard_home')
 
 # Vue pour afficher le profil (version fonction)
@@ -226,13 +238,16 @@ def profile_view(request):
     context = {
         'profile': profile,
         'user': request.user,
-        
     }
-    if user.role == 'teacher':
-        return render(request, 'dashboard/teacher/home/profile.html', context)
-    elif user.role == 'student':
-       
+    
+    if user.role == 'student':
+        student = get_object_or_404(Student, user=user)
+        context['student'] = student
         return render(request, 'dashboard/student/home/profile.html', context)
+    elif user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=user)
+        context['teacher'] = teacher
+        return render(request, 'dashboard/teacher/home/profile.html', context)
     
 
 
@@ -283,7 +298,7 @@ def schedule_view(request):
 
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
-        schedule = Schedule.objects.filter(branch__in=student.branch.all()).order_by('day', 'start_time')
+        schedule = Schedule.objects.filter(skill__in=student.skill_set.all()).order_by('day', 'start_time')
         context['schedule'] = schedule 
         return render(request, 'dashboard/student/home/schedule.html', context)
 
@@ -296,102 +311,6 @@ def schedule_view(request):
     else:
         return render(request, '404.html', context)
 
-
-
-def marks_view(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=request.user)
-    context = {
-        'profile': profile,
-        'user': user,
-        'username': request.user.username,
-    }
-
-    if user.role == 'student':
-        student = get_object_or_404(Student, user=user)
-        
-        # Récupérer toutes les notes de l'étudiant
-        marks = Mark.objects.filter(student=student)
-        
-        # Calculer la moyenne générale
-        average = marks.aggregate(Avg('mark'))['mark__avg']
-        if average is not None:
-            average = round(average, 2)
-        else:
-            average = 0
-            
-        # Nombre total d'étudiants dans les mêmes branches
-        total_students = Student.objects.filter(branch__in=student.branch.all()).distinct().count()
-        
-        # Nombre de matières avec notes
-        subjects_with_marks = marks.values('skill').distinct().count()
-        
-        # Nombre total de matières
-        total_subjects = student.skill_set.count()
-        
-        # Meilleures et pires notes
-        best_mark = marks.order_by('-mark').first() if marks.exists() else None
-        worst_mark = marks.order_by('mark').first() if marks.exists() else None
-        
-        # Notes par matière
-        marks_by_subject = {}
-        for mark in marks:
-            if mark.skill.name not in marks_by_subject:
-                marks_by_subject[mark.skill.name] = []
-            marks_by_subject[mark.skill.name].append(mark.mark)
-        
-        # Calculer la moyenne par matière
-        subjects_averages = {}
-        for subject, subject_marks in marks_by_subject.items():
-            subjects_averages[subject] = round(sum(subject_marks) / len(subject_marks), 2)
-        
-        context.update({
-            'marks': marks,
-            'average': average,
-            'total_students': total_students,
-            'subjects_with_marks': subjects_with_marks,
-            'total_subjects': total_subjects,
-            'best_mark': best_mark,
-            'worst_mark': worst_mark,
-            'subjects_averages': subjects_averages,
-            'student': student
-        })
-        
-        return render(request, 'dashboard/student/home/marks.html', context)
-    
-    elif user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=user)
-        skills = teacher.skill_set.all()
-        marks = Mark.objects.filter(skill__in=skills)
-        context['marks'] = marks
-        return render(request, 'dashboard/teacher/home/marks.html', context)
-
-
-
-def skills_view(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=request.user)
-    context = {
-        'profile': profile,
-        'user': user,
-        'username': request.user.username,
-    }
-    
-
-    if user.role == 'student':
-        student = get_object_or_404(Student, user=user)
-        skills = student.skill_set.all()
-        context['skills'] = skills
-        return render(request, 'dashboard/student/home/skills.html', context)
-    
-    elif user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=user)
-        skills = teacher.skill_set.all()
-        context['skills'] = skills
-        return render(request, 'dashboard/teacher/home/skills.html', context)
-
-
-
 def resources_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=request.user)
@@ -403,9 +322,9 @@ def resources_view(request):
 
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
-        # Récupérer les ressources liées aux compétences de l'étudiant
-        student_skills = student.skill_set.all()
-        resources = Resource.objects.filter(skills__in=student_skills).distinct()
+        # Récupérer les ressources liées aux langues de l'étudiant
+        student_languages = student.languages.all()
+        resources = Resource.objects.filter(languages__in=student_languages).distinct()
         context.update({
             'resources': resources,
             'student': student
@@ -524,12 +443,9 @@ def dashboard_search(request):
             ).distinct()
 
             # Recherche dans l'emploi du temps
-            schedule = Schedule.objects.filter(
-                Q(branch__in=student.branch.all()) &
-                (Q(skill__name__icontains=query) |
-                Q(teacher__user__first_name__icontains=query) |
-                Q(teacher__user__last_name__icontains=query) |
-                Q(classroom__icontains=query))
+            schedule_results = Schedule.objects.filter(
+                Q(skill__in=student.skill_set.all()) &
+                (Q(day__icontains=query) | Q(skill__name__icontains=query))
             ).distinct()
 
             context.update({
@@ -537,7 +453,7 @@ def dashboard_search(request):
                 'marks': marks,
                 'resources': resources,
                 'requests': requests,
-                'schedule': schedule,
+                'schedule': schedule_results,
                 'student': student,
             })
 
@@ -727,7 +643,6 @@ def teacher_students(request):
     teacher = get_object_or_404(Teacher, user=user)
     skills = Skill.objects.filter(teachers=teacher)
     students = Student.objects.filter(skill__in=skills).distinct()
-    branches = Branch.objects.filter(student__in=students).distinct()
     
     context = {
         'profile': profile,
@@ -735,7 +650,6 @@ def teacher_students(request):
         'user': user,
         'username': user.username,
         'students': students,
-        'branches': branches,
         'segment': 'students'
     }
     return render(request, 'dashboard/teacher/home/students.html', context)
@@ -857,9 +771,8 @@ def teacher_skills(request):
     teacher = get_object_or_404(Teacher, user=user)
     skills = Skill.objects.filter(teachers=teacher)
     
-    # Récupérer les branches des étudiants qui sont dans les matières de l'enseignant
+    # Récupérer les étudiants qui sont dans les matières de l'enseignant
     students = Student.objects.filter(skill__in=skills).distinct()
-    branches = Branch.objects.filter(student__in=students).distinct()
     
     context = {
         'profile': profile,
@@ -867,7 +780,7 @@ def teacher_skills(request):
         'user': user,
         'username': user.username,
         'skills': skills,
-        'branches': branches,
+        'students': students,
         'segment': 'skills'
     }
     return render(request, 'dashboard/teacher/home/skills.html', context)
@@ -878,14 +791,11 @@ def teacher_skills(request):
 def api_filter_students(request):
     user = request.user
     teacher = get_object_or_404(Teacher, user=user)
-    branch_id = request.GET.get('branch')
     search = request.GET.get('search')
     
     skills = Skill.objects.filter(teachers=teacher)
     students = Student.objects.filter(skill__in=skills).distinct()
     
-    if branch_id:
-        students = students.filter(branch=branch_id)
     if search:
         students = students.filter(
             Q(user__first_name__icontains=search) |
@@ -897,7 +807,7 @@ def api_filter_students(request):
         'id': student.id,
         'full_name': student.user.full_name,
         'email': student.user.email,
-        'branches': [b.name for b in student.branch.all()],
+        'languages': [lang.name for lang in student.languages.all()],
         'matricule': student.matricule
     } for student in students]
     
@@ -937,3 +847,209 @@ def api_filter_assignments(request):
     } for assignment in assignments]
     
     return JsonResponse(data, safe=False)
+
+# Nouvelles vues pour le cahier des charges
+
+@login_required
+def session_detail_view(request, session_id):
+    """Vue détaillée d'une séance avec possibilité de feedback"""
+    session = get_object_or_404(Session, id=session_id)
+    
+    # Vérifier que l'utilisateur a accès à cette séance
+    if request.user.role == 'student' and session.student.user != request.user:
+        raise Http404("Accès non autorisé")
+    elif request.user.role == 'teacher' and session.teacher.user != request.user:
+        raise Http404("Accès non autorisé")
+    
+    if request.method == 'POST':
+        feedback = request.POST.get('feedback')
+        if feedback and request.user.role == 'teacher':
+            session.feedback = feedback
+            session.save()
+            messages.success(request, "Feedback enregistré avec succès")
+            return redirect('session_detail', session_id=session_id)
+    
+    context = {
+        'session': session,
+        'user': request.user,
+    }
+    
+    # Choisir le bon template selon le rôle
+    if request.user.role == 'student':
+        return render(request, 'dashboard/student/home/session_detail.html', context)
+    else:
+        return render(request, 'dashboard/teacher/home/session_detail.html', context)
+
+@login_required
+def session_status_update(request, session_id):
+    """Mise à jour du statut d'une séance (coche, report, absence)"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+    
+    session = get_object_or_404(Session, id=session_id)
+    
+    # Vérifier que l'utilisateur est l'enseignant de cette séance
+    if request.user.role != 'teacher' or session.teacher.user != request.user:
+        return JsonResponse({'error': 'Accès non autorisé'}, status=403)
+    
+    new_status = request.POST.get('status')
+    if new_status in ['completed', 'cancelled', 'rescheduled', 'absent']:
+        session.status = new_status
+        session.save()
+        
+        # Mettre à jour les heures utilisées si la séance est terminée
+        if new_status == 'completed':
+            student = session.student
+            student.total_hours_used += session.duration_hours
+            student.save()
+        
+        return JsonResponse({'success': True, 'status': new_status})
+    
+    return JsonResponse({'error': 'Statut invalide'}, status=400)
+
+@login_required
+def certificates_view(request):
+    """Vue des certificats pour les étudiants"""
+    if request.user.role != 'student':
+        raise Http404("Cette page est réservée aux étudiants")
+    
+    student = get_object_or_404(Student, user=request.user)
+    certificates = Certificate.objects.filter(student=student, is_active=True)
+    
+    context = {
+        'certificates': certificates,
+        'user': request.user,
+    }
+    return render(request, 'dashboard/student/home/certificates.html', context)
+
+@login_required
+def evaluations_view(request):
+    """Vue des évaluations"""
+    if request.user.role == 'student':
+        student = get_object_or_404(Student, user=request.user)
+        evaluations = Evaluation.objects.filter(student=student)
+        return render(request, 'dashboard/student/home/evaluations.html', {
+            'evaluations': evaluations,
+            'user': request.user,
+        })
+    elif request.user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=request.user)
+        evaluations = Evaluation.objects.filter(teacher=teacher)
+        return render(request, 'dashboard/teacher/home/evaluations.html', {
+            'evaluations': evaluations,
+            'teacher': teacher,
+            'user': request.user,
+        })
+    else:
+        raise Http404("Accès non autorisé")
+
+@login_required
+def notifications_view(request):
+    """Vue des notifications"""
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    
+    if request.method == 'POST':
+        notification_id = request.POST.get('notification_id')
+        if notification_id:
+            notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+            notification.is_read = True
+            notification.save()
+            return JsonResponse({'success': True})
+    
+    context = {
+        'notifications': notifications,
+        'user': request.user,
+    }
+    
+    # Choisir le bon template selon le rôle
+    if request.user.role == 'student':
+        return render(request, 'dashboard/student/home/notifications.html', context)
+    else:
+        return render(request, 'dashboard/teacher/home/notifications.html', context)
+
+@login_required
+def payments_view(request):
+    """Vue des paiements pour les étudiants"""
+    if request.user.role != 'student':
+        raise Http404("Cette page est réservée aux étudiants")
+    
+    student = get_object_or_404(Student, user=request.user)
+    payments = Payment.objects.filter(student=student)
+    
+    context = {
+        'payments': payments,
+        'student': student,
+        'user': request.user,
+    }
+    return render(request, 'dashboard/student/home/payments.html', context)
+
+@login_required
+def teacher_sessions_view(request):
+    """Vue des séances pour les enseignants avec filtres"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    
+    # Filtres
+    language_filter = request.GET.get('language')
+    status_filter = request.GET.get('status')
+    date_filter = request.GET.get('date')
+    
+    sessions = Session.objects.filter(teacher=teacher)
+    
+    if language_filter:
+        sessions = sessions.filter(language__code=language_filter)
+    if status_filter:
+        sessions = sessions.filter(status=status_filter)
+    if date_filter:
+        sessions = sessions.filter(date=date_filter)
+    
+    sessions = sessions.order_by('-date', '-start_time')
+    
+    context = {
+        'sessions': sessions,
+        'teacher': teacher,
+        'languages': teacher.languages.all(),
+        'status_choices': Session.STATUS_CHOICES,
+        'filters': {
+            'language': language_filter,
+            'status': status_filter,
+            'date': date_filter,
+        },
+        'user': request.user,
+    }
+    return render(request, 'dashboard/teacher/home/sessions.html', context)
+
+@login_required
+def student_sessions_view(request):
+    """Vue des séances pour les étudiants"""
+    if request.user.role != 'student':
+        raise Http404("Cette page est réservée aux étudiants")
+    
+    student = get_object_or_404(Student, user=request.user)
+    
+    # Filtres
+    status_filter = request.GET.get('status')
+    date_filter = request.GET.get('date')
+    
+    sessions = Session.objects.filter(student=student)
+    
+    if status_filter:
+        sessions = sessions.filter(status=status_filter)
+    if date_filter:
+        sessions = sessions.filter(date=date_filter)
+    
+    sessions = sessions.order_by('-date', '-start_time')
+    
+    context = {
+        'sessions': sessions,
+        'student': student,
+        'status_choices': Session.STATUS_CHOICES,
+        'filters': {
+            'status': status_filter,
+            'date': date_filter,
+        },
+        'user': request.user,
+    }
+    return render(request, 'dashboard/student/home/sessions.html', context)

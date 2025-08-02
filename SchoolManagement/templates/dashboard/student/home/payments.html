@@ -1,0 +1,175 @@
+{% extends 'dashboard/student/layouts/base.html' %}
+
+{% block title %} Mes paiements {% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Mes paiements</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Paiements</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <!-- Résumé des paiements -->
+  <div class="row">
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Heures achetées</h5>
+              <span class="h2 font-weight-bold mb-0 text-success">{{ student.total_hours_purchased }}h</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                <i class="ni ni-money-coins"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Heures utilisées</h5>
+              <span class="h2 font-weight-bold mb-0 text-warning">{{ student.total_hours_used }}h</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                <i class="ni ni-time-alarm"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Heures restantes</h5>
+              <span class="h2 font-weight-bold mb-0 text-danger">{{ student.hours_remaining }}h</span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                <i class="ni ni-chart-bar-32"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <h5 class="card-title text-uppercase text-muted mb-0">Total payé</h5>
+              <span class="h2 font-weight-bold mb-0 text-info">
+                {% with total_amount=0 %}
+                {% for payment in payments %}
+                {% if payment.status == 'paid' %}
+                {% with total_amount=total_amount|add:payment.amount %}
+                {% endwith %}
+                {% endif %}
+                {% endfor %}
+                {{ total_amount }}€
+                {% endwith %}
+              </span>
+            </div>
+            <div class="col-auto">
+              <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                <i class="ni ni-chart-pie-35"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Historique des paiements</h3>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Heures achetées</th>
+                <th scope="col">Montant</th>
+                <th scope="col">Statut</th>
+                <th scope="col">Facture</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for payment in payments %}
+              <tr>
+                <th scope="row">
+                  {{ payment.payment_date|date:"d/m/Y" }}
+                </th>
+                <td>
+                  {{ payment.get_payment_type_display }}
+                </td>
+                <td>
+                  {{ payment.hours_purchased }}h
+                </td>
+                <td>
+                  {{ payment.amount }}€
+                </td>
+                <td>
+                  <span class="badge badge-{% if payment.status == 'paid' %}success{% elif payment.status == 'pending' %}warning{% elif payment.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                    {{ payment.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if payment.invoice_number %}
+                  <a href="#" class="btn btn-sm btn-info">
+                    <i class="ni ni-single-copy-04"></i> {{ payment.invoice_number }}
+                  </a>
+                  {% else %}
+                  <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center">Aucun paiement enregistré</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %} 

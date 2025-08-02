@@ -3,9 +3,26 @@
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
 
-
 {% block content %}
-<div class="container-fluid mt-5">
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Ressources et Documents</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active" aria-current="page">Ressources</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -21,7 +38,7 @@
                                         <th>Titre</th>
                                         <th>Type</th>
                                         <th>Description</th>
-                                        <th>Module</th>
+                                        <th>Langues</th>
                                         <th>Date d'ajout</th>
                                         <th>Actions</th>
                                     </tr>
@@ -37,8 +54,8 @@
                                         </td>
                                         <td>{{ resource.description|truncatewords:20 }}</td>
                                         <td>
-                                            {% for skill in resource.skills.all %}
-                                                <span class="badge badge-info">{{ skill.name }}</span>
+                                            {% for language in resource.languages.all %}
+                                                <span class="badge badge-info">{{ language.name }}</span>
                                             {% endfor %}
                                         </td>
                                         <td>{{ resource.created_at|date:"d/m/Y" }}</td>
@@ -61,6 +78,7 @@
                         </div>
                     {% else %}
                         <div class="alert alert-info">
+                            <i class="ni ni-info-2"></i>
                             Aucune ressource disponible pour le moment.
                         </div>
                     {% endif %}
