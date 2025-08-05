@@ -79,7 +79,11 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False  
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'static/assets'),
+    os.path.join(BASE_DIR, 'assets'),
+]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
