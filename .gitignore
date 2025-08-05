@@ -5,6 +5,8 @@ __pycache__/
 # Base de données SQLite
 db.sqlite3
 
+#media
+media/
 # Environnement virtuel
 env/
 venv/
