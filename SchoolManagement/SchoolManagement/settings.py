@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS =[ "https://oralise.up.railway.app","http://127.0.0.1:8000"]
+CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://oralise.up.railway.app"]
 
 
 import os
