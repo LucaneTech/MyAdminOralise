@@ -15,3 +15,7 @@ venv/
 # Fichiers système
 .DS_Store
 Thumbs.db
+
+#static collection version
+staticfiles/
+
