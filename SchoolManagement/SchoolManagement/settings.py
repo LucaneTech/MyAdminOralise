@@ -6,12 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!m5g&!4(fcedrw^*4@+7=h8t0lkglbu83@sj)8_8j^%6zuz_x0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED-ORIGINS =["", "http://127.0.0.1:8000"]
 
 
 import os
@@ -114,8 +114,8 @@ SOCIALACCOUNT_PROVIDERS = {
     
     'github': {
          'APP':{
-            'client_id':'Ov23liXjAkTdkPDrzJOh',
-            'secret': '86b364b2706911f305da63fc032c2ee213009cf3',
+            'client_id':config('GITHUB_ID'),
+            'secret': config('GITHUB_SECRET'),
             'key':''
                  
          }
@@ -123,8 +123,8 @@ SOCIALACCOUNT_PROVIDERS = {
     },
       'google': {
         'APP': {
-            'client_id': '70054966689-02gctef5s59196me1cjtjde6bl49fb23.apps.googleusercontent.com',
-            'secret': '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',
+            'client_id': config('GOOGLE_ID'),
+            'secret': config('GOOGLE_SECRET'),
             'key': ''
         },
         'SCOPE': [
@@ -204,10 +204,21 @@ WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+#DATABASES = {
+    #'default': {
+        #'ENGINE': 'django.db.backends.sqlite3',
+       # 'NAME': BASE_DIR / 'db.sqlite3',
+    #}
+#}
+
+DATABASES ={
+    'default':{
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD':config('DB_PASSWORD'),
+        'HOST':config('DB_HOST'),
+        'PORT':config('DB_PORT')
     }
 }
 
@@ -260,8 +271,7 @@ AUTH_USER_MODEL = 'dashboard.CustomUser'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 #configure of email backend
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -272,12 +282,7 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour le développement
 
-# Configuration SMTP (pour la production)
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='dev@example.com')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='dev_password')
+
 
 # Configuration pour django-allauth
 ACCOUNT_EMAIL_REQUIRED = True
