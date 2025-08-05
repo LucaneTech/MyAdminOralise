@@ -99,7 +99,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Default primary key field type about django-allauth settings
-SITE_ID = 8
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
