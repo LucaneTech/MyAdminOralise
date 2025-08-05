@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['oralise.up.railway.app']
 CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://oralise.up.railway.app"]
 
 
@@ -276,8 +276,6 @@ ACCOUNT_FORMS = {
 #Customise of user's role login
 AUTH_USER_MODEL = 'dashboard.CustomUser'
 
-#Apply email reception in console
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 #configure of email backend
 
@@ -288,15 +286,13 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-# Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour le développement
 
 
 
 # Configuration pour django-allauth
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporairement désactivé pour le développement
+ACCOUNT_EMAIL_VERIFICATION = 'none' 
 
 
 #django-jazzmin settings for admin dashboard
