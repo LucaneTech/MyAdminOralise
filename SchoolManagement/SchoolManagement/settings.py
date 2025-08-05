@@ -79,9 +79,11 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False  
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # collectstatic's folder
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 
 
@@ -98,6 +100,7 @@ SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
