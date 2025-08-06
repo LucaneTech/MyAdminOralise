@@ -10,24 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['oralise.up.railway.app']
-CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://oralise.up.railway.app"]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://127.0.0.1:8000/"]
 
 
 import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# STATIC_URL = '/static/'
-
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static')
-# ]
-
-
-
-
 
 
 # Application definition
@@ -44,11 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     #extensions
-    'django_extensions',
-
-    
- 
-   
+    'django_extensions', 
     # Dashboard app
     'dashboard',
     'widget_tweaks',
@@ -82,14 +68,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
     os.path.join(BASE_DIR, 'static/assets'),
+    os.path.join(BASE_DIR, 'media'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
-
-
 
 # django-allauth settings
 AUTHENTICATION_BACKENDS = [
@@ -164,7 +147,7 @@ SOCIALACCOUNT_PROVIDERS = {
  #   }
 }
 
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True 
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = False 
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'dashboard_home'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = 'dashboard_home'
 SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
@@ -172,9 +155,9 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
 # SOCIAL_AUTH_FACEBOOK_AUTH_EXTRA_ARGUMENTS = {'auth_type': 'reauthenticate'}
 SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+# SESSION_COOKIE_SECURE = False
+# CSRF_COOKIE_SECURE = False
 
 #redirection url after login
 LOGIN_REDIRECT_URL = 'dashboard_home'
@@ -184,7 +167,7 @@ LOGOUT_REDIRECT_URL = 'account_login'
 # django-allauth settings
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporairement désactivé pour le développement
+ACCOUNT_EMAIL_VERIFICATION = 'none' 
 
 ROOT_URLCONF = 'SchoolManagement.urls'
 
@@ -213,23 +196,23 @@ WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-#DATABASES = {
-    #'default': {
-        #'ENGINE': 'django.db.backends.sqlite3',
-       # 'NAME': BASE_DIR / 'db.sqlite3',
-    #}
-#}
-
-DATABASES ={
-    'default':{
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD':config('DB_PASSWORD'),
-        'HOST':config('DB_HOST'),
-        'PORT':config('DB_PORT')
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES ={
+#     'default':{
+#         'ENGINE':'django.db.backends.postgresql',
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD':config('DB_PASSWORD'),
+#         'HOST':config('DB_HOST'),
+#         'PORT':config('DB_PORT')
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -285,15 +268,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
-
-
-
-
-# Configuration pour django-allauth
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'none' 
-
 
 #django-jazzmin settings for admin dashboard
 JAZZMIN_UI_TWEAKS = {
@@ -396,7 +370,6 @@ JAZZMIN_SETTINGS = {
 
 }
 
-#admin dashboard style making tanks to show_ui_builder
 
 #current year
 from datetime import datetime

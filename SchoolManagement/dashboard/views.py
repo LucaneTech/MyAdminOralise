@@ -1023,6 +1023,7 @@ def teacher_sessions_view(request):
 
 @login_required
 def student_sessions_view(request):
+  
     """Vue des séances pour les étudiants"""
     if request.user.role != 'student':
         raise Http404("Cette page est réservée aux étudiants")
@@ -1042,7 +1043,7 @@ def student_sessions_view(request):
     
     sessions = sessions.order_by('-date', '-start_time')
     
-    context = {
+    context = {  
         'sessions': sessions,
         'student': student,
         'status_choices': Session.STATUS_CHOICES,
