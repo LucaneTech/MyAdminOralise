@@ -206,13 +206,10 @@
             aria-expanded="false">
             <div class="media align-items-center">
               <span class="">
-                {% if profile.profile_picture %}
+               
                 <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="50px" height="50px"
                   class="rounded-circle" style="object-fit: cover; border: 1px solid #fff; padding: 0.5px;">
-                {% else %}
-                <img src="{% static 'assets/img/profile.png' %}" alt="Image par défaut" width="50px" height="50px"
-                  class="rounded-circle" style="object-fit: cover; border: 1px solid #fff; padding: 0.5px;">
-                {% endif %}
+                
               </span>
 
               <div class="media-body  ml-2  d-none d-lg-block">

@@ -235,6 +235,7 @@ def teacher_view(request, username=None):
 def profile_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=request.user)
+    
     context = {
         'profile': profile,
         'user': request.user,
@@ -251,9 +252,12 @@ def profile_view(request):
     
 
 
+@login_required
 def profile_edit(request):
     user = request.user
-    profile = get_object_or_404(Profile, user=request.user)
+    profile = get_object_or_404(Profile, user=user)
+
+
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
@@ -261,16 +265,22 @@ def profile_edit(request):
             return redirect('profile_view')
     else:
         form = ProfileUpdateForm(instance=profile)
+
     context = { 
         'profile': profile,
         'form': form,
-        'user': request.user,
-     
+        'user': user,
+    
+
     }
+
     if user.role == 'teacher':
         return render(request, 'dashboard/teacher/home/profile_edit.html', context)
     elif user.role == 'student':
-        return render(request, 'dashboard/student/home/profile_edit.html', context)   
+        return render(request, 'dashboard/student/home/profile_edit.html', context)
+    else:
+        return render(request, 'dashboard/default/profile_edit.html', context)
+  
     
 
 
@@ -854,7 +864,6 @@ def api_filter_assignments(request):
 def session_detail_view(request, session_id):
     """Vue détaillée d'une séance avec possibilité de feedback"""
     session = get_object_or_404(Session, id=session_id)
-    
     # Vérifier que l'utilisateur a accès à cette séance
     if request.user.role == 'student' and session.student.user != request.user:
         raise Http404("Accès non autorisé")
@@ -915,22 +924,25 @@ def certificates_view(request):
     
     student = get_object_or_404(Student, user=request.user)
     certificates = Certificate.objects.filter(student=student, is_active=True)
+    profile = get_object_or_404(Profile, user=request.user)
     
     context = {
         'certificates': certificates,
         'user': request.user,
+        'profile': profile
     }
     return render(request, 'dashboard/student/home/certificates.html', context)
 
 @login_required
 def evaluations_view(request):
-    """Vue des évaluations"""
     if request.user.role == 'student':
         student = get_object_or_404(Student, user=request.user)
+        profile = get_object_or_404(Profile, user = request.user)
         evaluations = Evaluation.objects.filter(student=student)
         return render(request, 'dashboard/student/home/evaluations.html', {
             'evaluations': evaluations,
             'user': request.user,
+            'profile': profile
         })
     elif request.user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=request.user)
@@ -945,9 +957,8 @@ def evaluations_view(request):
 
 @login_required
 def notifications_view(request):
-    """Vue des notifications"""
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-    
+    profile = get_object_or_404(Profile, user = request.user)
     if request.method == 'POST':
         notification_id = request.POST.get('notification_id')
         if notification_id:
@@ -959,6 +970,7 @@ def notifications_view(request):
     context = {
         'notifications': notifications,
         'user': request.user,
+        'profile': profile
     }
     
     # Choisir le bon template selon le rôle
@@ -975,11 +987,14 @@ def payments_view(request):
     
     student = get_object_or_404(Student, user=request.user)
     payments = Payment.objects.filter(student=student)
+    profile = get_object_or_404(Profile,user=request.user)
+    user = request.user
     
     context = {
         'payments': payments,
         'student': student,
         'user': request.user,
+        'profile': profile
     }
     return render(request, 'dashboard/student/home/payments.html', context)
 
@@ -1024,12 +1039,11 @@ def teacher_sessions_view(request):
 @login_required
 def student_sessions_view(request):
   
-    """Vue des séances pour les étudiants"""
     if request.user.role != 'student':
         raise Http404("Cette page est réservée aux étudiants")
     
     student = get_object_or_404(Student, user=request.user)
-    
+    profile = get_object_or_404(Profile, user = request.user)
     # Filtres
     status_filter = request.GET.get('status')
     date_filter = request.GET.get('date')
@@ -1047,6 +1061,7 @@ def student_sessions_view(request):
         'sessions': sessions,
         'student': student,
         'status_choices': Session.STATUS_CHOICES,
+        'profile': profile,
         'filters': {
             'status': status_filter,
             'date': date_filter,

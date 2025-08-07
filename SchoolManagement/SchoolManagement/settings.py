@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','*']
 # CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://127.0.0.1:8000/"]
 
 
@@ -19,9 +19,7 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
 # Application definition
-
 INSTALLED_APPS = [
     #customise django-admin with django-jazzmin
     'jazzmin',
@@ -40,7 +38,6 @@ INSTALLED_APPS = [
     'widget_tweaks',
 
     #for django-allauth
-   
     'django.contrib.sites',
      'allauth',
     'allauth.account',
@@ -68,7 +65,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
     os.path.join(BASE_DIR, 'static/assets'),
-    os.path.join(BASE_DIR, 'media'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
@@ -82,7 +78,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Default primary key field type about django-allauth settings
-SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
