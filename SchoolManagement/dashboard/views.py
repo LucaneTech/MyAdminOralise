@@ -15,7 +15,7 @@ from dashboard.models import (
     Submission, Attendance, Language, Session, Payment, Certificate, 
     Evaluation, Notification
 )
-from .forms import ProfileUpdateForm
+from .forms import ProfileUpdateForm, ResourceForm
 import json
 
 
@@ -343,13 +343,39 @@ def resources_view(request):
     
     elif user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=user)
-        # Pour les enseignants, montrer les ressources qu'ils ont uploadées
         resources = Resource.objects.filter(uploaded_by=user)
         context.update({
             'resources': resources,
             'teacher': teacher
         })
         return render(request, 'dashboard/teacher/home/resources.html', context)
+
+@login_required
+def resources_add(request):
+    user = request.user
+    if not hasattr(user, 'teacher'):
+        messages.error(request, "Page réservée aux enseignants.")
+        return redirect('dashboard_home')
+    teacher = get_object_or_404(Teacher, user=user)
+    teacher_skills = Skill.objects.filter(teachers=teacher)
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES)
+        if form.is_valid():
+            resource = form.save(commit=False)
+            resource.uploaded_by = user
+            resource.save()
+            # Ajoute les skills sélectionnés (liés à la branch)
+            form.save_m2m()
+            return redirect('teacher_resources')
+    else:
+        form = ResourceForm()
+        # Limite les skills proposés à ceux du teacher
+        form.fields['skills'].queryset = teacher_skills
+    context = {
+        'form': form,
+        'teacher': teacher,
+    }
+    return render(request, 'dashboard/teacher/home/resources_add.html', context)
 
 
 
@@ -372,7 +398,7 @@ def requests_view(request):
             description = request.POST.get('description')
             attachment = request.FILES.get('attachment')
             
-            # Créer la nouvelle demande
+            # create a new request
             new_request = Request.objects.create(
                 student=student,
                 request_type=request_type,
@@ -384,10 +410,10 @@ def requests_view(request):
             # Rediriger vers la même page pour éviter la soumission multiple
             return redirect('requests_view')
         
-        # Récupérer toutes les demandes de l'étudiant
+        # gitting all reuest 
         requests = Request.objects.filter(student=student)
         
-        # Statistiques des demandes
+        #requests statistics
         total_requests = requests.count()
         pending_requests = requests.filter(status='pending').count()
         approved_requests = requests.filter(status='approved').count()
@@ -405,7 +431,6 @@ def requests_view(request):
     
     elif user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=user)
-        # Pour les enseignants, on pourrait montrer les demandes des étudiants de leurs classes
         context.update({
             'teacher': teacher
         })

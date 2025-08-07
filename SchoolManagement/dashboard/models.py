@@ -401,6 +401,7 @@ class Resource(models.Model):
     uploaded_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    skills = models.ManyToManyField(Skill, blank=True)  
 
     def __str__(self):
         return f"{self.uploaded_by.username} - {self.title}"

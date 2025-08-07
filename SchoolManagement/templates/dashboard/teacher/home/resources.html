@@ -1,0 +1,61 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+
+{% block title %}Ressources{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Ressources pédagogiques</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Ressources</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <a href="{% url 'teacher_resources_add' %}" class="btn btn-sm btn-success"><i class="fas fa-plus"></i> Ajouter une ressource</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <div class="row">
+        {% for resource in resources %}
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <span class="badge badge-primary mb-2">{{ resource.get_resource_type_display }}</span>
+                    <h5 class="card-title mb-1">{{ resource.title }}</h5>
+                    <small class="text-muted">Branche : {{ resource.branch.name }}</small>
+                    <p class="card-text mt-3">{{ resource.description|truncatewords:20 }}</p>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        {% if resource.file %}
+                            <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary mr-2" target="_blank"><i class="fas fa-download"></i> Télécharger</a>
+                        {% endif %}
+                        {% if resource.url %}
+                            <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank"><i class="fas fa-external-link-alt"></i> Voir en ligne</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    Ajouté le {{ resource.created_at|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center mb-0">Aucune ressource trouvée pour vos branches.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock content %} 

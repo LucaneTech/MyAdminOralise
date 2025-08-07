@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     profile_view, update_profile_picture,
     dashboard_view, profile_edit, schedule_view,
-    resources_view, requests_view, dashboard_search,
+    resources_view,resources_add, requests_view, dashboard_search,
     settings_view, teacher_view, teacher_courses, teacher_schedule,
     teacher_assignments, teacher_students, teacher_attendance, teacher_marks,
     teacher_skills, api_filter_students, api_filter_assignments,
@@ -22,6 +22,7 @@ urlpatterns = [
     path('teacher/marks/', teacher_marks, name='teacher_marks'),
     path('teacher/skills/', teacher_skills, name='teacher_skills'),
     path('teacher/resources/', resources_view, name='teacher_resources'),
+    path('teacher/resources_add/',resources_add, name= 'teacher_resources_add'),
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),
     path('teacher/<str:username>/', teacher_view, name='teacher_view'),
     

@@ -1,5 +1,5 @@
 from django import forms
-from dashboard.models import Profile, CustomUser
+from dashboard.models import Profile, CustomUser, Resource
 from django import forms
 from allauth.account.forms import LoginForm, SignupForm,ResetPasswordForm
 from django.contrib.auth import authenticate
@@ -86,4 +86,10 @@ class CustomResetPasswordForm(ResetPasswordForm):
         
 
     
-       
+class ResourceForm(forms.ModelForm):
+    class Meta:
+        model = Resource
+        fields = ['title', 'description', 'file', 'url', 'resource_type', 'skills']
+        widgets = {
+            'skills': forms.CheckboxSelectMultiple,
+        }
