@@ -6,7 +6,6 @@ from .views import (
     settings_view, teacher_view, teacher_courses, teacher_schedule,
     teacher_assignments, teacher_students, teacher_attendance, teacher_marks,
     teacher_skills, api_filter_students, api_filter_assignments,
-    # Nouvelles vues pour le cahier des charges
     session_detail_view, session_status_update, certificates_view,
     evaluations_view, notifications_view, payments_view,
     teacher_sessions_view, student_sessions_view
