@@ -49,8 +49,7 @@ urlpatterns = [
     # API endpoints
     path('api/filter-students/', api_filter_students, name='api_filter_students'),
     path('api/filter-assignments/', api_filter_assignments, name='api_filter_assignments'),
-    
-    # Redirection par défaut - will handle both student and teacher users
+    #redirection
     path('', dashboard_view, name='dashboard_home'),
 ]
 
