@@ -12,7 +12,6 @@ from .views import (
 )
 
 urlpatterns = [
-    # URLs enseignants (plus spécifiques en premier)
     path('teacher/courses/', teacher_courses, name='teacher_courses'),
     path('teacher/schedule/', teacher_schedule, name='teacher_schedule'),
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
