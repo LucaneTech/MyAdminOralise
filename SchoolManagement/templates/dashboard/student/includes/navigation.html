@@ -206,10 +206,21 @@
             aria-expanded="false">
             <div class="media align-items-center">
               <span class="">
-               
+                {% if profile.profile_picture %}
                 <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="50px" height="50px"
-                  class="rounded-circle" style="object-fit: cover; border: 1px solid #fff; padding: 0.5px;">
-                
+                  class="rounded-circle" style="
+                                    object-fit: cover;
+                                    border: 1px solid #fff;
+                                    padding: 0.5px;
+                                    ">
+                {% else %}
+                <span width="50px" height="50px" class="rounded-circle" style="
+                                    
+                                    border: 1px solid #fff;
+                                    padding: 0.5px;
+                                    background-color: gray;
+                                    "></span>
+                {% endif %}
               </span>
 
               <div class="media-body  ml-2  d-none d-lg-block">

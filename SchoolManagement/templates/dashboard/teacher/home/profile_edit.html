@@ -1,48 +1,221 @@
-{% extends "dashboard/teacher/layouts/base.html" %}
-
-{% block title %} Modifier mon profil {% endblock %}
+{% extends 'dashboard/student/layouts/base.html' %}
+{% block title %} Profile_Edit {% endblock title %}
+{% load widget_tweaks %}
+{% load static %}
+{% load i18n %}
 
 {% block content %}
-<div class="header pb-6 d-flex align-items-center" 
-     style="min-height: 200px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
-  <span class="mask bg-gradient-default opacity-8"></span>
-  <div class="container-fluid d-flex align-items-center">
-    <div class="row">
-      <div class="col-lg-7 col-md-10">
-        <h1 class="display-2 text-white">Modifier mon profil</h1>
-        <p class="text-white mt-0 mb-5">Mettez à jour vos informations personnelles ici.</p>
-      </div>
-    </div>
-  </div>
+
+
+
+<style>
+    /* Conteneur principal */
+.profile-edit-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.profile-edit-title {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+/* Formulaire */
+.profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Groupes de formulaire */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #34495e;
+    font-size: 1rem;
+}
+
+/* Champs de formulaire */
+.form-input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+/* Champ spécifique pour la photo */
+.profile-picture-group {
+    align-items: center;
+    text-align: center;
+}
+
+.profile-picture-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 1rem auto;
+    border: 3px solid #f1f1f1;
+}
+
+.current-profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-picture-input {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 0.5rem;
+}
+
+/* Zone de texte */
+.form-textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+/* Aide texte */
+.form-help {
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* Boutons */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding:10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+}
+
+.btn-secondary:hover {
+    background-color: #bdc3c7;
+}
+</style>
+
+<div class="header pb-6 d-flex align-items-center" style="min-height: 500px; background-image: url(&quot;{% static 'assets/img/account/login.jpg' %}&quot;); background-size: cover; background-position: center;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-2"></span>
 </div>
 
+<!-- Page content -->
 <div class="container-fluid mt--6">
   <div class="row">
     <div class="col-xl-4 order-xl-2">
       <div class="card card-profile">
-        <img src="/static/assets/img/theme/img-1-1000x600.jpg" alt="Image de couverture" class="card-img-top">
+        <img src="{% static 'assets/img/account/login.jpg' %}" alt="Image placeholder" class="card-img-top">
         <div class="row justify-content-center">
           <div class="col-lg-3 order-lg-2">
             <div class="card-profile-image">
-              <a href="#" id="profile-picture-trigger">
-                {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" class="rounded-circle">
-                {% else %}
-                <img src="/static/assets/img/theme/team-4.jpg" alt="Photo de profil par défaut" class="rounded-circle">
-                {% endif %}
+              <a href="#">
+                <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="90px" height="90px"
+                class="rounded-circle" style="
+                object-fit: cover;
+                border: 1px solid #fff;
+                padding: 0.5px;
+                ">
+              
               </a>
-              <form id="profile-picture-form" method="post" action="{% url 'update_picture' %}" enctype="multipart/form-data" style="display: none;">
-                {% csrf_token %}
-                <input type="file" id="profile-picture-input" name="profile_picture" accept="image/*" style="display: none;">
-              </form>
             </div>
           </div>
         </div>
-        <div class="card-body pt-7 px-5">
-          <div class="text-center mb-4">
-            <h3>{{ user.get_full_name }}</h3>
+        <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
+          <div class="d-flex justify-content-between">
+            <a href="#" class="btn btn-sm btn-info  mr-4 ">Connect</a>
+            <a href="#" class="btn btn-sm btn-default float-right">Message</a>
+          </div>
+        </div>
+        <div class="card-body pt-0">
+          <div class="row">
+            <div class="col">
+              <div class="card-profile-stats d-flex justify-content-center">
+                <div>
+                  <span class="heading">{{ student.hours_remaining }}</span>
+                  <span class="description">Heures restantes</span>
+                </div>
+                <div>
+                  <span class="heading">{{ student.languages.count }}</span>
+                  <span class="description">Langues</span>
+                </div>
+                <div>
+                  <span class="heading">{{ student.total_sessions.count}}</span>
+                  <span class="description">Séances</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="text-center">
+            <h5 class="h3">
+              {{user.full_name}} 
+              <p>( {{ user.get_role_display }} )</p>
+            </h5>
             <div class="h5 font-weight-300">
-              <i class="ni location_pin mr-2"></i>{{ profile.city|default:"Ville" }}, {{ profile.country|default:"Pays" }}
+              {{ request.user.email }}
+            </div>
+            <div class="h5 mt-4">
+              <i class="ni business_briefcase-24 mr-2"></i>Matricule: {{ teacher.matricule }}
+            </div>
+            <div>
+              <i class="ni education_hat mr-2"></i>Inscrit le {{ teacher.date_joined|date:"d/m/Y" }}
             </div>
           </div>
         </div>
@@ -53,93 +226,132 @@
         <div class="card-header">
           <div class="row align-items-center">
             <div class="col-8">
-              <h3 class="mb-0">Modifier mon profil</h3>
+              <h3 class="mb-0">Edit profile </h3>
+            </div>
+            <div class="col-4 text-right">
+              <a href="{% url 'profile_view' %}" class="btn btn-sm btn-primary">Retour</a>
             </div>
           </div>
         </div>
         <div class="card-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <!-- Informations utilisateur -->
-            <h6 class="heading-small text-muted mb-4">Informations personnelles</h6>
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label" for="{{ form.city.id_for_label }}">Ville</label>
-                    {{ form.city }}
-                    {{ form.city.errors }}
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label" for="{{ form.country.id_for_label }}">Pays</label>
-                    {{ form.country }}
-                    {{ form.country.errors }}
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-12">
-                  <div class="form-group">
-                    <label class="form-control-label" for="{{ form.address.id_for_label }}">Adresse</label>
-                    {{ form.address }}
-                    {{ form.address.errors }}
-                  </div>
-                </div>
-              </div>
+            <h1 class="profile-edit-title">Modifier le profil</h1>
+          <form method="post" enctype="multipart/form-data" class="profile-edit-form">
+        {% csrf_token %}
+        
+        <!-- Photo de profil -->
+        <div class="form-group profile-picture-group">
+            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Photo de profil</label>
+            <div class="profile-picture-preview">
+                {% if form.instance.profile_picture %}
+                    <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle" id="profile-picture-preview" class="current-profile-picture">
+                {% else %}
+                     <img src="{static 'assets/img/profile.png'}" alt="photo de profil">
+
+                {% endif %}
+               
             </div>
-            <hr class="my-4" />
-            <!-- Description -->
-            <h6 class="heading-small text-muted mb-4">À propos de moi</h6>
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-lg-12">
-                  <div class="form-group">
-                    <label class="form-control-label" for="{{ form.about.id_for_label }}">Biographie</label>
-                    {{ form.about }}
-                    {{ form.about.errors }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <hr class="my-4" />
-            <!-- Préférences -->
-            <h6 class="heading-small text-muted mb-4">Préférences</h6>
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-lg-12">
-                  <div class="form-group">
-                    <label class="form-control-label" for="{{ form.theme_preference.id_for_label }}">Thème</label>
-                    {{ form.theme_preference }}
-                    {{ form.theme_preference.errors }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="text-right">
-              <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-            </div>
-          </form>
+            <input type="file" 
+                   name="{{ form.profile_picture.name }}" 
+                   id="{{ form.profile_picture.id_for_label }}" 
+                   class="form-input profile-picture-input"
+                   accept="image/*">
+            <small class="form-help">Format JPG, PNG ou GIF. Taille max: 5MB.</small>
+        </div>
+        
+        <!-- Ville -->
+        <div class="form-group">
+            <label for="{{ form.city.id_for_label }}" class="form-label">Ville</label>
+            <input type="text" 
+                   name="{{ form.city.name }}" 
+                   id="{{ form.city.id_for_label }}" 
+                   value="{{ form.city.value|default_if_none:'' }}"
+                   class="form-input city-input"
+                   placeholder="Entrez votre ville">
+        </div>
+        
+        <!-- Pays -->
+        <div class="form-group">
+            <label for="{{ form.country.id_for_label }}" class="form-label">Pays</label>
+            <input type="text" 
+                   name="{{ form.country.name }}" 
+                   id="{{ form.country.id_for_label }}" 
+                   value="{{ form.country.value|default_if_none:'' }}"
+                   class="form-input country-input"
+                   placeholder="Entrez votre pays">
+        </div>
+        <!--whatsapp num-->
+        <div class="form-group">
+            <label for="{{ form.number.id_for_label }}" class="form-label">Numéro Whatsapp</label>
+            <input type="text" 
+                   name="{{ form.number.name }}" 
+                   id="{{ form.number.id_for_label }}" 
+                   value="{{ form.number.value|default_if_none:'' }}"
+                   class="form-input address-input"
+                   placeholder="Entrez votre numéro whatsapp">
+        </div>
+        
+        <!-- Adresse -->
+        <div class="form-group">
+            <label for="{{ form.address.id_for_label }}" class="form-label">Adresse</label>
+            <input type="text" 
+                   name="{{ form.address.name }}" 
+                   id="{{ form.address.id_for_label }}" 
+                   value="{{ form.address.value|default_if_none:'' }}"
+                   class="form-input address-input"
+                   placeholder="Entrez votre adresse complète">
+        </div>
+        
+        <!-- À propos -->
+        <div class="form-group">
+            <label for="{{ form.about.id_for_label }}" class="form-label">À propos de moi</label>
+            <textarea name="{{ form.about.name }}" 
+                      id="{{ form.about.id_for_label }}" 
+                      class="form-textarea about-textarea"
+                      rows="5"
+                      placeholder="Décrivez-vous en quelques mots...">{{ form.about.value|default_if_none:'' }}</textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary submit-btn">Enregistrer</button>
+            <a href="{% url 'profile_view' %}" class="btn btn-secondary cancel-btn">Annuler</a>
+        </div>
+    </form>
         </div>
       </div>
     </div>
   </div>
+
 </div>
+
+<script>
+
+document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function(e) {
+    const preview = document.getElementById('profile-picture-preview');
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        if (!preview) {
+            const previewContainer = document.querySelector('.profile-picture-preview');
+            previewContainer.innerHTML = `<img src="${e.target.result}" id="profile-picture-preview" class="current-profile-picture">`;
+        } else {
+            preview.src = e.target.result;
+        }
+    };
+    
+    if (file) {
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+
 {% endblock content %}
 
-{% block javascripts %}
-<script>
-  // Script pour gérer le changement d'image de profil
-  document.getElementById('profile-picture-trigger').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('profile-picture-input').click();
-  });
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}
 
-  document.getElementById('profile-picture-input').addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-      document.getElementById('profile-picture-form').submit();
-    }
-  });
-</script>
-{% endblock javascripts %} 
+
+
+
+<!-- Specific JS goes HERE --> 
+{% comment %} {% block javascripts %}{% endblock javascripts %} {% endcomment %}

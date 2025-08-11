@@ -90,5 +90,5 @@ class MarkAdmin(admin.ModelAdmin):
 
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('day', 'teacher', 'skill', 'start_time', 'end_time', 'classroom')
-    list_filter = ('day', 'teacher', 'skill')
+    list_display = ('day', 'teacher', 'skill', 'start_time', 'end_time', 'classroom','student')
+    list_filter = ('day', 'teacher', 'skill','student')

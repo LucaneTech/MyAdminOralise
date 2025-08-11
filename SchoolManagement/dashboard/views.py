@@ -972,10 +972,12 @@ def evaluations_view(request):
     elif request.user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=request.user)
         evaluations = Evaluation.objects.filter(teacher=teacher)
+        profile = get_object_or_404(Profile, user = request.user)
         return render(request, 'dashboard/teacher/home/evaluations.html', {
             'evaluations': evaluations,
             'teacher': teacher,
             'user': request.user,
+            'profile' : profile
         })
     else:
         raise Http404("Accès non autorisé")
@@ -1030,6 +1032,7 @@ def teacher_sessions_view(request):
         raise Http404("Cette page est réservée aux enseignants")
     
     teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user = request.user)
     
     # Filtres
     language_filter = request.GET.get('language')
@@ -1052,6 +1055,7 @@ def teacher_sessions_view(request):
         'teacher': teacher,
         'languages': teacher.languages.all(),
         'status_choices': Session.STATUS_CHOICES,
+        'profile' : profile,
         'filters': {
             'language': language_filter,
             'status': status_filter,

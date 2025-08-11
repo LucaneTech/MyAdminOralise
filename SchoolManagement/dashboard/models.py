@@ -150,6 +150,7 @@ class Teacher(models.Model):
     def __str__(self):
         return self.user.get_full_name()
 
+
 # Compétences/Skills
 class Skill(models.Model):
     name = models.CharField(max_length=100)
@@ -195,6 +196,7 @@ class Schedule(models.Model):
 
     day = models.CharField(max_length=10, choices=DAY_CHOICES)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True)
     classroom = models.CharField(max_length=30, blank=True, null=True)
     start_time = models.TimeField()
@@ -457,8 +459,7 @@ class Notification(models.Model):
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    related_object_id = models.IntegerField(null=True, blank=True)
-    related_object_type = models.CharField(max_length=50, null=True, blank=True)
+    
     
     def __str__(self):
         return f"{self.user} - {self.title}"
