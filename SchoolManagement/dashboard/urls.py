@@ -8,20 +8,27 @@ from .views import (
     teacher_skills, api_filter_students, api_filter_assignments,
     session_detail_view, session_status_update, certificates_view,
     evaluations_view, notifications_view, payments_view,
-    teacher_sessions_view, student_sessions_view
+    teacher_sessions_view, student_sessions_view,
+    teacher_schedule_manage, teacher_evaluations_add, teacher_attendance_manage,
+    teacher_resources_add_student, evaluation_edit
 )
 
 urlpatterns = [
     path('teacher/courses/', teacher_courses, name='teacher_courses'),
     path('teacher/schedule/', teacher_schedule, name='teacher_schedule'),
+    path('teacher/schedule/manage/', teacher_schedule_manage, name='teacher_schedule_manage'),
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
     path('teacher/students/', teacher_students, name='teacher_students'),
     path('teacher/attendance/', teacher_attendance, name='teacher_attendance'),
+    path('teacher/attendance/manage/', teacher_attendance_manage, name='teacher_attendance_manage'),
     path('teacher/marks/', teacher_marks, name='teacher_marks'),
     path('teacher/skills/', teacher_skills, name='teacher_skills'),
     path('teacher/resources/', resources_view, name='teacher_resources'),
     path('teacher/resources_add/',resources_add, name= 'teacher_resources_add'),
+    path('teacher/resources/add/student/', teacher_resources_add_student, name='teacher_resources_add_student'),
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),
+    path('teacher/evaluations/add/', teacher_evaluations_add, name='teacher_evaluations_add'),
+    path('teacher/evaluations/<int:evaluation_id>/edit/', evaluation_edit, name='evaluation_edit'),
     path('teacher/<str:username>/', teacher_view, name='teacher_view'),
     
     # URLs communes

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     CustomUser, Student, Teacher, Skill, Schedule, Mark, 
     Resource, Request, Language, Session, Payment, Certificate, 
-    Evaluation, Notification
+    Evaluation, Notification, Comment
 )
 
 
@@ -92,3 +92,10 @@ class MarkAdmin(admin.ModelAdmin):
 class ScheduleAdmin(admin.ModelAdmin):
     list_display = ('day', 'teacher', 'skill', 'start_time', 'end_time', 'classroom','student')
     list_filter = ('day', 'teacher', 'skill','student')
+
+
+@admin.register(Comment)
+class Comment(admin.ModelAdmin):
+    list_display = ('comment', 'student', 'teacher', 'language', 'comment_at')
+    list_filter = ('student', 'teacher', 'language')
+    fields = ('comment', 'student', 'teacher', 'language')

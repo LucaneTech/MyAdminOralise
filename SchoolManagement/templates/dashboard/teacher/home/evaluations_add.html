@@ -1,0 +1,163 @@
+{% extends 'dashboard/teacher/layouts/base.html' %}
+
+{% block title %} Ajouter une évaluation {% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Nouvelle évaluation</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'evaluations_view' %}">Évaluations</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Nouvelle évaluation</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row justify-content-center">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Ajouter une nouvelle évaluation</h3>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="student">Étudiant *</label>
+                  <select name="student" id="student" class="form-control" required>
+                    <option value="">Sélectionner un étudiant</option>
+                    {% for student in students %}
+                    <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.matricule }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="language">Langue *</label>
+                  <select name="language" id="language" class="form-control" required>
+                    <option value="">Sélectionner une langue</option>
+                    {% for language in languages %}
+                    <option value="{{ language.id }}">{{ language.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="evaluation_type">Type d'évaluation *</label>
+                  <select name="evaluation_type" id="evaluation_type" class="form-control" required>
+                    <option value="">Sélectionner un type</option>
+                    {% for type_code, type_name in evaluation_types %}
+                    <option value="{{ type_code }}">{{ type_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="score">Note /20 *</label>
+                  <input type="number" name="score" id="score" class="form-control" min="0" max="20" step="0.5" required>
+                  <small class="form-text text-muted">Note sur 20 avec possibilité de demi-points</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="comments">Commentaires et observations</label>
+              <textarea name="comments" id="comments" class="form-control" rows="4" placeholder="Détails sur l'évaluation, points forts, axes d'amélioration..."></textarea>
+            </div>
+
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <a href="{% url 'evaluations_view' %}" class="btn btn-secondary btn-block">
+                  <i class="ni ni-fat-remove"></i> Annuler
+                </a>
+              </div>
+              <div class="col-md-6">
+                <button type="submit" class="btn btn-primary btn-block">
+                  <i class="ni ni-check-bold"></i> Enregistrer l'évaluation
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Validation en temps réel
+    $('#score').on('input', function() {
+        var score = parseFloat($(this).val());
+        if (score < 0 || score > 20) {
+            $(this).addClass('is-invalid');
+            if (score < 0) {
+                $(this).next('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La note ne peut pas être négative</div>');
+            } else if (score > 20) {
+                $(this).next('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">La note ne peut pas dépasser 20</div>');
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+
+    // Validation du formulaire avant soumission
+    $('form').on('submit', function(e) {
+        var score = parseFloat($('#score').val());
+        if (score < 0 || score > 20) {
+            e.preventDefault();
+            alert('Veuillez entrer une note valide entre 0 et 20');
+            return false;
+        }
+        
+        if (!$('#student').val()) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un étudiant');
+            return false;
+        }
+        
+        if (!$('#language').val()) {
+            e.preventDefault();
+            alert('Veuillez sélectionner une langue');
+            return false;
+        }
+        
+        if (!$('#evaluation_type').val()) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un type d\'évaluation');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock javascripts %} 

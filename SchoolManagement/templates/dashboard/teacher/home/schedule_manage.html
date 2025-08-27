@@ -1,0 +1,368 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Gestion de l'emploi du temps {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .schedule-row:hover {
+        background-color: #f8f9fa;
+    }
+    .time-input {
+        width: 100px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %} 
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Gestion de l'emploi du temps</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Gestion emploi du temps</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#addCourseModal">
+                        <i class="fas fa-plus"></i> Ajouter un cours
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Emploi du temps -->
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Mon emploi du temps</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Jour</th>
+                                <th scope="col">Heure</th>
+                                <th scope="col">Matière</th>
+                                <th scope="col">Étudiant</th>
+                                <th scope="col">Salle</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr class="schedule-row" id="schedule-row-{{ schedule.id }}">
+                                <td>
+                                    <span class="badge badge-primary">{{ schedule.day }}</span>
+                                </td>
+                                <td>
+                                    {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                                </td>
+                                <td>
+                                    <strong>{{ schedule.skill.name }}</strong>
+                                </td>
+                                <td>
+                                    {% if schedule.student %}
+                                        {{ schedule.student.user.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">Cours collectif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if schedule.classroom %}
+                                        {{ schedule.classroom }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="editSchedule({{ schedule.id }})">
+                                            <i class="ni ni-ruler-pencil"></i> Modifier
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteSchedule({{ schedule.id }})">
+                                            <i class="ni ni-fat-remove"></i> Supprimer
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">
+                                    <i class="ni ni-calendar-grid-58 fa-2x mb-2"></i>
+                                    <p>Aucun cours planifié</p>
+                                    <p>Commencez par ajouter votre premier cours</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter un cours -->
+<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCourseModalLabel">Ajouter un nouveau cours</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="day">Jour</label>
+                                <select name="day" id="day" class="form-control" required>
+                                    <option value="">Sélectionner un jour</option>
+                                    {% for day_code, day_name in day_choices %}
+                                    <option value="{{ day_code }}">{{ day_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="skill">Matière</label>
+                                <select name="skill" id="skill" class="form-control" required>
+                                    <option value="">Sélectionner une matière</option>
+                                    {% for skill in skills %}
+                                    <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="start_time">Heure de début</label>
+                                <input type="time" name="start_time" id="start_time" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="end_time">Heure de fin</label>
+                                <input type="time" name="end_time" id="end_time" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="student">Étudiant (optionnel)</label>
+                                <select name="student" id="student" class="form-control">
+                                    <option value="">Cours collectif</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="classroom">Salle (optionnel)</label>
+                                <input type="text" name="classroom" id="classroom" class="form-control" placeholder="Ex: Salle 101">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Ajouter le cours</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier un cours -->
+<div class="modal fade" id="editCourseModal" tabindex="-1" role="dialog" aria-labelledby="editCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCourseModalLabel">Modifier le cours</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="schedule_id" id="edit_schedule_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_day">Jour</label>
+                                <select name="day" id="edit_day" class="form-control" required>
+                                    {% for day_code, day_name in day_choices %}
+                                    <option value="{{ day_code }}">{{ day_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_skill">Matière</label>
+                                <select name="skill" id="edit_skill" class="form-control" required>
+                                    {% for skill in skills %}
+                                    <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_start_time">Heure de début</label>
+                                <input type="time" name="start_time" id="edit_start_time" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_end_time">Heure de fin</label>
+                                <input type="time" name="end_time" id="edit_end_time" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_student">Étudiant (optionnel)</label>
+                                <select name="student" id="edit_student" class="form-control">
+                                    <option value="">Cours collectif</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_classroom">Salle (optionnel)</label>
+                                <input type="text" name="classroom" id="edit_classroom" class="form-control" placeholder="Ex: Salle 101">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Modifier le cours</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce cours ?</p>
+                <p class="text-danger">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="schedule_id" id="delete_schedule_id">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+$(document).ready(function() {
+    // Initialiser les sélecteurs de temps
+    flatpickr("input[type=time]", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true
+    });
+    
+    // Validation des heures
+    $('#end_time').on('change', function() {
+        var startTime = $('#start_time').val();
+        var endTime = $(this).val();
+        
+        if (startTime && endTime && startTime >= endTime) {
+            alert('L\'heure de fin doit être postérieure à l\'heure de début');
+            $(this).val('');
+        }
+    });
+    
+    $('#edit_end_time').on('change', function() {
+        var startTime = $('#edit_start_time').val();
+        var endTime = $(this).val();
+        
+        if (startTime && endTime && startTime >= endTime) {
+            alert('L\'heure de fin doit être postérieure à l\'heure de début');
+            $(this).val('');
+        }
+    });
+});
+
+function editSchedule(scheduleId) {
+    // Récupérer les données du cours via AJAX ou les passer via data attributes
+    // Pour l'instant, on utilise une approche simple
+    $('#edit_schedule_id').val(scheduleId);
+    
+    // Ici vous pourriez faire un appel AJAX pour récupérer les données du cours
+    // et remplir le formulaire
+    
+    $('#editCourseModal').modal('show');
+}
+
+function deleteSchedule(scheduleId) {
+    $('#delete_schedule_id').val(scheduleId);
+    $('#deleteConfirmModal').modal('show');
+}
+</script>
+{% endblock javascripts %} 

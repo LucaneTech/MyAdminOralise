@@ -13,13 +13,20 @@
                     <h6 class="h2 text-white d-inline-block mb-0">Ressources pédagogiques</h6>
                     <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                         <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
                             <li class="breadcrumb-item active" aria-current="page">Ressources</li>
                         </ol>
                     </nav>
                 </div>
                 <div class="col-lg-6 col-5 text-right">
-                    <a href="{% url 'teacher_resources_add' %}" class="btn btn-sm btn-success"><i class="fas fa-plus"></i> Ajouter une ressource</a>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'teacher_resources_add' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus"></i> Ressource générale
+                        </a>
+                        <a href="{% url 'teacher_resources_add_student' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-user-plus"></i> Pour un étudiant
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -28,32 +35,115 @@
 
 <!-- Page content -->
 <div class="container-fluid mt--6">
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row">
+                        <div class="col-md-3">
+                            <label for="resource_type">Type de ressource</label>
+                            <select name="resource_type" id="resource_type" class="form-control">
+                                <option value="">Tous les types</option>
+                                <option value="document">Document</option>
+                                <option value="link">Lien</option>
+                                <option value="video">Vidéo</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="language">Langue</label>
+                            <select name="language" id="language" class="form-control">
+                                <option value="">Toutes les langues</option>
+                                {% for language in teacher.languages.all %}
+                                <option value="{{ language.id }}">{{ language.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="skill">Matière</label>
+                            <select name="skill" id="skill" class="form-control">
+                                <option value="">Toutes les matières</option>
+                                {% for skill in teacher.skills.all %}
+                                <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         {% for resource in resources %}
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <span class="badge badge-primary mb-2">{{ resource.get_resource_type_display }}</span>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge badge-primary">{{ resource.get_resource_type_display }}</span>
+                        {% if resource.students.exists %}
+                        <span class="badge badge-info">Étudiant spécifique</span>
+                        {% endif %}
+                    </div>
                     <h5 class="card-title mb-1">{{ resource.title }}</h5>
-                    <small class="text-muted">Branche : {{ resource.branch.name }}</small>
+                    <small class="text-muted">
+                        {% if resource.languages.exists %}
+                            Langues: {{ resource.languages.all|join:", " }}
+                        {% endif %}
+                        {% if resource.skills.exists %}
+                            | Matières: {{ resource.skills.all|join:", " }}
+                        {% endif %}
+                    </small>
                     <p class="card-text mt-3">{{ resource.description|truncatewords:20 }}</p>
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         {% if resource.file %}
-                            <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary mr-2" target="_blank"><i class="fas fa-download"></i> Télécharger</a>
+                            <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                <i class="fas fa-download"></i> Télécharger
+                            </a>
                         {% endif %}
                         {% if resource.url %}
-                            <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank"><i class="fas fa-external-link-alt"></i> Voir en ligne</a>
+                            <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Voir en ligne
+                            </a>
                         {% endif %}
                     </div>
                 </div>
                 <div class="card-footer text-muted">
-                    Ajouté le {{ resource.created_at|date:"d/m/Y H:i" }}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small>Ajouté le {{ resource.created_at|date:"d/m/Y H:i" }}</small>
+                        {% if resource.students.exists %}
+                        <small class="text-info">
+                            <i class="fas fa-user"></i> {{ resource.students.count }} étudiant(s)
+                        </small>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12">
-            <div class="alert alert-info text-center mb-0">Aucune ressource trouvée pour vos branches.</div>
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucune ressource trouvée</h4>
+                    <p class="text-muted">Vous n'avez pas encore créé de ressources pédagogiques.</p>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'teacher_resources_add' %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Créer une ressource générale
+                        </a>
+                        <a href="{% url 'teacher_resources_add_student' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Créer une ressource pour un étudiant
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>

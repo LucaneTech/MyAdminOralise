@@ -467,7 +467,50 @@ class Notification(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-# Signaux pour créer automatiquement les profils
+
+
+
+#student comment about teacher 
+
+class Comment(models.Model):
+    comment = models.TextField(blank=True, null=True)
+    rating = models.PositiveSmallIntegerField(
+        choices=[(i, str(i)) for i in range(1, 6)],
+        help_text="Note de 1 (mauvais) à 5 (excellent)"
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    teacher = models.ForeignKey(
+        'Teacher',
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    language = models.ForeignKey(
+        'Language',
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    comment_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'teacher', 'language')
+        ordering = ['-comment_at']
+
+    def __str__(self):
+        return f"{self.student} → {self.teacher} ({self.rating}/5)"
+
+
+
+
+
+
+
+
+
+
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

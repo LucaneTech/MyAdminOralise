@@ -18,6 +18,11 @@
             </ol>
           </nav>
         </div>
+        <div class="col-lg-6 col-5 text-right">
+          <a href="{% url 'teacher_evaluations_add' %}" class="btn btn-primary">
+            <i class="ni ni-fat-add"></i> Nouvelle évaluation
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -31,11 +36,6 @@
           <div class="row align-items-center">
             <div class="col">
               <h3 class="mb-0">Mes évaluations</h3>
-            </div>
-            <div class="col text-right">
-              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addEvaluationModal">
-                <i class="ni ni-fat-add"></i> Nouvelle évaluation
-              </button>
             </div>
           </div>
         </div>
@@ -72,61 +72,78 @@
                   </span>
                 </td>
                 <td>
-                  <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#editEvaluationModal{{ evaluation.id }}">
-                    <i class="ni ni-ruler-pencil"></i> Modifier
-                  </button>
+                  <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#viewEvaluationModal{{ evaluation.id }}">
+                      <i class="ni ni-ruler-pencil"></i> Voir détails
+                    </button>
+                    <a href="{% url 'evaluation_edit' evaluation.id %}" class="btn btn-sm btn-warning">
+                      <i class="ni ni-settings-gear-65"></i> Modifier
+                    </a>
+                  </div>
                 </td>
               </tr>
               
-              <!-- Modal pour modifier l'évaluation -->
-              <div class="modal fade" id="editEvaluationModal{{ evaluation.id }}" tabindex="-1" role="dialog" aria-labelledby="editEvaluationModalLabel" aria-hidden="true">
+              <!-- Modal pour voir les détails de l'évaluation -->
+              <div class="modal fade" id="viewEvaluationModal{{ evaluation.id }}" tabindex="-1" role="dialog" aria-labelledby="viewEvaluationModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title" id="editEvaluationModalLabel">Modifier l'évaluation</h5>
+                      <h5 class="modal-title" id="viewEvaluationModalLabel">Détails de l'évaluation</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
                     </div>
-                    <form method="post" action="{% url 'evaluation_edit' evaluation.id %}">
-                      {% csrf_token %}
-                      <div class="modal-body">
-                        <div class="form-group">
-                          <label>Étudiant</label>
-                          <input type="text" class="form-control" value="{{ evaluation.student.user.get_full_name }}" readonly>
-                        </div>
-                        <div class="form-group">
-                          <label>Langue</label>
-                          <input type="text" class="form-control" value="{{ evaluation.language.name }}" readonly>
-                        </div>
-                        <div class="form-group">
-                          <label>Type d'évaluation</label>
-                          <select name="evaluation_type" class="form-control">
-                            {% for value, label in evaluation.EVALUATION_TYPES %}
-                            <option value="{{ value }}" {% if evaluation.evaluation_type == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                          </select>
-                        </div>
-                        <div class="form-group">
-                          <label>Note (/20)</label>
-                          <input type="number" name="score" class="form-control" value="{{ evaluation.score }}" min="0" max="20" step="0.5">
-                        </div>
-                        <div class="form-group">
-                          <label>Commentaires</label>
-                          <textarea name="comments" class="form-control" rows="3">{{ evaluation.comments }}</textarea>
-                        </div>
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label><strong>Étudiant</strong></label>
+                        <p class="form-control-static">{{ evaluation.student.user.get_full_name }}</p>
                       </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                      <div class="form-group">
+                        <label><strong>Langue</strong></label>
+                        <p class="form-control-static">{{ evaluation.language.name }}</p>
                       </div>
-                    </form>
+                      <div class="form-group">
+                        <label><strong>Type d'évaluation</strong></label>
+                        <p class="form-control-static">{{ evaluation.get_evaluation_type_display }}</p>
+                      </div>
+                      <div class="form-group">
+                        <label><strong>Note</strong></label>
+                        <p class="form-control-static">
+                          <span class="badge badge-{% if evaluation.score >= 16 %}success{% elif evaluation.score >= 12 %}warning{% else %}danger{% endif %}">
+                            {{ evaluation.score }}/20
+                          </span>
+                        </p>
+                      </div>
+                      <div class="form-group">
+                        <label><strong>Commentaires</strong></label>
+                        <p class="form-control-static">{{ evaluation.comments|default:"Aucun commentaire" }}</p>
+                      </div>
+                      <div class="form-group">
+                        <label><strong>Date d'évaluation</strong></label>
+                        <p class="form-control-static">{{ evaluation.evaluation_date|date:"d/m/Y" }}</p>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <a href="{% url 'evaluation_edit' evaluation.id %}" class="btn btn-warning">
+                        <i class="ni ni-settings-gear-65"></i> Modifier
+                      </a>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    </div>
                   </div>
                 </div>
               </div>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center">Aucune évaluation disponible</td>
+                <td colspan="6" class="text-center">
+                  <div class="py-4">
+                    <i class="ni ni-chart-bar-32 fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucune évaluation</h4>
+                    <p class="text-muted">Vous n'avez pas encore créé d'évaluations pour vos étudiants.</p>
+                    <a href="{% url 'teacher_evaluations_add' %}" class="btn btn-primary">
+                      <i class="ni ni-fat-add"></i> Créer votre première évaluation
+                    </a>
+                  </div>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -136,66 +153,12 @@
     </div>
   </div>
 </div>
-
-<!-- Modal pour ajouter une nouvelle évaluation -->
-<div class="modal fade" id="addEvaluationModal" tabindex="-1" role="dialog" aria-labelledby="addEvaluationModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addEvaluationModalLabel">Nouvelle évaluation</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <form method="post" action="#">
-        {% csrf_token %}
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Étudiant</label>
-            <select name="student" class="form-control" required>
-              <option value="">Sélectionner un étudiant</option>
-              {% for student in teacher.current_students.all %}
-              <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Langue</label>
-            <select name="language" class="form-control" required>
-              <option value="">Sélectionner une langue</option>
-              {% for language in teacher.languages.all %}
-              <option value="{{ language.id }}">{{ language.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Type d'évaluation</label>
-            <select name="evaluation_type" class="form-control" required>
-              <option value="">Sélectionner un type</option>
-              <option value="pronunciation">Prononciation</option>
-              <option value="grammar">Grammaire</option>
-              <option value="vocabulary">Vocabulaire</option>
-              <option value="fluency">Fluidité</option>
-              <option value="comprehension">Compréhension</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Note (/20)</label>
-            <input type="number" name="score" class="form-control" min="0" max="20" step="0.5" required>
-          </div>
-          <div class="form-group">
-            <label>Commentaires</label>
-            <textarea name="comments" class="form-control" rows="3"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-primary">Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %} 
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Aucune validation nécessaire pour ce template simplifié
+});
+</script>
+{% endblock javascripts %} 

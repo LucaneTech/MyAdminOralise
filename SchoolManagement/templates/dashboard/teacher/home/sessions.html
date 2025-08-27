@@ -5,6 +5,9 @@
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
+<!-- Token CSRF pour les requêtes AJAX -->
+{% csrf_token %}
+
 <div class="header pb-6" style="background-color:#147a81;">
   <div class="container-fluid">
     <div class="header-body">
@@ -97,7 +100,7 @@
             </thead>
             <tbody>
               {% for session in sessions %}
-              <tr>
+              <tr id="session-row-{{ session.id }}">
                 <th scope="row">
                   {{ session.date|date:"d/m/Y" }}
                 </th>
@@ -114,7 +117,7 @@
                   {{ session.duration_hours|floatformat:1 }}h
                 </td>
                 <td>
-                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% elif session.status == 'rescheduled' %}warning{% else %}secondary{% endif %}" id="status-badge-{{ session.id }}">
                     {{ session.get_status_display }}
                   </span>
                 </td>
@@ -130,8 +133,25 @@
                     <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
                       <i class="ni ni-calendar-grid-58"></i> Reporter
                     </button>
-                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
-                      <i class="ni ni-fat-remove"></i> Absence
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="cancelled">
+                      <i class="ni ni-fat-remove"></i> Annuler
+                    </button>
+                    <button type="button" class="btn btn-sm btn-secondary session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
+                      <i class="ni ni-user-run"></i> Absence
+                    </button>
+                    {% elif session.status == 'rescheduled' %}
+                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                      <i class="ni ni-check-bold"></i> Terminée
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="cancelled">
+                      <i class="ni ni-fat-remove"></i> Annuler
+                    </button>
+                    {% elif session.status == 'absent' %}
+                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                      <i class="ni ni-check-bold"></i> Terminée
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+                      <i class="ni ni-calendar-grid-58"></i> Reporter
                     </button>
                     {% endif %}
                   </div>
@@ -149,32 +169,199 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="statusConfirmModal" tabindex="-1" role="dialog" aria-labelledby="statusConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="statusConfirmModalLabel">Confirmer le changement de statut</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir changer le statut de cette séance ?</p>
+        <p><strong>Nouveau statut :</strong> <span id="new-status-display"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="confirmStatusChange">Confirmer</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock content %}
 
 {% block javascripts %}
 <script>
 $(document).ready(function() {
+    var currentSessionId = null;
+    var currentStatus = null;
+    
+    // Récupérer le token CSRF
+    function getCSRFToken() {
+        return $('[name=csrfmiddlewaretoken]').val();
+    }
+    
     $('.session-status-btn').click(function() {
-        var sessionId = $(this).data('session-id');
-        var status = $(this).data('status');
+        currentSessionId = $(this).data('session-id');
+        currentStatus = $(this).data('status');
         
+        // Déterminer le nom du statut
+        var statusNames = {
+            'completed': 'Terminée',
+            'rescheduled': 'Reportée',
+            'cancelled': 'Annulée',
+            'absent': 'Absence'
+        };
+        
+        $('#new-status-display').text(statusNames[currentStatus]);
+        $('#statusConfirmModal').modal('show');
+    });
+    
+    $('#confirmStatusChange').click(function() {
+        if (currentSessionId && currentStatus) {
+            updateSessionStatus(currentSessionId, currentStatus);
+        }
+        $('#statusConfirmModal').modal('hide');
+    });
+    
+    function updateSessionStatus(sessionId, status) {
         $.ajax({
-            url: '/dashboard/session/' + sessionId + '/status/',
+            url: '/session/' + sessionId + '/status/',
             method: 'POST',
             data: {
                 'status': status,
-                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                'csrfmiddlewaretoken': getCSRFToken()
             },
             success: function(response) {
                 if (response.success) {
-                    location.reload();
+                    // Mettre à jour l'interface
+                    updateSessionRow(sessionId, status);
+                    showSuccessMessage('Statut mis à jour avec succès');
+                } else {
+                    showErrorMessage(response.error || 'Erreur lors de la mise à jour');
                 }
             },
             error: function(xhr) {
-                alert('Erreur lors de la mise à jour du statut');
+                console.error('Erreur AJAX:', xhr);
+                showErrorMessage('Erreur lors de la mise à jour du statut');
             }
         });
-    });
+    }
+    
+    function updateSessionRow(sessionId, status) {
+        var row = $('#session-row-' + sessionId);
+        var statusBadge = $('#status-badge-' + sessionId);
+        var actionsCell = row.find('td:last');
+        
+        // Mettre à jour le badge de statut
+        var statusClasses = {
+            'completed': 'success',
+            'rescheduled': 'warning',
+            'cancelled': 'danger',
+            'absent': 'secondary'
+        };
+        
+        var statusNames = {
+            'completed': 'Terminée',
+            'rescheduled': 'Reportée',
+            'cancelled': 'Annulée',
+            'absent': 'Absence'
+        };
+        
+        statusBadge.removeClass().addClass('badge badge-' + statusClasses[status]);
+        statusBadge.text(statusNames[status]);
+        
+        // Mettre à jour les boutons d'action
+        var newActions = '';
+        if (status === 'completed') {
+            newActions = '<span class="text-success"><i class="ni ni-check-bold"></i> Séance terminée</span>';
+        } else if (status === 'rescheduled') {
+            newActions = `
+                <div class="btn-group" role="group">
+                    <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
+                        <i class="ni ni-ruler-pencil"></i> Détails
+                    </a>
+                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="${sessionId}" data-status="completed">
+                        <i class="ni ni-check-bold"></i> Terminée
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="${sessionId}" data-status="cancelled">
+                        <i class="ni ni-fat-remove"></i> Annuler
+                    </button>
+                </div>
+            `;
+        } else if (status === 'cancelled') {
+            newActions = '<span class="text-danger"><i class="ni ni-fat-remove"></i> Séance annulée</span>';
+        } else if (status === 'absent') {
+            newActions = `
+                <div class="btn-group" role="group">
+                    <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
+                        <i class="ni ni-ruler-pencil"></i> Détails
+                    </a>
+                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="${sessionId}" data-status="completed">
+                        <i class="ni ni-check-bold"></i> Terminée
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="${sessionId}" data-status="rescheduled">
+                        <i class="ni ni-calendar-grid-58"></i> Reporter
+                    </button>
+                </div>
+            `;
+        }
+        
+        actionsCell.html(newActions);
+        
+        // Réattacher les événements aux nouveaux boutons
+        actionsCell.find('.session-status-btn').click(function() {
+            currentSessionId = $(this).data('session-id');
+            currentStatus = $(this).data('status');
+            
+            var statusNames = {
+                'completed': 'Terminée',
+                'rescheduled': 'Reportée',
+                'cancelled': 'Annulée',
+                'absent': 'Absence'
+            };
+            
+            $('#new-status-display').text(statusNames[currentStatus]);
+            $('#statusConfirmModal').modal('show');
+        });
+    }
+    
+    function showSuccessMessage(message) {
+        // Créer une notification de succès
+        var alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+            message +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span>' +
+            '</button>' +
+            '</div>');
+        
+        $('.container-fluid').first().prepend(alert);
+        
+        // Auto-fermer après 3 secondes
+        setTimeout(function() {
+            alert.alert('close');
+        }, 3000);
+    }
+    
+    function showErrorMessage(message) {
+        // Créer une notification d'erreur
+        var alert = $('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+            message +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span>' +
+            '</button>' +
+            '</div>');
+        
+        $('.container-fluid').first().prepend(alert);
+        
+        // Auto-fermer après 5 secondes
+        setTimeout(function() {
+            alert.alert('close');
+        }, 5000);
+    }
 });
 </script>
 {% endblock javascripts %} 

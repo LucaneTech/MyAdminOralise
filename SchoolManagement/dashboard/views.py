@@ -916,30 +916,349 @@ def session_detail_view(request, session_id):
 
 @login_required
 def session_status_update(request, session_id):
-    """Mise à jour du statut d'une séance (coche, report, absence)"""
+    """API pour mettre à jour le statut d'une séance"""
     if request.method != 'POST':
-        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+        return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
     
-    session = get_object_or_404(Session, id=session_id)
+    if request.user.role != 'teacher':
+        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
-    # Vérifier que l'utilisateur est l'enseignant de cette séance
-    if request.user.role != 'teacher' or session.teacher.user != request.user:
-        return JsonResponse({'error': 'Accès non autorisé'}, status=403)
-    
-    new_status = request.POST.get('status')
-    if new_status in ['completed', 'cancelled', 'rescheduled', 'absent']:
-        session.status = new_status
-        session.save()
+    try:
+        session = get_object_or_404(Session, id=session_id, teacher__user=request.user)
+        new_status = request.POST.get('status')
         
-        # Mettre à jour les heures utilisées si la séance est terminée
-        if new_status == 'completed':
-            student = session.student
-            student.total_hours_used += session.duration_hours
-            student.save()
-        
-        return JsonResponse({'success': True, 'status': new_status})
+        if new_status in dict(Session.STATUS_CHOICES):
+            session.status = new_status
+            session.save()
+            
+            # Créer une notification pour l'étudiant
+            Notification.objects.create(
+                user=session.student.user,
+                notification_type='session_reminder',
+                title=f'Statut de séance mis à jour',
+                message=f'Votre séance de {session.language.name} du {session.date} est maintenant {session.get_status_display()}'
+            )
+            
+            return JsonResponse({'success': True, 'message': 'Statut mis à jour avec succès'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Statut invalide'})
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def teacher_schedule_manage(request):
+    """Vue pour gérer l'emploi du temps de l'enseignant"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
     
-    return JsonResponse({'error': 'Statut invalide'}, status=400)
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add':
+            # Ajouter un nouveau cours
+            day = request.POST.get('day')
+            skill_id = request.POST.get('skill')
+            student_id = request.POST.get('student')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            classroom = request.POST.get('classroom')
+            
+            try:
+                skill = get_object_or_404(Skill, id=skill_id)
+                student = get_object_or_404(Student, id=student_id) if student_id else None
+                
+                Schedule.objects.create(
+                    day=day,
+                    skill=skill,
+                    student=student,
+                    teacher=teacher,
+                    classroom=classroom,
+                    start_time=start_time,
+                    end_time=end_time
+                )
+                messages.success(request, 'Cours ajouté avec succès')
+            except Exception as e:
+                messages.error(request, f'Erreur lors de l\'ajout: {str(e)}')
+                
+        elif action == 'edit':
+            # Modifier un cours existant
+            schedule_id = request.POST.get('schedule_id')
+            try:
+                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
+                schedule.day = request.POST.get('day')
+                schedule.skill = get_object_or_404(Skill, id=request.POST.get('skill'))
+                schedule.student = get_object_or_404(Student, id=request.POST.get('student')) if request.POST.get('student') else None
+                schedule.start_time = request.POST.get('start_time')
+                schedule.end_time = request.POST.get('end_time')
+                schedule.classroom = request.POST.get('classroom')
+                schedule.save()
+                messages.success(request, 'Cours modifié avec succès')
+            except Exception as e:
+                messages.error(request, f'Erreur lors de la modification: {str(e)}')
+                
+        elif action == 'delete':
+            # Supprimer un cours
+            schedule_id = request.POST.get('schedule_id')
+            try:
+                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
+                schedule.delete()
+                messages.success(request, 'Cours supprimé avec succès')
+            except Exception as e:
+                messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+    
+    # Récupérer l'emploi du temps
+    schedules = Schedule.objects.filter(teacher=teacher).order_by('day', 'start_time')
+    skills = Skill.objects.filter(teachers=teacher)
+    students = Student.objects.filter(current_teacher=teacher)
+    
+    context = {
+        'schedules': schedules,
+        'skills': skills,
+        'students': students,
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+        'day_choices': Schedule.DAY_CHOICES,
+    }
+    
+    return render(request, 'dashboard/teacher/home/schedule_manage.html', context)
+
+@login_required
+def teacher_evaluations_add(request):
+    """Vue pour ajouter une nouvelle évaluation"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            student_id = request.POST.get('student')
+            language_id = request.POST.get('language')
+            evaluation_type = request.POST.get('evaluation_type')
+            score = request.POST.get('score')
+            comments = request.POST.get('comments')
+            
+            student = get_object_or_404(Student, id=student_id)
+            language = get_object_or_404(Language, id=language_id)
+            
+            Evaluation.objects.create(
+                student=student,
+                teacher=teacher,
+                language=language,
+                evaluation_type=evaluation_type,
+                score=score,
+                comments=comments
+            )
+            
+            messages.success(request, 'Évaluation ajoutée avec succès')
+            return redirect('teacher_evaluations')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de l\'ajout: {str(e)}')
+    
+    students = Student.objects.filter(current_teacher=teacher)
+    languages = teacher.languages.all()
+    evaluation_types = Evaluation.EVALUATION_TYPES
+    
+    context = {
+        'students': students,
+        'languages': languages,
+        'evaluation_types': evaluation_types,
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+    }
+    
+    return render(request, 'dashboard/teacher/home/evaluations_add.html', context)
+
+@login_required
+def evaluation_edit(request, evaluation_id):
+    """Vue pour éditer une évaluation existante"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    evaluation = get_object_or_404(Evaluation, id=evaluation_id, teacher__user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            evaluation.score = request.POST.get('score')
+            evaluation.comments = request.POST.get('comments', '')
+            evaluation.save()
+            
+            messages.success(request, 'Évaluation modifiée avec succès')
+            return redirect('evaluations_view')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la modification: {str(e)}')
+    
+    context = {
+        'evaluation': evaluation,
+        'teacher': evaluation.teacher,
+        'profile': get_object_or_404(Profile, user=request.user),
+        'user': request.user,
+    }
+    
+    return render(request, 'dashboard/teacher/home/evaluation_edit.html', context)
+
+@login_required
+def teacher_attendance_manage(request):
+    """Vue pour gérer les présences des étudiants"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            date = request.POST.get('date')
+            skill_id = request.POST.get('skill')
+            attendance_data = request.POST.getlist('attendance')
+            student_ids = request.POST.getlist('student_id')
+            statuses = request.POST.getlist('status')
+            arrival_times = request.POST.getlist('arrival_time')
+            notes = request.POST.getlist('note')
+            
+            skill = get_object_or_404(Skill, id=skill_id)
+            
+            # Mettre à jour ou créer les présences
+            for i, student_id in enumerate(student_ids):
+                if student_id:
+                    student = get_object_or_404(Student, id=student_id)
+                    status = statuses[i] if i < len(statuses) else 'present'
+                    arrival_time = arrival_times[i] if i < len(arrival_times) and arrival_times[i] else None
+                    note = notes[i] if i < len(notes) else ''
+                    
+                    attendance, created = Attendance.objects.get_or_create(
+                        student=student,
+                        skill=skill,
+                        date=date,
+                        defaults={
+                            'status': status,
+                            'arrival_time': arrival_time,
+                            'note': note
+                        }
+                    )
+                    
+                    if not created:
+                        attendance.status = status
+                        attendance.arrival_time = arrival_time
+                        attendance.note = note
+                        attendance.save()
+            
+            messages.success(request, 'Présences enregistrées avec succès')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de l\'enregistrement: {str(e)}')
+    
+    # Récupérer les données pour le formulaire
+    selected_date = request.GET.get('date', timezone.now().date())
+    selected_skill = request.GET.get('skill')
+    
+    skills = Skill.objects.filter(teachers=teacher)
+    students = Student.objects.filter(current_teacher=teacher)
+    
+    # Récupérer les présences existantes pour la date et la matière sélectionnées
+    existing_attendance = {}
+    if selected_date and selected_skill:
+        skill = get_object_or_404(Skill, id=selected_skill)
+        attendance_records = Attendance.objects.filter(
+            skill=skill,
+            date=selected_date
+        )
+        for record in attendance_records:
+            existing_attendance[record.student.id] = record
+    
+    context = {
+        'skills': skills,
+        'students': students,
+        'selected_date': selected_date,
+        'selected_skill': selected_skill,
+        'existing_attendance': existing_attendance,
+        'attendance_statuses': Attendance.STATUS,
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+    }
+    
+    return render(request, 'dashboard/teacher/home/attendance_manage.html', context)
+
+@login_required
+def teacher_resources_add_student(request):
+    """Vue pour ajouter des ressources pour un étudiant spécifique"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            resource_type = request.POST.get('resource_type')
+            student_id = request.POST.get('student')
+            language_id = request.POST.get('language')
+            skill_id = request.POST.get('skill')
+            
+            # Gérer le fichier ou l'URL
+            file = request.FILES.get('file')
+            url = request.POST.get('url')
+            
+            student = get_object_or_404(Student, id=student_id)
+            language = get_object_or_404(Language, id=language_id)
+            skill = get_object_or_404(Skill, id=skill_id) if skill_id else None
+            
+            resource = Resource.objects.create(
+                title=title,
+                description=description,
+                resource_type=resource_type,
+                file=file,
+                url=url,
+                uploaded_by=request.user
+            )
+            
+            # Ajouter les relations
+            resource.languages.add(language)
+            if skill:
+                resource.skills.add(skill)
+            
+            # Créer une notification pour l'étudiant
+            Notification.objects.create(
+                user=student.user,
+                notification_type='system',
+                title='Nouvelle ressource disponible',
+                message=f'Votre enseignant a ajouté une nouvelle ressource: {title}'
+            )
+            
+            messages.success(request, 'Ressource ajoutée avec succès')
+            return redirect('teacher_resources')
+            
+        except Exception as e:
+            messages.error(request, f'Erreur lors de l\'ajout: {str(e)}')
+    
+    students = Student.objects.filter(current_teacher=teacher)
+    languages = teacher.languages.all()
+    skills = Skill.objects.filter(teachers=teacher)
+    resource_types = Resource.RESOURCE_TYPES
+    
+    context = {
+        'students': students,
+        'languages': languages,
+        'skills': skills,
+        'resource_types': resource_types,
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+    }
+    
+    return render(request, 'dashboard/teacher/home/resources_add_student.html', context)
 
 @login_required
 def certificates_view(request):

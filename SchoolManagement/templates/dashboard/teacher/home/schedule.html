@@ -27,16 +27,21 @@
                     <h6 class="h2 text-white d-inline-block mb-0">Emploi du temps</h6>
                     <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                         <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
                             <li class="breadcrumb-item active" aria-current="page">Emploi du temps</li>
                         </ol>
                     </nav>
                 </div>
                 <div class="col-lg-6 col-5 text-right">
-                    <a href="#" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#addEventModal">
-                        <i class="fas fa-plus"></i> Ajouter un cours
-                    </a>
-                    <div class="btn-group">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'teacher_schedule_manage' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-cog"></i> Gérer l'emploi du temps
+                        </a>
+                        <button type="button" class="btn btn-sm btn-neutral" data-toggle="modal" data-target="#addEventModal">
+                            <i class="fas fa-plus"></i> Ajouter un cours
+                        </button>
+                    </div>
+                    <div class="btn-group ml-2">
                         <button type="button" class="btn btn-sm btn-neutral" id="calendar-prev">
                             <i class="fas fa-chevron-left"></i>
                         </button>
@@ -103,13 +108,31 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Actions rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'teacher_schedule_manage' %}" class="btn btn-primary btn-block mb-2">
+                        <i class="fas fa-edit"></i> Modifier l'emploi du temps
+                    </a>
+                    <a href="{% url 'teacher_sessions' %}" class="btn btn-info btn-block mb-2">
+                        <i class="fas fa-calendar-check"></i> Voir les séances
+                    </a>
+                    <a href="{% url 'teacher_attendance_manage' %}" class="btn btn-warning btn-block">
+                        <i class="fas fa-user-check"></i> Gérer les présences
+                    </a>
+                </div>
+            </div>
         </div>
 
         <div class="col-xl-9">
             <!-- Calendrier -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="h3 mb-0">Calendrier des cours</h5>
+                    <h5 class="h3 mb-0">Calendrier</h5>
                 </div>
                 <div class="card-body">
                     <div id="calendar"></div>
@@ -119,65 +142,34 @@
     </div>
 </div>
 
-<!-- Modal Ajout Cours -->
+<!-- Modal Ajouter un cours -->
 <div class="modal fade" id="addEventModal" tabindex="-1" role="dialog" aria-labelledby="addEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addEventModalLabel">Ajouter un cours</h5>
+                <h5 class="modal-title" id="addEventModalLabel">Ajouter un nouveau cours</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="addEventForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-control-label">Cours</label>
-                        <select class="form-control" required>
-                            <option value="francais">Français</option>
-                            <option value="anglais">Anglais</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Elève</label>
-                        <select class="form-control" required>
-                            <option value="eleve1">Eleve1</option>
-                            <option value="eleve2">Eleve2</option>
-                            <option value="eleve3">Eleve3</option>
-                        </select>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-control-label">Date</label>
-                                <input type="date" class="form-control" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-control-label">Heure de début</label>
-                                <input type="time" class="form-control" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Durée (minutes)</label>
-                        <input type="number" class="form-control" value="90" min="30" step="30" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Salle</label>
-                        <input type="text" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Description</label>
-                        <textarea class="form-control" rows="3"></textarea>
-                    </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note :</strong> Pour une gestion complète de votre emploi du temps, utilisez la fonction 
+                    <a href="{% url 'teacher_schedule_manage' %}" class="alert-link">"Gérer l'emploi du temps"</a> 
+                    qui vous permettra d'ajouter, modifier et supprimer des cours de manière permanente.
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </div>
-            </form>
+                <p class="text-muted">
+                    Cette fonctionnalité est en cours de développement. Utilisez le bouton "Gérer l'emploi du temps" 
+                    pour une gestion complète de votre planning.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <a href="{% url 'teacher_schedule_manage' %}" class="btn btn-primary">
+                    <i class="fas fa-cog"></i> Aller à la gestion
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -187,54 +179,58 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/locales/fr.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'timeGridWeek',
-            locale: 'fr',
-            headerToolbar: false,
-            slotMinTime: '08:00:00',
-            slotMaxTime: '20:00:00',
-            allDaySlot: false,
-            slotDuration: '00:30:00',
-            events: [
-                {
-                    title: 'Mathématiques - 1A',
-                    start: '2024-03-18T10:00:00',
-                    end: '2024-03-18T11:30:00',
-                    className: 'course-math'
-                },
-                {
-                    title: 'Physique - 2B',
-                    start: '2024-03-19T14:30:00',
-                    end: '2024-03-19T16:30:00',
-                    className: 'course-physics'
-                }
-            ],
-            eventClick: function(info) {
-                // Afficher les détails du cours
-                alert('Cours: ' + info.event.title);
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        locale: 'fr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Mois',
+            week: 'Semaine',
+            day: 'Jour'
+        },
+        allDaySlot: false,
+        slotMinTime: '08:00:00',
+        slotMaxTime: '20:00:00',
+        height: 'auto',
+        events: [
+            // Exemple d'événements - à remplacer par des données dynamiques
+            {
+                title: 'Français - Grammaire',
+                start: '2024-01-15T10:00:00',
+                end: '2024-01-15T11:30:00',
+                className: 'course-math'
+            },
+            {
+                title: 'Anglais - Conversation',
+                start: '2024-01-16T14:30:00',
+                end: '2024-01-16T16:30:00',
+                className: 'course-physics'
             }
-        });
-        calendar.render();
-
-        // Gestion des boutons de navigation
-        document.getElementById('calendar-prev').addEventListener('click', function() {
-            calendar.prev();
-        });
-        document.getElementById('calendar-next').addEventListener('click', function() {
-            calendar.next();
-        });
-        document.getElementById('calendar-today').addEventListener('click', function() {
-            calendar.today();
-        });
-
-        // Gestion du formulaire d'ajout de cours
-        document.getElementById('addEventForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Logique d'ajout de cours à implémenter
-            $('#addEventModal').modal('hide');
-        });
+        ]
     });
+    
+    calendar.render();
+    
+    // Navigation du calendrier
+    document.getElementById('calendar-prev').addEventListener('click', function() {
+        calendar.prev();
+    });
+    
+    document.getElementById('calendar-next').addEventListener('click', function() {
+        calendar.next();
+    });
+    
+    document.getElementById('calendar-today').addEventListener('click', function() {
+        calendar.today();
+    });
+});
 </script>
 {% endblock javascripts %} 

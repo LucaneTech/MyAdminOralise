@@ -1,0 +1,303 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+
+{% block title %} Gestion des Présences {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .attendance-row:hover {
+        background-color: #f8f9fa;
+    }
+    .status-present { background-color: #d4edda; }
+    .status-absent { background-color: #f8d7da; }
+    .status-late { background-color: #fff3cd; }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Gestion des Présences</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Gestion des Présences</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-3">Sélectionner la date et la matière</h3>
+                    <form method="get" class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Date</label>
+                                <input type="text" class="form-control datepicker" name="date" id="filterDate" value="{{ selected_date|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Matière</label>
+                                <select class="form-control" name="skill" id="filterSkill" required>
+                                    <option value="">Sélectionner une matière</option>
+                                    {% for skill in skills %}
+                                    <option value="{{ skill.id }}" {% if selected_skill == skill.id|stringformat:"s" %}selected{% endif %}>{{ skill.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> Charger les étudiants
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feuille de présence -->
+    {% if selected_date and selected_skill %}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Feuille de présence - {{ selected_date|date:"d/m/Y" }}</h3>
+                            <p class="text-muted mb-0">
+                                {% for skill in skills %}
+                                    {% if skill.id|stringformat:"s" == selected_skill %}
+                                        Matière : {{ skill.name }}
+                                    {% endif %}
+                                {% endfor %}
+                            </p>
+                        </div>
+                        <div class="col text-right">
+                            <button type="button" class="btn btn-sm btn-success" id="saveAttendance">
+                                <i class="fas fa-save"></i> Enregistrer les présences
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" id="attendanceForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                    <input type="hidden" name="skill" value="{{ selected_skill }}">
+                    
+                    <div class="table-responsive">
+                        <table class="table align-items-center table-flush">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th scope="col">Étudiant</th>
+                                    <th scope="col">Statut</th>
+                                    <th scope="col">Heure d'arrivée</th>
+                                    <th scope="col">Remarque</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr class="attendance-row" id="student-row-{{ student.id }}">
+                                    <td>
+                                        <div class="media align-items-center">
+                                            <div class="media-body">
+                                                <span class="name mb-0 text-sm">{{ student.user.get_full_name }}</span>
+                                                <small class="text-muted">{{ student.matricule }}</small>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    </td>
+                                    <td>
+                                        <select name="status" class="form-control status-select" data-student-id="{{ student.id }}">
+                                            <option value="present" {% if existing_attendance|get_item:student.id|get_item:"status" == "present" %}selected{% endif %}>Présent</option>
+                                            <option value="absent" {% if existing_attendance|get_item:student.id|get_item:"status" == "absent" %}selected{% endif %}>Absent</option>
+                                            <option value="late" {% if existing_attendance|get_item:student.id|get_item:"status" == "late" %}selected{% endif %}>En retard</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="time" name="arrival_time" class="form-control time-input" 
+                                               value="{% if existing_attendance|get_item:student.id|get_item:"arrival_time" %}{{ existing_attendance|get_item:student.id|get_item:"arrival_time"|time:'H:i' }}{% endif %}"
+                                               {% if existing_attendance|get_item:student.id|get_item:"status" != "late" %}disabled{% endif %}>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="note" class="form-control" 
+                                               placeholder="Remarque optionnelle"
+                                               value="{% if existing_attendance|get_item:student.id|get_item:"note" %}{{ existing_attendance|get_item:student.id|get_item:"note" }}{% endif %}">
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        <i class="ni ni-user-run fa-2x mb-2"></i>
+                                        <p>Aucun étudiant trouvé pour cette matière</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="ni ni-calendar-grid-58 fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Sélectionnez une date et une matière</h4>
+                    <p class="text-muted">Pour commencer à gérer les présences, veuillez sélectionner une date et une matière ci-dessus.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+$(document).ready(function() {
+    // Initialiser le sélecteur de date
+    flatpickr("#filterDate", {
+        dateFormat: "Y-m-d",
+        defaultDate: "{{ selected_date|date:'Y-m-d' }}",
+        locale: "fr"
+    });
+    
+    // Gérer l'activation/désactivation du champ heure d'arrivée
+    $('.status-select').on('change', function() {
+        var studentId = $(this).data('student-id');
+        var status = $(this).val();
+        var timeInput = $(this).closest('tr').find('.time-input');
+        
+        if (status === 'late') {
+            timeInput.prop('disabled', false);
+            timeInput.closest('td').addClass('status-late');
+        } else {
+            timeInput.prop('disabled', true);
+            timeInput.val('');
+            timeInput.closest('td').removeClass('status-late');
+        }
+        
+        // Mettre à jour la classe de la ligne
+        var row = $(this).closest('tr');
+        row.removeClass('status-present status-absent status-late');
+        row.addClass('status-' + status);
+    });
+    
+    // Appliquer les classes de statut au chargement
+    $('.status-select').each(function() {
+        var status = $(this).val();
+        var row = $(this).closest('tr');
+        row.addClass('status-' + status);
+        
+        if (status === 'late') {
+            $(this).closest('tr').find('.time-input').prop('disabled', false);
+        }
+    });
+    
+    // Sauvegarder les présences
+    $('#saveAttendance').click(function() {
+        if (validateForm()) {
+            $('#attendanceForm').submit();
+        }
+    });
+    
+    function validateForm() {
+        var hasStudents = $('input[name="student_id"]').length > 0;
+        if (!hasStudents) {
+            alert('Aucun étudiant à traiter');
+            return false;
+        }
+        
+        // Vérifier que tous les statuts sont valides
+        var valid = true;
+        $('.status-select').each(function() {
+            if (!$(this).val()) {
+                valid = false;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!valid) {
+            alert('Veuillez sélectionner un statut pour tous les étudiants');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Auto-sauvegarde toutes les 30 secondes
+    setInterval(function() {
+        if ($('#attendanceForm').length && $('input[name="student_id"]').length > 0) {
+            // Sauvegarder automatiquement sans recharger la page
+            var formData = new FormData($('#attendanceForm')[0]);
+            $.ajax({
+                url: window.location.href,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Afficher un indicateur de sauvegarde
+                    showAutoSaveIndicator();
+                },
+                error: function() {
+                    console.log('Auto-sauvegarde échouée');
+                }
+            });
+        }
+    }, 30000);
+    
+    function showAutoSaveIndicator() {
+        var indicator = $('<div class="alert alert-info alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">' +
+            '<i class="fas fa-save"></i> Sauvegarde automatique effectuée' +
+            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+            '<span aria-hidden="true">&times;</span>' +
+            '</button>' +
+            '</div>');
+        
+        $('body').append(indicator);
+        
+        setTimeout(function() {
+            indicator.alert('close');
+        }, 2000);
+    }
+});
+</script>
+{% endblock javascripts %} 

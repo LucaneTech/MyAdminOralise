@@ -1,0 +1,326 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+{% load static %}
+
+{% block title %} Ajouter une ressource pour un étudiant {% endblock %}
+
+{% block stylesheets %}
+<style>
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        text-align: center;
+        transition: border-color 0.15s ease-in-out;
+        cursor: pointer;
+    }
+    .file-upload-area:hover {
+        border-color: #5e72e4;
+    }
+    .file-upload-area.dragover {
+        border-color: #5e72e4;
+        background-color: #f8f9ff;
+    }
+    .resource-preview {
+        max-width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Nouvelle ressource pour un étudiant</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_resources' %}">Ressources</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Nouvelle ressource</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Ajouter une ressource pédagogique</h3>
+                    <p class="text-muted mb-0">Cette ressource sera spécifiquement destinée à l'étudiant sélectionné</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="resourceForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="student">Étudiant *</label>
+                                    <select name="student" id="student" class="form-control" required>
+                                        <option value="">Sélectionner un étudiant</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.matricule }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Choisissez l'étudiant pour qui cette ressource est destinée</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="language">Langue *</label>
+                                    <select name="language" id="language" class="form-control" required>
+                                        <option value="">Sélectionner une langue</option>
+                                        {% for language in languages %}
+                                        <option value="{{ language.id }}">{{ language.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Langue d'enseignement de la ressource</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="skill">Matière (optionnel)</label>
+                                    <select name="skill" id="skill" class="form-control">
+                                        <option value="">Aucune matière spécifique</option>
+                                        {% for skill in skills %}
+                                        <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Matière spécifique si applicable</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="resource_type">Type de ressource *</label>
+                                    <select name="resource_type" id="resource_type" class="form-control" required>
+                                        <option value="">Sélectionner un type</option>
+                                        {% for type_code, type_name in resource_types %}
+                                        <option value="{{ type_code }}">{{ type_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="title">Titre de la ressource *</label>
+                            <input type="text" name="title" id="title" class="form-control" placeholder="Ex: Exercices de grammaire - Le passé composé" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea name="description" id="description" class="form-control" rows="3" placeholder="Description détaillée de la ressource, objectifs d'apprentissage..."></textarea>
+                        </div>
+
+                        <!-- Section Fichier -->
+                        <div class="form-group">
+                            <label>Fichier (optionnel)</label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                <p class="mb-1">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
+                                <p class="text-muted small">Formats acceptés: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, JPG, PNG, MP4, MP3</p>
+                                <input type="file" name="file" id="fileInput" class="d-none" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3">
+                            </div>
+                            <div id="filePreview" class="mt-2 d-none">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file fa-lg text-primary mr-2"></i>
+                                    <span id="fileName"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ml-auto" onclick="removeFile()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section URL -->
+                        <div class="form-group">
+                            <label for="url">Lien externe (optionnel)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-link"></i></span>
+                                </div>
+                                <input type="url" name="url" id="url" class="form-control" placeholder="https://example.com/resource">
+                            </div>
+                            <small class="form-text text-muted">Lien vers une ressource en ligne (YouTube, site web, etc.)</small>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <a href="{% url 'teacher_resources' %}" class="btn btn-secondary btn-block">
+                                    <i class="ni ni-fat-remove"></i> Annuler
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                                    <i class="ni ni-check-bold"></i> Ajouter la ressource
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Gestion du drag & drop pour les fichiers
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+
+    // Clic sur la zone de dépôt
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    // Drag & drop
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    // Sélection de fichier via input
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        // Vérifier la taille du fichier (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Le fichier est trop volumineux. Taille maximum: 10MB');
+            return;
+        }
+
+        // Vérifier le type de fichier
+        const allowedTypes = [
+            'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'image/jpeg', 'image/png', 'video/mp4', 'audio/mpeg'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            alert('Type de fichier non supporté. Veuillez choisir un fichier valide.');
+            return;
+        }
+
+        // Afficher la prévisualisation
+        fileName.textContent = file.name;
+        filePreview.classList.remove('d-none');
+        fileInput.files = e.dataTransfer.files;
+    }
+
+    // Validation du formulaire
+    $('#resourceForm').on('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    function validateForm() {
+        // Vérifier qu'au moins un fichier ou une URL est fourni
+        const hasFile = $('#fileInput')[0].files.length > 0;
+        const hasUrl = $('#url').val().trim() !== '';
+
+        if (!hasFile && !hasUrl) {
+            alert('Veuillez fournir soit un fichier soit un lien externe');
+            return false;
+        }
+
+        // Vérifier que tous les champs obligatoires sont remplis
+        if (!$('#student').val()) {
+            alert('Veuillez sélectionner un étudiant');
+            return false;
+        }
+
+        if (!$('#language').val()) {
+            alert('Veuillez sélectionner une langue');
+            return false;
+        }
+
+        if (!$('#resource_type').val()) {
+            alert('Veuillez sélectionner un type de ressource');
+            return false;
+        }
+
+        if (!$('#title').val().trim()) {
+            alert('Veuillez saisir un titre');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Mise à jour dynamique des matières selon l'étudiant sélectionné
+    $('#student').on('change', function() {
+        const studentId = $(this).val();
+        if (studentId) {
+            // Ici vous pourriez faire un appel AJAX pour récupérer les matières spécifiques à l'étudiant
+            // Pour l'instant, on garde toutes les matières
+            console.log('Étudiant sélectionné:', studentId);
+        }
+    });
+
+    // Mise à jour dynamique des langues selon l'étudiant sélectionné
+    $('#student').on('change', function() {
+        const studentId = $(this).val();
+        if (studentId) {
+            // Ici vous pourriez faire un appel AJAX pour récupérer les langues de l'étudiant
+            // Pour l'instant, on garde toutes les langues
+            console.log('Étudiant sélectionné:', studentId);
+        }
+    });
+});
+
+function removeFile() {
+    $('#fileInput').val('');
+    $('#filePreview').addClass('d-none');
+    $('#fileName').text('');
+}
+</script>
+{% endblock javascripts %} 
