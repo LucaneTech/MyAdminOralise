@@ -1,0 +1,702 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Gestion dynamique des présences {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .attendance-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .attendance-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .session-info {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .session-time {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .session-details {
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .attendance-table {
+        margin: 0;
+    }
+    
+    .attendance-table th {
+        background: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .status-select {
+        min-width: 120px;
+    }
+    
+    .status-present { background-color: #d4edda; color: #155724; }
+    .status-absent { background-color: #f8d7da; color: #721c24; }
+    .status-late { background-color: #fff3cd; color: #856404; }
+    .status-excused { background-color: #d1ecf1; color: #0c5460; }
+    
+    .attendance-actions {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-top: 1px solid #e9ecef;
+        text-align: right;
+    }
+    
+    .date-selector {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .current-date {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .no-sessions {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .no-sessions i {
+        font-size: 3em;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    .attendance-summary {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-stats {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    
+    .stat-item {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 2em;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .stat-present { color: #28a745; }
+    .stat-absent { color: #dc3545; }
+    .stat-late { color: #ffc107; }
+    .stat-excused { color: #17a2b8; }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .bulk-actions {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .bulk-actions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .bulk-actions-buttons {
+        display: flex;
+        gap: 10px;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6 mt-12">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Gestion dynamique des présences</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Gestion des présences</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'teacher_schedule_enhanced' %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-calendar"></i> Voir l'emploi du temps
+                        </a>
+                        <a href="{% url 'teacher_attendance_manage' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-cog"></i> Gestion classique
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Sélecteur de date -->
+    <div class="date-selector">
+        <div class="date-navigation">
+            <div class="current-date">
+                Présences du {{ selected_date|date:"l d F Y" }}
+            </div>
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="prev-day">
+                    <i class="fas fa-chevron-left"></i> Jour précédent
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="today-btn">
+                    Aujourd'hui
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="next-day">
+                    Jour suivant <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-control-label">Sélectionner une date</label>
+                <input type="text" class="form-control" id="date-picker" placeholder="Choisir une date">
+            </div>
+            <div class="col-md-6">
+                <label class="form-control-label">Actions en masse</label>
+                <div class="bulk-actions-buttons">
+                    <button type="button" class="btn btn-sm btn-success" id="mark-all-present">
+                        <i class="fas fa-check"></i> Tous présents
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" id="mark-all-absent">
+                        <i class="fas fa-times"></i> Tous absents
+                    </button>
+                    <button type="button" class="btn btn-sm btn-warning" id="mark-all-late">
+                        <i class="fas fa-clock"></i> Tous en retard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if today_sessions %}
+        <!-- Résumé des présences -->
+        <div class="attendance-summary">
+            <h5 class="h3 mb-3">Résumé des présences</h5>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-number stat-present" id="total-present">0</div>
+                    <div class="stat-label">Présents</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number stat-absent" id="total-absent">0</div>
+                    <div class="stat-label">Absents</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number stat-late" id="total-late">0</div>
+                    <div class="stat-label">En retard</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number stat-excused" id="total-excused">0</div>
+                    <div class="stat-label">Justifiés</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestion des présences par séance -->
+        {% for session in today_sessions %}
+        <div class="attendance-card">
+            <div class="attendance-header">
+                <h5 class="h3 mb-0">Séance {{ forloop.counter }}</h5>
+            </div>
+            
+            <div class="session-info">
+                <div class="session-time">
+                    {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                </div>
+                <div class="session-details">
+                    <strong>{{ session.student.user.get_full_name }}</strong> - {{ session.language.name }}
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Étudiant</th>
+                            <th>Statut</th>
+                            <th>Heure d'arrivée</th>
+                            <th>Remarque</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-session-id="{{ session.id }}" data-student-id="{{ session.student.id }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm rounded-circle mr-3">
+                                        {% if session.student.user.profile.profile_picture %}
+                                            <img src="{{ session.student.user.profile.profile_picture.url }}" alt="Avatar">
+                                        {% else %}
+                                            <div class="avatar-initials rounded-circle bg-primary text-white">
+                                                {{ session.student.user.first_name|first }}{{ session.student.user.last_name|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ session.student.user.get_full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ session.student.matricule }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <select class="form-control status-select" name="status">
+                                    {% for status_code, status_label in attendance_statuses %}
+                                    <option value="{{ status_code }}" 
+                                            {% if existing_attendance %}
+                                                {% for student_id, attendances in existing_attendance.items %}
+                                                    {% if student_id == session.student.id %}
+                                                        {% for session_id, attendance in attendances.items %}
+                                                            {% if session_id == session.id and attendance.status == status_code %}selected{% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% elif status_code == 'present' %}selected{% endif %}>
+                                        {{ status_label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="time" class="form-control" name="arrival_time" 
+                                       value="{% if existing_attendance %}
+                                           {% for student_id, attendances in existing_attendance.items %}
+                                               {% if student_id == session.student.id %}
+                                                   {% for session_id, attendance in attendances.items %}
+                                                       {% if session_id == session.id and attendance.arrival_time %}{{ attendance.arrival_time|time:'H:i' }}{% endif %}
+                                                   {% endfor %}
+                                               {% endif %}
+                                           {% endfor %}
+                                       {% endif %}">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control" name="note" placeholder="Remarque..."
+                                       value="{% if existing_attendance %}
+                                           {% for student_id, attendances in existing_attendance.items %}
+                                               {% if student_id == session.student.id %}
+                                                   {% for session_id, attendance in attendances.items %}
+                                                       {% if session_id == session.id and attendance.note %}{{ attendance.note }}{% endif %}
+                                                   {% endfor %}
+                                               {% endif %}
+                                           {% endfor %}
+                                       {% endif %}">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary save-attendance" 
+                                        data-session-id="{{ session.id }}" data-student-id="{{ session.student.id }}">
+                                    <i class="fas fa-save"></i> Sauvegarder
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="attendance-actions">
+                <button type="button" class="btn btn-success save-session-attendance" 
+                        data-session-id="{{ session.id }}">
+                    <i class="fas fa-save"></i> Sauvegarder cette séance
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Actions globales -->
+        <div class="bulk-actions">
+            <div class="bulk-actions-header">
+                <h5 class="h3 mb-0">Actions globales</h5>
+                <div class="bulk-actions-buttons">
+                    <button type="button" class="btn btn-success" id="save-all-attendance">
+                        <i class="fas fa-save"></i> Sauvegarder toutes les présences
+                    </button>
+                    <button type="button" class="btn btn-info" id="export-attendance">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Aucune séance prévue -->
+        <div class="no-sessions">
+            <i class="fas fa-calendar-times"></i>
+            <h4>Aucune séance prévue pour le {{ selected_date|date:"d/m/Y" }}</h4>
+            <p class="text-muted">Il n'y a pas de séances programmées pour cette date.</p>
+            <a href="{% url 'teacher_schedule_enhanced' %}" class="btn btn-primary">
+                <i class="fas fa-calendar"></i> Voir l'emploi du temps
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmation</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirm-action">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation du sélecteur de date
+    const datePicker = flatpickr("#date-picker", {
+        locale: "fr",
+        dateFormat: "Y-m-d",
+        defaultDate: "{{ selected_date|date:'Y-m-d' }}",
+        onChange: function(selectedDates, dateStr) {
+            if (selectedDates[0]) {
+                window.location.href = `?date=${dateStr}`;
+            }
+        }
+    });
+
+    // Navigation entre les jours
+    document.getElementById('prev-day').addEventListener('click', function() {
+        const currentDate = new Date('{{ selected_date|date:"Y-m-d" }}');
+        const prevDay = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+        const dateStr = prevDay.toISOString().split('T')[0];
+        window.location.href = `?date=${dateStr}`;
+    });
+
+    document.getElementById('next-day').addEventListener('click', function() {
+        const currentDate = new Date('{{ selected_date|date:"Y-m-d" }}');
+        const nextDay = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+        const dateStr = nextDay.toISOString().split('T')[0];
+        window.location.href = `?date=${dateStr}`;
+    });
+
+    document.getElementById('today-btn').addEventListener('click', function() {
+        const today = new Date().toISOString().split('T')[0];
+        window.location.href = `?date=${today}`;
+    });
+
+    // Sauvegarde des présences individuelles
+    document.querySelectorAll('.save-attendance').forEach(button => {
+        button.addEventListener('click', function() {
+            const sessionId = this.dataset.sessionId;
+            const studentId = this.dataset.studentId;
+            const row = this.closest('tr');
+            
+            saveAttendance(sessionId, studentId, row);
+        });
+    });
+
+    // Sauvegarde des présences par séance
+    document.querySelectorAll('.save-session-attendance').forEach(button => {
+        button.addEventListener('click', function() {
+            const sessionId = this.dataset.sessionId;
+            const row = this.closest('.attendance-card').querySelector('tbody tr');
+            
+            saveAttendance(sessionId, row.dataset.studentId, row);
+        });
+    });
+
+    // Sauvegarde de toutes les présences
+    document.getElementById('save-all-attendance').addEventListener('click', function() {
+        showConfirmModal(
+            'Voulez-vous sauvegarder toutes les présences pour cette date ?',
+            function() {
+                saveAllAttendance();
+            }
+        );
+    });
+
+    // Actions en masse
+    document.getElementById('mark-all-present').addEventListener('click', function() {
+        showConfirmModal(
+            'Marquer tous les étudiants comme présents ?',
+            function() {
+                markAllStudents('present');
+            }
+        );
+    });
+
+    document.getElementById('mark-all-absent').addEventListener('click', function() {
+        showConfirmModal(
+            'Marquer tous les étudiants comme absents ?',
+            function() {
+                markAllStudents('absent');
+            }
+        );
+    });
+
+    document.getElementById('mark-all-late').addEventListener('click', function() {
+        showConfirmModal(
+            'Marquer tous les étudiants comme en retard ?',
+            function() {
+                markAllStudents('late');
+            }
+        );
+    });
+
+    // Fonction de sauvegarde des présences
+    function saveAttendance(sessionId, studentId, row) {
+        const status = row.querySelector('select[name="status"]').value;
+        const arrivalTime = row.querySelector('input[name="arrival_time"]').value;
+        const note = row.querySelector('input[name="note"]').value;
+
+        const attendanceData = {
+            date: '{{ selected_date|date:"Y-m-d" }}',
+            session_id: sessionId,
+            attendance_data: {
+                [studentId]: {
+                    status: status,
+                    arrival_time: arrivalTime || null,
+                    note: note
+                }
+            }
+        };
+
+        fetch('{% url "teacher_attendance_dynamic" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(attendanceData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification('Présence sauvegardée avec succès', 'success');
+                updateAttendanceSummary();
+            } else {
+                showNotification('Erreur lors de la sauvegarde: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showNotification('Erreur lors de la sauvegarde', 'error');
+        });
+    }
+
+    // Fonction de sauvegarde de toutes les présences
+    function saveAllAttendance() {
+        const sessions = document.querySelectorAll('.attendance-card');
+        let allData = {
+            date: '{{ selected_date|date:"Y-m-d" }}',
+            attendance_data: {}
+        };
+
+        sessions.forEach(session => {
+            const sessionId = session.querySelector('.save-session-attendance').dataset.sessionId;
+            const row = session.querySelector('tbody tr');
+            const studentId = row.dataset.studentId;
+            
+            allData.attendance_data[studentId] = {
+                status: row.querySelector('select[name="status"]').value,
+                arrival_time: row.querySelector('input[name="arrival_time"]').value || null,
+                note: row.querySelector('input[name="note"]').value
+            };
+        });
+
+        // Sauvegarder chaque séance
+        let savedCount = 0;
+        const totalSessions = sessions.length;
+
+        sessions.forEach((session, index) => {
+            const sessionId = session.querySelector('.save-session-attendance').dataset.sessionId;
+            const row = session.querySelector('tbody tr');
+            const studentId = row.dataset.studentId;
+            
+            const attendanceData = {
+                date: '{{ selected_date|date:"Y-m-d" }}',
+                session_id: sessionId,
+                attendance_data: {
+                    [studentId]: {
+                        status: row.querySelector('select[name="status"]').value,
+                        arrival_time: row.querySelector('input[name="arrival_time"]').value || null,
+                        note: row.querySelector('input[name="note"]').value
+                    }
+                }
+            };
+
+            fetch('{% url "teacher_attendance_dynamic" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(attendanceData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                savedCount++;
+                if (data.status === 'success') {
+                    if (savedCount === totalSessions) {
+                        showNotification('Toutes les présences ont été sauvegardées', 'success');
+                        updateAttendanceSummary();
+                    }
+                } else {
+                    showNotification('Erreur lors de la sauvegarde de la séance ' + sessionId, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                savedCount++;
+                if (savedCount === totalSessions) {
+                    showNotification('Erreur lors de la sauvegarde de certaines présences', 'error');
+                }
+            });
+        });
+    }
+
+    // Fonction pour marquer tous les étudiants avec un statut
+    function markAllStudents(status) {
+        document.querySelectorAll('select[name="status"]').forEach(select => {
+            select.value = status;
+        });
+        
+        showNotification(`Tous les étudiants ont été marqués comme ${getStatusLabel(status)}`, 'info');
+    }
+
+    // Fonction pour obtenir le libellé d'un statut
+    function getStatusLabel(status) {
+        const statusLabels = {
+            'present': 'présents',
+            'absent': 'absents',
+            'late': 'en retard',
+            'excused': 'justifiés'
+        };
+        return statusLabels[status] || status;
+    }
+
+    // Fonction pour mettre à jour le résumé des présences
+    function updateAttendanceSummary() {
+        let present = 0, absent = 0, late = 0, excused = 0;
+        
+        document.querySelectorAll('select[name="status"]').forEach(select => {
+            switch(select.value) {
+                case 'present': present++; break;
+                case 'absent': absent++; break;
+                case 'late': late++; break;
+                case 'excused': excused++; break;
+            }
+        });
+        
+        document.getElementById('total-present').textContent = present;
+        document.getElementById('total-absent').textContent = absent;
+        document.getElementById('total-late').textContent = late;
+        document.getElementById('total-excused').textContent = excused;
+    }
+
+    // Fonction pour afficher une notification
+    function showNotification(message, type) {
+        // Utiliser les notifications Django si disponibles
+        if (typeof showAlert === 'function') {
+            showAlert(message, type);
+        } else {
+            // Fallback simple
+            alert(message);
+        }
+    }
+
+    // Fonction pour afficher le modal de confirmation
+    function showConfirmModal(message, callback) {
+        document.getElementById('confirm-message').textContent = message;
+        document.getElementById('confirm-action').onclick = callback;
+        $('#confirmModal').modal('show');
+    }
+
+    // Fonction pour récupérer le cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialiser le résumé des présences
+    updateAttendanceSummary();
+});
+</script>
+{% endblock javascripts %}

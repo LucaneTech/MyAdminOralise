@@ -201,9 +201,51 @@ class Schedule(models.Model):
     classroom = models.CharField(max_length=30, blank=True, null=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['day', 'start_time']
+        unique_together = ['day', 'skill', 'teacher', 'start_time']
 
     def __str__(self):
         return f"{self.skill.name} - {self.day} ({self.start_time} - {self.end_time})"
+    
+    @property
+    def duration_minutes(self):
+        """Retourne la durée du cours en minutes"""
+        start = datetime.combine(datetime.min.date(), self.start_time)
+        end = datetime.combine(datetime.min.date(), self.end_time)
+        duration = end - start
+        return int(duration.total_seconds() / 60)
+    
+    @property
+    def language_name(self):
+        """Retourne le nom de la langue associée au skill"""
+        if self.language:
+            return self.language.name
+        elif self.skill and hasattr(self.skill, 'languages'):
+            return self.skill.languages.first().name if self.skill.languages.exists() else "N/A"
+        return "N/A"
+    
+    @property
+    def color_class(self):
+        """Retourne une classe CSS pour la couleur basée sur la langue"""
+        if self.language:
+            language_colors = {
+                'Français': 'course-french',
+                'Anglais': 'course-english',
+                'Espagnol': 'course-spanish',
+                'Allemand': 'course-german',
+                'Italien': 'course-italian',
+                'Chinois': 'course-chinese',
+                'Japonais': 'course-japanese',
+                'Arabe': 'course-arabic',
+            }
+            return language_colors.get(self.language.name, 'course-default')
+        return 'course-default'
 
 # Présence
 class Attendance(models.Model):
@@ -211,21 +253,74 @@ class Attendance(models.Model):
         ('present', 'Présent'),
         ('absent', 'Absent'),
         ('late', 'En retard'),
+        ('excused', 'Justifié'),
     )
     
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS)
     arrival_time = models.TimeField(null=True, blank=True)
     note = models.TextField(blank=True)
+    session = models.ForeignKey('Session', on_delete=models.SET_NULL, null=True, blank=True, related_name='attendances')
     created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ('student', 'skill', 'date')
+        ordering = ['-date', 'student__user__first_name']
     
     def __str__(self):
         return f"{self.student} - {self.skill} - {self.date}: {self.status}"
+    
+    @property
+    def is_late(self):
+        """Vérifie si l'étudiant est en retard"""
+        if self.arrival_time and self.session:
+            return self.arrival_time > self.session.start_time
+        return False
+    
+    @property
+    def late_minutes(self):
+        """Retourne le nombre de minutes de retard"""
+        if self.is_late and self.session:
+            start = datetime.combine(datetime.min.date(), self.session.start_time)
+            arrival = datetime.combine(datetime.min.date(), self.arrival_time)
+            delay = arrival - start
+            return int(delay.total_seconds() / 60)
+        return 0
+    
+    @classmethod
+    def get_today_attendance_for_teacher(cls, teacher, date=None):
+        """Récupère les présences du jour pour un enseignant"""
+        if date is None:
+            date = timezone.now().date()
+        
+        # Récupérer les séances du jour pour cet enseignant
+        today_sessions = Session.objects.filter(
+            teacher=teacher,
+            date=date,
+            status='scheduled'
+        )
+        
+        # Récupérer les présences existantes
+        attendances = cls.objects.filter(
+            teacher=teacher,
+            date=date
+        ).select_related('student', 'skill', 'session')
+        
+        # Créer un dictionnaire des présences par étudiant et matière
+        attendance_dict = {}
+        for attendance in attendances:
+            key = (attendance.student.id, attendance.skill.id)
+            attendance_dict[key] = attendance
+        
+        return {
+            'sessions': today_sessions,
+            'attendances': attendance_dict,
+            'date': date
+        }
 
 # Devoirs
 class Assignment(models.Model):

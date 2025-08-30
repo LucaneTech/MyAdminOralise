@@ -139,20 +139,47 @@
                                     </td>
                                     <td>
                                         <select name="status" class="form-control status-select" data-student-id="{{ student.id }}">
-                                            <option value="present" {% if existing_attendance|get_item:student.id|get_item:"status" == "present" %}selected{% endif %}>Présent</option>
-                                            <option value="absent" {% if existing_attendance|get_item:student.id|get_item:"status" == "absent" %}selected{% endif %}>Absent</option>
-                                            <option value="late" {% if existing_attendance|get_item:student.id|get_item:"status" == "late" %}selected{% endif %}>En retard</option>
+                                            <option value="present" 
+                                                {% if existing_attendance %}
+                                                    {% for student_id, attendance_data in existing_attendance.items %}
+                                                        {% if student_id == student.id and attendance_data.status == "present" %}selected{% endif %}
+                                                    {% endfor %}
+                                                {% endif %}>Présent</option>
+                                            <option value="absent" 
+                                                {% if existing_attendance %}
+                                                    {% for student_id, attendance_data in existing_attendance.items %}
+                                                        {% if student_id == student.id and attendance_data.status == "absent" %}selected{% endif %}
+                                                    {% endfor %}
+                                                {% endif %}>Absent</option>
+                                            <option value="late" 
+                                                {% if existing_attendance %}
+                                                    {% for student_id, attendance_data in existing_attendance.items %}
+                                                        {% if student_id == student.id and attendance_data.status == "late" %}selected{% endif %}
+                                                    {% endfor %}
+                                                {% endif %}>En retard</option>
                                         </select>
                                     </td>
                                     <td>
                                         <input type="time" name="arrival_time" class="form-control time-input" 
-                                               value="{% if existing_attendance|get_item:student.id|get_item:"arrival_time" %}{{ existing_attendance|get_item:student.id|get_item:"arrival_time"|time:'H:i' }}{% endif %}"
-                                               {% if existing_attendance|get_item:student.id|get_item:"status" != "late" %}disabled{% endif %}>
+                                               value="{% if existing_attendance %}
+                                                   {% for student_id, attendance_data in existing_attendance.items %}
+                                                       {% if student_id == student.id and attendance_data.arrival_time %}{{ attendance_data.arrival_time|time:'H:i' }}{% endif %}
+                                                   {% endfor %}
+                                               {% endif %}"
+                                               {% if existing_attendance %}
+                                                   {% for student_id, attendance_data in existing_attendance.items %}
+                                                       {% if student_id == student.id and attendance_data.status != "late" %}disabled{% endif %}
+                                                   {% endfor %}
+                                               {% endif %}>
                                     </td>
                                     <td>
                                         <input type="text" name="note" class="form-control" 
                                                placeholder="Remarque optionnelle"
-                                               value="{% if existing_attendance|get_item:student.id|get_item:"note" %}{{ existing_attendance|get_item:student.id|get_item:"note" }}{% endif %}">
+                                               value="{% if existing_attendance %}
+                                                   {% for student_id, attendance_data in existing_attendance.items %}
+                                                       {% if student_id == student.id and attendance_data.note %}{{ attendance_data.note }}{% endif %}
+                                                   {% endfor %}
+                                               {% endif %}">
                                     </td>
                                 </tr>
                                 {% empty %}

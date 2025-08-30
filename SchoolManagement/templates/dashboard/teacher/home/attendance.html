@@ -38,7 +38,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="form-control-label">Classe</label>
+                                <label class="form-control-label text-gray">Classe</label>
                                 <select class="form-control" id="filterClass">
                                     <option value="">Toutes</option>
                                     {% for class in classes %}
@@ -49,13 +49,13 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="form-control-label">Date</label>
+                                <label class="form-control-label text-gray">Date</label>
                                 <input type="text" class="form-control datepicker" id="filterDate">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label class="form-control-label">Cours</label>
+                                <label class="form-control-label text-gray">Cours</label>
                                 <select class="form-control" id="filterCourse">
                                     <option value="">Tous</option>
                                     {% for course in courses %}
@@ -77,68 +77,16 @@
                 <!-- Card header -->
                 <div class="card-header border-0">
                     <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Feuille de présence</h3>
-                        </div>
+                     
                         <div class="col text-right">
-                            <button type="button" class="btn btn-sm btn-primary" id="saveAttendance">
-                                <i class="fas fa-save"></i> Enregistrer
-                            </button>
+                            <a href="{% url 'teacher_attendance_manage' %}" class="btn btn-warning btn-block">
+                                <i class="fas fa-user-check"></i> Gérer les présences
+                            </a>
                         </div>
                     </div>
                 </div>
                 <!-- Light table -->
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Étudiant</th>
-                                <th scope="col">Statut</th>
-                                <th scope="col">Heure d'arrivée</th>
-                                <th scope="col">Remarque</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student in students %}
-                            <tr>
-                                <th scope="row">
-                                    <div class="media align-items-center">
-                                        <a href="#" class="avatar rounded-circle mr-3">
-                                            {% if student.photo %}
-                                            <img alt="{{ student.full_name }}" src="{{ student.photo.url }}">
-                                            {% else %}
-                                            <img alt="Default" src="{% static 'assets/img/theme/team-4.jpg' %}">
-                                            {% endif %}
-                                        </a>
-                                        <div class="media-body">
-                                            <span class="name mb-0 text-sm">{{ student.full_name }}</span>
-                                        </div>
-                                    </div>
-                                </th>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-success attendance-btn" data-status="present">
-                                            <i class="fas fa-check"></i> Présent
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-warning attendance-btn" data-status="late">
-                                            <i class="fas fa-clock"></i> Retard
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-danger attendance-btn" data-status="absent">
-                                            <i class="fas fa-times"></i> Absent
-                                        </button>
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="text" class="form-control form-control-sm timepicker" placeholder="HH:mm">
-                                </td>
-                                <td>
-                                    <input type="text" class="form-control form-control-sm" placeholder="Remarque...">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                
             </div>
         </div>
     </div>

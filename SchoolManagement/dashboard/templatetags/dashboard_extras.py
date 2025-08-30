@@ -3,12 +3,26 @@ from django.template.defaultfilters import floatformat
 
 register = template.Library()
 
-@register.filter(name='get_item')
+@register.filter
 def get_item(dictionary, key):
     """Récupère un élément d'un dictionnaire par sa clé"""
-    if dictionary and hasattr(dictionary, 'get'):
-        return dictionary.get(key)
-    return None
+    if dictionary is None:
+        return None
+    return dictionary.get(key)
+
+@register.filter
+def get_nested_item(dictionary, keys):
+    """Récupère un élément imbriqué d'un dictionnaire par une liste de clés"""
+    if dictionary is None:
+        return None
+    
+    current = dictionary
+    for key in keys.split('.'):
+        if isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            return None
+    return current
 
 @register.filter
 def multiply(value, arg):
@@ -42,19 +56,30 @@ def get_attendance_note(student_id, attendance_dict):
 @register.filter
 def format_duration(minutes):
     """Formate une durée en minutes en format lisible"""
-    if not minutes:
+    if minutes is None:
         return "0 min"
     
     hours = minutes // 60
-    mins = minutes % 60
+    remaining_minutes = minutes % 60
     
     if hours > 0:
-        if mins > 0:
-            return f"{hours}h{mins:02d}"
+        if remaining_minutes > 0:
+            return f"{hours}h {remaining_minutes}min"
         else:
             return f"{hours}h"
     else:
-        return f"{mins} min"
+        return f"{remaining_minutes}min"
+
+@register.filter
+def get_attendance_status_class(status):
+    """Retourne la classe CSS pour le statut de présence"""
+    status_classes = {
+        'present': 'status-present',
+        'absent': 'status-absent',
+        'late': 'status-late',
+        'excused': 'status-excused'
+    }
+    return status_classes.get(status, 'status-default')
 
 @register.filter
 def get_session_status_color(status):
@@ -165,6 +190,21 @@ def format_date(date_obj, format_str="d/m/Y"):
         return date_obj.strftime(format_str)
     except AttributeError:
         return str(date_obj)
+
+@register.filter
+def get_language_color_class(language_name):
+    """Retourne la classe CSS pour la couleur de la langue"""
+    language_colors = {
+        'Français': 'course-french',
+        'Anglais': 'course-english',
+        'Espagnol': 'course-spanish',
+        'Allemand': 'course-german',
+        'Italien': 'course-italian',
+        'Chinois': 'course-chinese',
+        'Japonais': 'course-japanese',
+        'Arabe': 'course-arabic',
+    }
+    return language_colors.get(language_name, 'course-default')
 
 # Force reload des filtres - Django 5.1.6
 register.filters['get_item'] = get_item 

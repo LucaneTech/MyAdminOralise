@@ -10,16 +10,21 @@ from .views import (
     evaluations_view, notifications_view, payments_view,
     teacher_sessions_view, student_sessions_view,
     teacher_schedule_manage, teacher_evaluations_add, teacher_attendance_manage,
-    teacher_resources_add_student, evaluation_edit
+    teacher_resources_add_student, evaluation_edit,
+    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic,
+    
 )
 
 urlpatterns = [
     path('teacher/courses/', teacher_courses, name='teacher_courses'),
     path('teacher/schedule/', teacher_schedule, name='teacher_schedule'),
+    path('teacher/schedule/enhanced/', teacher_schedule_enhanced, name='teacher_schedule_enhanced'),
     path('teacher/schedule/manage/', teacher_schedule_manage, name='teacher_schedule_manage'),
+    path('teacher/schedule/api/', teacher_schedule_api, name='teacher_schedule_api'),
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
     path('teacher/students/', teacher_students, name='teacher_students'),
     path('teacher/attendance/', teacher_attendance, name='teacher_attendance'),
+    path('teacher/attendance/dynamic/', teacher_attendance_dynamic, name='teacher_attendance_dynamic'),
     path('teacher/attendance/manage/', teacher_attendance_manage, name='teacher_attendance_manage'),
     path('teacher/marks/', teacher_marks, name='teacher_marks'),
     path('teacher/skills/', teacher_skills, name='teacher_skills'),
@@ -56,6 +61,8 @@ urlpatterns = [
     # API endpoints
     path('api/filter-students/', api_filter_students, name='api_filter_students'),
     path('api/filter-assignments/', api_filter_assignments, name='api_filter_assignments'),
+    
+    
     #redirection
     path('', dashboard_view, name='dashboard_home'),
 ]

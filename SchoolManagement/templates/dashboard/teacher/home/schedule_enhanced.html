@@ -1,0 +1,626 @@
+{% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %} Emploi du temps amélioré {% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 0.9em;
+        padding: 2px 4px;
+    }
+    .fc-event:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+    
+    /* Couleurs par langue */
+    .course-french { background-color: #5e72e4 !important; border-color: #5e72e4 !important; }
+    .course-english { background-color: #fb6340 !important; border-color: #fb6340 !important; }
+    .course-spanish { background-color: #2dce89 !important; border-color: #2dce89 !important; }
+    .course-german { background-color: #f5365c !important; border-color: #f5365c !important; }
+    .course-italian { background-color: #11cdef !important; border-color: #11cdef !important; }
+    .course-chinese { background-color: #8965e0 !important; border-color: #8965e0 !important; }
+    .course-japanese { background-color: #f09346 !important; border-color: #f09346 !important; }
+    .course-arabic { background-color: #5603ad !important; border-color: #5603ad !important; }
+    .course-default { background-color: #8898aa !important; border-color: #8898aa !important; }
+    
+    .schedule-week-view {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .schedule-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .schedule-day {
+        border-right: 1px solid #e9ecef;
+        min-height: 120px;
+        padding: 10px;
+        position: relative;
+    }
+    
+    .schedule-day:last-child {
+        border-right: none;
+    }
+    
+    .schedule-day-header {
+        background: #f8f9fa;
+        padding: 8px;
+        margin: -10px -10px 10px -10px;
+        text-align: center;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .schedule-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 8px;
+        font-size: 0.85em;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    .schedule-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .schedule-time {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.8em;
+    }
+    
+    .schedule-subject {
+        font-weight: 600;
+        margin: 4px 0;
+    }
+    
+    .schedule-language {
+        font-size: 0.75em;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .schedule-student {
+        font-size: 0.8em;
+        color: #495057;
+        margin-top: 4px;
+    }
+    
+    .language-index {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .language-index-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .language-stats {
+        padding: 20px;
+    }
+    
+    .language-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .language-stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .language-color-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+    
+    .language-name {
+        font-weight: 600;
+        color: #495057;
+        flex: 1;
+    }
+    
+    .language-stats-numbers {
+        text-align: right;
+        color: #6c757d;
+    }
+    
+    .today-sessions {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .today-sessions-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .session-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .session-item:last-child {
+        border-bottom: none;
+    }
+    
+    .session-info {
+        flex: 1;
+    }
+    
+    .session-time {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .session-student {
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    
+    .session-language {
+        font-size: 0.9em;
+        color: #28a745;
+        font-weight: 500;
+    }
+    
+    .attendance-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: 500;
+    }
+    
+    .attendance-present { background-color: #d4edda; color: #155724; }
+    .attendance-absent { background-color: #f8d7da; color: #721c24; }
+    .attendance-late { background-color: #fff3cd; color: #856404; }
+    .attendance-excused { background-color: #d1ecf1; color: #0c5460; }
+    
+    .calendar-controls {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .date-navigation {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .current-week {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .view-toggle .btn {
+        flex: 1;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Header -->
+<div class="header bg-primary pb-6 ">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Emploi du temps amélioré</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Emploi du temps amélioré</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'teacher_schedule_manage' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-cog"></i> Gérer l'emploi du temps
+                        </a>
+                        <a href="{% url 'teacher_attendance_dynamic' %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-user-check"></i> Gérer les présences
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page content -->
+<div class="container-fluid mt--6">
+    <!-- Contrôles du calendrier -->
+    <div class="calendar-controls">
+        <div class="date-navigation">
+            <div class="current-week">
+                Semaine du {{ start_of_week|date:"d/m/Y" }} au {{ end_of_week|date:"d/m/Y" }}
+            </div>
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="prev-week">
+                    <i class="fas fa-chevron-left"></i> Semaine précédente
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="today-btn">
+                    Aujourd'hui
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="next-week">
+                    Semaine suivante <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-control-label">Sélectionner une date</label>
+                <input type="text" class="form-control" id="date-picker" placeholder="Choisir une date">
+            </div>
+            <div class="col-md-6">
+                <label class="form-control-label">Filtrer par langue</label>
+                <select class="form-control" id="language-filter">
+                    <option value="">Toutes les langues</option>
+                    {% for language in teacher.languages.all %}
+                    <option value="{{ language.id }}">{{ language.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="view-toggle">
+            <button type="button" class="btn btn-primary" id="week-view-btn">
+                <i class="fas fa-calendar-week"></i> Vue semaine
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="calendar-view-btn">
+                <i class="fas fa-calendar-alt"></i> Vue calendrier
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Index des langues -->
+        <div class="col-xl-3">
+            <div class="language-index">
+                <div class="language-index-header">
+                    <h5 class="h3 mb-0">Index des langues</h5>
+                </div>
+                <div class="language-stats">
+                    {% for lang_name, stats in language_stats.items %}
+                    <div class="language-stat-item">
+                        <div class="d-flex align-items-center">
+                            <div class="language-color-indicator {{ stats.color_class }}"></div>
+                            <div class="language-name">{{ lang_name }}</div>
+                        </div>
+                        <div class="language-stats-numbers">
+                            <div>{{ stats.sessions_count }} séances</div>
+                            <div>{{ stats.total_hours|floatformat:1 }}h</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p>Aucune langue configurée</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Séances du jour -->
+            <div class="today-sessions">
+                <div class="today-sessions-header">
+                    <h5 class="h3 mb-0">Séances du {{ selected_date|date:"d/m/Y" }}</h5>
+                </div>
+                <div class="today-sessions-body">
+                    {% for session in today_sessions %}
+                    <div class="session-item">
+                        <div class="session-info">
+                            <div class="session-time">
+                                {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                            </div>
+                            <div class="session-student">
+                                {{ session.student.user.get_full_name }}
+                            </div>
+                            <div class="session-language">
+                                {{ session.language.name }}
+                            </div>
+                        </div>
+                        <div class="session-actions">
+                            {% if session.id in today_attendance.attendances %}
+                                {% for key, attendance in today_attendance.attendances.items %}
+                                    {% if key.1 == session.id %}
+                                        <span class="attendance-status attendance-{{ attendance.status }}">
+                                            {{ attendance.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">En attente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                        <p>Aucune séance prévue aujourd'hui</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Vue semaine de l'emploi du temps -->
+        <div class="col-xl-9">
+            <div class="schedule-week-view">
+                <div class="schedule-header">
+                    <h4 class="mb-0">Emploi du temps hebdomadaire</h4>
+                </div>
+                <div class="row no-gutters">
+                    {% for day_choice in day_choices %}
+                    <div class="col">
+                        <div class="schedule-day">
+                            <div class="schedule-day-header">
+                                {{ day_choice.1 }}
+                            </div>
+                            {% for schedule in schedule_by_day %}
+                                {% if schedule.day == day_choice.0 %}
+                            <div class="schedule-item {{ schedule.color_class }}">
+                                <div class="schedule-time">
+                                    {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                                </div>
+                                <div class="schedule-subject">
+                                    {{ schedule.skill.name }}
+                                </div>
+                                <div class="schedule-language">
+                                    {{ schedule.language_name }}
+                                </div>
+                                {% if schedule.student %}
+                                <div class="schedule-student">
+                                    {{ schedule.student.user.get_full_name }}
+                                </div>
+                                {% endif %}
+                                {% if schedule.classroom %}
+                                <div class="schedule-classroom">
+                                    <small class="text-muted">{{ schedule.classroom }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                                {% endif %}
+                            {% empty %}
+                            <div class="text-center text-muted py-3">
+                                <small>Aucun cours</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue calendrier FullCalendar (cachée par défaut) -->
+    <div class="row mt-4" id="calendar-view" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Vue calendrier</h5>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les détails du cours -->
+<div class="modal fade" id="courseDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails du cours</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="course-details-content">
+                    <!-- Le contenu sera chargé dynamiquement -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <a href="#" class="btn btn-primary" id="edit-course-btn">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.0/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation du sélecteur de date
+    const datePicker = flatpickr("#date-picker", {
+        locale: "fr",
+        dateFormat: "Y-m-d",
+        defaultDate: "{{ selected_date|date:'Y-m-d' }}",
+        onChange: function(selectedDates, dateStr) {
+            if (selectedDates[0]) {
+                window.location.href = `?date=${dateStr}`;
+            }
+        }
+    });
+
+    // Navigation entre les semaines
+    document.getElementById('prev-week').addEventListener('click', function() {
+        const currentDate = new Date('{{ selected_date|date:"Y-m-d" }}');
+        const prevWeek = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const dateStr = prevWeek.toISOString().split('T')[0];
+        window.location.href = `?date=${dateStr}`;
+    });
+
+    document.getElementById('next-week').addEventListener('click', function() {
+        const currentDate = new Date('{{ selected_date|date:"Y-m-d" }}');
+        const nextWeek = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const dateStr = nextWeek.toISOString().split('T')[0];
+        window.location.href = `?date=${dateStr}`;
+    });
+
+    document.getElementById('today-btn').addEventListener('click', function() {
+        const today = new Date().toISOString().split('T')[0];
+        window.location.href = `?date=${today}`;
+    });
+
+    // Filtre par langue
+    document.getElementById('language-filter').addEventListener('change', function() {
+        const selectedLanguage = this.value;
+        const scheduleItems = document.querySelectorAll('.schedule-item');
+        
+        scheduleItems.forEach(item => {
+            if (!selectedLanguage || item.querySelector('.schedule-language').textContent.includes(selectedLanguage)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Basculement entre les vues
+    document.getElementById('week-view-btn').addEventListener('click', function() {
+        document.querySelector('.schedule-week-view').style.display = 'block';
+        document.getElementById('calendar-view').style.display = 'none';
+        this.classList.add('btn-primary');
+        this.classList.remove('btn-outline-primary');
+        document.getElementById('calendar-view-btn').classList.remove('btn-primary');
+        document.getElementById('calendar-view-btn').classList.add('btn-outline-primary');
+    });
+
+    document.getElementById('calendar-view-btn').addEventListener('click', function() {
+        document.querySelector('.schedule-week-view').style.display = 'none';
+        document.getElementById('calendar-view').style.display = 'block';
+        this.classList.add('btn-primary');
+        this.classList.remove('btn-outline-primary');
+        document.getElementById('week-view-btn').classList.remove('btn-primary');
+        document.getElementById('week-view-btn').classList.add('btn-outline-primary');
+        
+        // Initialiser FullCalendar si pas encore fait
+        if (!window.calendar) {
+            initializeCalendar();
+        }
+    });
+
+    // Initialisation de FullCalendar
+    function initializeCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        window.calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridWeek',
+            locale: 'fr',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridWeek,dayGridMonth'
+            },
+            events: '{% url "teacher_schedule_api" %}',
+            eventClick: function(info) {
+                showCourseDetails(info.event);
+            },
+            eventDidMount: function(info) {
+                // Ajouter des tooltips
+                $(info.el).tooltip({
+                    title: `${info.event.title}<br>${info.event.extendedProps.student_name}<br>${info.event.extendedProps.classroom}`,
+                    html: true,
+                    placement: 'top'
+                });
+            }
+        });
+        window.calendar.render();
+    }
+
+    // Affichage des détails du cours
+    function showCourseDetails(event) {
+        const modal = $('#courseDetailModal');
+        const content = document.getElementById('course-details-content');
+        const editBtn = document.getElementById('edit-course-btn');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Matière:</strong> ${event.extendedProps.skill_name}</p>
+                    <p><strong>Langue:</strong> ${event.extendedProps.language_name}</p>
+                    <p><strong>Étudiant:</strong> ${event.extendedProps.student_name}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Horaire:</strong> ${event.start.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})} - ${event.end.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</p>
+                    <p><strong>Durée:</strong> ${event.extendedProps.duration} min</p>
+                    <p><strong>Salle:</strong> ${event.extendedProps.classroom || 'Non spécifiée'}</p>
+                </div>
+            </div>
+        `;
+        
+        editBtn.href = `{% url 'teacher_schedule_manage' %}?schedule_id=${event.extendedProps.schedule_id}`;
+        modal.modal('show');
+    }
+
+    // Gestion des clics sur les éléments de l'emploi du temps
+    document.querySelectorAll('.schedule-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Ici vous pouvez ajouter la logique pour afficher les détails
+            // ou rediriger vers la page de gestion
+        });
+    });
+});
+</script>
+{% endblock javascripts %}

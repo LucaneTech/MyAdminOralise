@@ -689,20 +689,28 @@ def teacher_students(request):
     }
     return render(request, 'dashboard/teacher/home/students.html', context)
 
-
 def teacher_attendance(request):
     user = request.user
+
+    # Vérifier si l'utilisateur est bien un enseignant
+    if not hasattr(user, 'teacher'):
+        messages.error(request, "Page réservée aux enseignants.")
+        return redirect('dashboard_home')
+
     profile = get_object_or_404(Profile, user=user)
     teacher = get_object_or_404(Teacher, user=user)
     today = timezone.now().date()
+
+    # Récupérer les compétences de l'enseignant
     skills = Skill.objects.filter(teachers=teacher)
-    
+
+    # Si l'enseignant enregistre des présences
     if request.method == 'POST':
         data = json.loads(request.body)
         skill_id = data['skill']
         date = data['date']
         attendances = data['attendances']
-        
+
         for student_id, attendance_data in attendances.items():
             Attendance.objects.update_or_create(
                 skill_id=skill_id,
@@ -715,15 +723,16 @@ def teacher_attendance(request):
                 }
             )
         return JsonResponse({'status': 'success'})
-    
-    students = Student.objects.filter(skill__in=skills).distinct()
-    
-    # Statistiques de présence
+
+    # ✅ Correction ici : languages__in et non pas language__in
+    students = Student.objects.filter(languages__in=teacher.languages.all()).distinct()
+
+    # Statistiques globales de présence
     attendance_stats = Attendance.objects.filter(
         skill__in=skills
     ).values('status').annotate(count=Count('id'))
-    
-    # Évolution des présences sur la semaine
+
+    # Statistiques par jour sur la semaine
     week_stats = []
     for i in range(7):
         date = today - timedelta(days=i)
@@ -736,15 +745,14 @@ def teacher_attendance(request):
             skill__in=skills,
             date=date
         ).count()
-        if total > 0:
-            percentage = (presence / total) * 100
-        else:
-            percentage = 0
+
+        percentage = (presence / total) * 100 if total > 0 else 0
+
         week_stats.append({
             'date': date.strftime('%a'),
             'percentage': percentage
         })
-    
+
     context = {
         'profile': profile,
         'teacher': teacher,
@@ -756,7 +764,10 @@ def teacher_attendance(request):
         'week_stats': week_stats,
         'segment': 'attendance'
     }
+
     return render(request, 'dashboard/teacher/home/attendance.html', context)
+
+
 
 
 def teacher_marks(request):
@@ -1417,3 +1428,283 @@ def student_sessions_view(request):
         'user': request.user,
     }
     return render(request, 'dashboard/student/home/sessions.html', context)
+
+def test_template_tags(request):
+    """Vue de test pour vérifier que les template tags fonctionnent"""
+    return render(request, 'dashboard/teacher/home/test_template_tags.html', {})
+
+@login_required
+def teacher_schedule_enhanced(request):
+    """Vue améliorée pour l'emploi du temps avec affichage Google Calendar-like"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    # Récupérer la date sélectionnée (par défaut aujourd'hui)
+    selected_date = request.GET.get('date')
+    if selected_date:
+        try:
+            selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = timezone.now().date()
+    else:
+        selected_date = timezone.now().date()
+    
+    # Récupérer la semaine contenant la date sélectionnée
+    start_of_week = selected_date - timedelta(days=selected_date.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    
+    # Récupérer l'emploi du temps de la semaine
+    weekly_schedule = Schedule.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).select_related('skill', 'language', 'student').order_by('day', 'start_time')
+    
+    # Organiser l'emploi du temps par jour
+    schedule_by_day = {}
+    for day in Schedule.DAY_CHOICES:
+        schedule_by_day[day[0]] = []
+    
+    for schedule in weekly_schedule:
+        if schedule.day in schedule_by_day:
+            schedule_by_day[schedule.day].append(schedule)
+    
+    # Récupérer les séances du jour sélectionné
+    today_sessions = Session.objects.filter(
+        teacher=teacher,
+        date=selected_date,
+        status='scheduled'
+    ).select_related('student', 'language').order_by('start_time')
+    
+    # Récupérer les présences du jour
+    today_attendance = Attendance.get_today_attendance_for_teacher(teacher, selected_date)
+    
+    # Statistiques par langue pour la semaine
+    language_stats = {}
+    for schedule in weekly_schedule:
+        if schedule.language:
+            lang_name = schedule.language.name
+            if lang_name not in language_stats:
+                language_stats[lang_name] = {
+                    'total_hours': 0,
+                    'sessions_count': 0,
+                    'students_count': 0,
+                    'color_class': schedule.color_class
+                }
+            language_stats[lang_name]['total_hours'] += schedule.duration_minutes / 60
+            language_stats[lang_name]['sessions_count'] += 1
+            if schedule.student:
+                language_stats[lang_name]['students_count'] += 1
+    
+    context = {
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+        'username': request.user.username,
+        'selected_date': selected_date,
+        'start_of_week': start_of_week,
+        'end_of_week': end_of_week,
+        'schedule_by_day': schedule_by_day,
+        'today_sessions': today_sessions,
+        'today_attendance': today_attendance,
+        'language_stats': language_stats,
+        'day_choices': Schedule.DAY_CHOICES,
+        'segment': 'schedule_enhanced'
+    }
+    
+    return render(request, 'dashboard/teacher/home/schedule_enhanced.html', context)
+
+@login_required
+def teacher_attendance_dynamic(request):
+    """Vue pour la gestion dynamique des présences basée sur les séances du jour"""
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            date = data.get('date')
+            session_id = data.get('session_id')
+            attendance_data = data.get('attendance_data', {})
+            
+            if not date or not session_id:
+                return JsonResponse({'status': 'error', 'message': 'Date et session requises'})
+            
+            # Convertir la date
+            try:
+                date = datetime.strptime(date, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'status': 'error', 'message': 'Format de date invalide'})
+            
+            # Récupérer la session
+            session = get_object_or_404(Session, id=session_id, teacher=teacher)
+            
+            # Mettre à jour ou créer les présences
+            for student_id, attendance_info in attendance_data.items():
+                student = get_object_or_404(Student, id=student_id)
+                status = attendance_info.get('status', 'present')
+                arrival_time = attendance_info.get('arrival_time')
+                note = attendance_info.get('note', '')
+                
+                # Convertir l'heure d'arrivée si fournie
+                if arrival_time:
+                    try:
+                        arrival_time = datetime.strptime(arrival_time, '%H:%M').time()
+                    except ValueError:
+                        arrival_time = None
+                
+                # Mettre à jour ou créer la présence
+                attendance, created = Attendance.objects.update_or_create(
+                    student=student,
+                    skill=session.language,  # Utiliser la langue de la session
+                    teacher=teacher,
+                    date=date,
+                    session=session,
+                    defaults={
+                        'status': status,
+                        'arrival_time': arrival_time,
+                        'note': note
+                    }
+                )
+                
+                if not created:
+                    attendance.status = status
+                    attendance.arrival_time = arrival_time
+                    attendance.note = note
+                    attendance.save()
+            
+            return JsonResponse({'status': 'success', 'message': 'Présences mises à jour'})
+            
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    # Récupérer la date sélectionnée
+    selected_date = request.GET.get('date')
+    if selected_date:
+        try:
+            selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = timezone.now().date()
+    else:
+        selected_date = timezone.now().date()
+    
+    # Récupérer les séances du jour pour cet enseignant
+    today_sessions = Session.objects.filter(
+        teacher=teacher,
+        date=selected_date,
+        status='scheduled'
+    ).select_related('student', 'language').order_by('start_time')
+    
+    # Récupérer les présences existantes
+    existing_attendance = {}
+    for session in today_sessions:
+        attendances = Attendance.objects.filter(
+            session=session,
+            date=selected_date
+        ).select_related('student')
+        
+        for attendance in attendances:
+            if attendance.student.id not in existing_attendance:
+                existing_attendance[attendance.student.id] = {}
+            existing_attendance[attendance.student.id][session.id] = attendance
+    
+    # Récupérer tous les étudiants de cet enseignant
+    teacher_students = Student.objects.filter(
+        current_teacher=teacher
+    ).select_related('user').order_by('user__first_name')
+    
+    context = {
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+        'username': request.user.username,
+        'selected_date': selected_date,
+        'today_sessions': today_sessions,
+        'existing_attendance': existing_attendance,
+        'teacher_students': teacher_students,
+        'attendance_statuses': Attendance.STATUS,
+        'segment': 'attendance_dynamic'
+    }
+    
+    return render(request, 'dashboard/teacher/home/attendance_dynamic.html', context)
+
+@login_required
+def teacher_schedule_api(request):
+    """API pour récupérer l'emploi du temps au format JSON pour FullCalendar"""
+    if request.user.role != 'teacher':
+        return JsonResponse({'error': 'Accès non autorisé'}, status=403)
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    
+    # Récupérer les paramètres de date
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+    
+    if not start_date or not end_date:
+        return JsonResponse({'error': 'Dates de début et fin requises'}, status=400)
+    
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Format de date invalide'}, status=400)
+    
+    # Récupérer l'emploi du temps pour la période
+    schedules = Schedule.objects.filter(
+        teacher=teacher,
+        is_active=True
+    ).select_related('skill', 'language', 'student')
+    
+    # Convertir en format FullCalendar
+    events = []
+    for schedule in schedules:
+        # Calculer la prochaine occurrence de ce cours
+        current_date = start_date
+        while current_date <= end_date:
+            # Trouver le prochain jour de la semaine correspondant
+            while current_date.weekday() != _get_weekday_number(schedule.day):
+                current_date += timedelta(days=1)
+                if current_date > end_date:
+                    break
+            
+            if current_date <= end_date:
+                # Créer l'événement
+                event = {
+                    'id': f'schedule_{schedule.id}_{current_date}',
+                    'title': f"{schedule.skill.name} - {schedule.language_name if schedule.language else 'N/A'}",
+                    'start': f"{current_date}T{schedule.start_time}",
+                    'end': f"{current_date}T{schedule.end_time}",
+                    'className': schedule.color_class,
+                    'extendedProps': {
+                        'schedule_id': schedule.id,
+                        'skill_name': schedule.skill.name,
+                        'language_name': schedule.language_name,
+                        'classroom': schedule.classroom or '',
+                        'student_name': schedule.student.user.get_full_name() if schedule.student else 'Groupe',
+                        'duration': schedule.duration_minutes
+                    }
+                }
+                events.append(event)
+                
+                # Passer à la semaine suivante
+                current_date += timedelta(days=7)
+    
+    return JsonResponse(events, safe=False)
+
+def _get_weekday_number(day_name):
+    """Convertit le nom du jour en numéro de jour de la semaine (0=Lundi, 6=Dimanche)"""
+    day_mapping = {
+        'Lundi': 0,
+        'Mardi': 1,
+        'Mercredi': 2,
+        'Jeudi': 3,
+        'Vendredi': 4,
+        'Samedi': 5,
+        'Dimanche': 6
+    }
+    return day_mapping.get(day_name, 0)
