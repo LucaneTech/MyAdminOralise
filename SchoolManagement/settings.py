@@ -18,6 +18,7 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
 # Application definition
 INSTALLED_APPS = [
     #customise django-admin with django-jazzmin
@@ -50,6 +51,8 @@ INSTALLED_APPS = [
     'compressor',
     
 ]
+#if DEBUG is False:
+   # INSTALLED_APPS += ['whitenoise.runserver_nostatic']
 
 #djang-compressor
 STATICFILES_FINDERS = [
@@ -67,8 +70,12 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+STORAGES = {
+ 
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 # django-allauth settings
 AUTHENTICATION_BACKENDS = [
    
