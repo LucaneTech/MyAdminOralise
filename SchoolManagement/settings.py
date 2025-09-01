@@ -70,12 +70,9 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
 COMPRESS_ROOT = STATIC_ROOT
-STORAGES = {
- 
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+
 # django-allauth settings
 AUTHENTICATION_BACKENDS = [
    
