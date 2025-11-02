@@ -15,7 +15,7 @@ from dashboard.models import (
     Submission, Attendance, Language, Session, Payment, Certificate, 
     Evaluation, Notification
 )
-from .forms import ProfileUpdateForm, ResourceForm
+from .forms import ProfileUpdateForm, ResourceForm, SessionForm
 import json
 
 
@@ -28,6 +28,10 @@ def dashboard_view(request, username=None):
     # If user is a teacher, redirect to teacher_view
     if request.user.role == 'teacher':
         return redirect('teacher_view', username=username)
+
+    #if user'role is preUser
+    if request.user.role == 'preUser':
+        return redirect('home')
     
     try:
         # Vérifier si l'utilisateur demandé existe
@@ -1350,7 +1354,7 @@ def payments_view(request):
     context = {
         'payments': payments,
         'student': student,
-        'user': request.user,
+        'user': user,
         'profile': profile
     }
     return render(request, 'dashboard/student/home/payments.html', context)
@@ -1394,6 +1398,32 @@ def teacher_sessions_view(request):
         'user': request.user,
     }
     return render(request, 'dashboard/teacher/home/sessions.html', context)
+#Creat a session for teacher
+@login_required
+def create_session_view(request):
+    if request.user.role != 'teacher':
+        raise Http404("Cette page est réservée aux enseignants")
+    
+    teacher = get_object_or_404(Teacher, user=request.user)
+    user = request.user
+    if request.method == 'POST':
+        form = SessionForm(request.POST)
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.teacher = teacher 
+            session.save()
+            form.save_m2m() 
+            messages.success(request, "La session a été créée avec succès !")
+            return redirect('teacher_sessions') 
+    else:
+        form = SessionForm()
+    
+    context = {
+        'form': form,
+        'user': request.user,
+        'teacher': teacher,
+    }
+    return render(request, 'dashboard/teacher/home/sessions_add.html', context)
 
 @login_required
 def student_sessions_view(request):

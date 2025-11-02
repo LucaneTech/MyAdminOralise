@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    CustomUser, Student, Teacher, Skill, Schedule, Mark, 
+    CustomUser, Student, Teacher, Schedule,  
     Resource, Request, Language, Session, Payment, Certificate, 
-    Evaluation, Notification, Comment
+    Evaluation, Notification, Comment,Skill
 )
 
 
@@ -11,13 +11,13 @@ from .models import (
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     fieldsets = (
-        ("🧑‍💼  Informations Personnelles", {
+        ("Informations Personnelles", {
             "fields": ("username", "email", "first_name", "last_name"),
         }),
-        ("🎭 Permissions", {
+        ("Permissions", {
             "fields": ("role", "is_active", "is_staff", "is_superuser"),
         }),
-         ("📅 Dates Importantes", {
+         ("Dates Importantes", {
             "fields": ("last_login", "date_joined"),
         }),
     )
@@ -33,10 +33,24 @@ class CustomUserAdmin(UserAdmin):
     display_profile_picture.allow_tags = True   
     
 # Enregistrement des modèles dans Django Admin
-admin.site.register(Student)
-admin.site.register(Teacher)
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('user__username','user__email', 'matricule', 'current_teacher')
+    list_filter = ('matricule','user','current_teacher',)
+    search_fields= ('user__first_name', 'user__last_name', 'matricule')
+
+@admin.register(Teacher)
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ('user__username','user__email', 'speciality', 'date_joined', 'is_available')
+    list_filter = ('is_available', 'languages')
+    search_fields = ('user__first_name', 'user__last_name', 'speciality')
+
+# admin.site.register(Skill)
 admin.site.register(Skill)
-admin.site.register(Language)
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'description')
+    search_fields = ('name', 'code')
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
@@ -83,15 +97,15 @@ class RequestAdmin(admin.ModelAdmin):
     fields = ('student', 'request_type', 'subject', 'description', 'attachment', 'status', 'response')
     readonly_fields = ('created_at', 'updated_at')
 
-@admin.register(Mark)
-class MarkAdmin(admin.ModelAdmin):
-    list_display = ('student', 'skill', 'mark')
-    list_filter = ('student', 'skill', 'mark')
+# @admin.register(Mark)
+# class MarkAdmin(admin.ModelAdmin):
+#     list_display = ('student', 'skill', 'mark')
+#     list_filter = ('student', 'skill', 'mark')
 
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('day', 'teacher', 'skill', 'start_time', 'end_time', 'classroom','student')
-    list_filter = ('day', 'teacher', 'skill','student')
+    list_display = ('day', 'teacher', 'language', 'start_time', 'end_time', 'classroom','student')
+    list_filter = ('day', 'teacher', 'language','student')
 
 
 @admin.register(Comment)

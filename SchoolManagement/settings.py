@@ -100,30 +100,30 @@ MIDDLEWARE = [
 
 SOCIALACCOUNT_PROVIDERS = {
     
-    'github': {
-         'APP':{
-            'client_id':config('GITHUB_ID'),
-            'secret': config('GITHUB_SECRET'),
-            'key':''
+    # 'github': {
+    #      'APP':{
+    #         'client_id':config('GITHUB_ID'),
+    #         'secret': config('GITHUB_SECRET'),
+    #         'key':''
                  
-         }
+    #      }
       
-    },
-      'google': {
-        'APP': {
-            'client_id': config('GOOGLE_ID'),
-            'secret': config('GOOGLE_SECRET'),
-            'key': ''
-        },
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
+    # },
+    #   'google': {
+    #     'APP': {
+    #         'client_id': config('GOOGLE_ID'),
+    #         'secret': config('GOOGLE_SECRET'),
+    #         'key': ''
+    #     },
+    #     'SCOPE': [
+    #         'profile',
+    #         'email',
+    #     ],
+    #     'AUTH_PARAMS': {
+    #         'access_type': 'online',
+    #     },
+    #     'OAUTH_PKCE_ENABLED': True,
+    # }
     
     # 'facebook': {
     #     'APP': {
@@ -237,12 +237,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'fr-fr'
-
-TIME_ZONE = 'UTC'
-
+LANGUAGE_CODE = 'fr'
+TIME_ZONE = 'Europe/Paris'
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
@@ -276,16 +274,16 @@ JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
     "body_small_text": True,
-    "brand_small_text": False,
-    "brand_colour": "navbar-success",
-    "accent": "accent-success",
+    "brand_small_text": True,
+    "brand_colour": "navbar-cyan",
+    "accent": "accent-lightblue",
     "navbar": "navbar-dark",
     "no_navbar_border": True,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": False,
-    "sidebar": "sidebar-dark-success",
+    "sidebar": "sidebar-dark-info",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": False,
@@ -293,7 +291,7 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_legacy_style": True,
     "sidebar_nav_flat_style": False,
     "theme": "darkly",
-    "dark_mode_theme": "darkly",
+    "dark_mode_theme": "cyborg",
     "button_classes": {
         "primary": "btn-primary",
         "secondary": "btn-secondary",
@@ -303,7 +301,9 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     },
     "actions_sticky_top": True,
-    "language_chooser": True
+    "language_chooser": True,
+    "custom_css": "assets/css/jazzmin.css",
+    "login_logo_classes": "custom-logo"
 }
 
 #all about django-jazz for admin dashboard
@@ -316,12 +316,14 @@ JAZZMIN_SETTINGS = {
        
     
     "site_title": "Oralise",
-    "site_header": "Administration Oralise",
+    "site_header": "Admin Oralise",
     "site_brand": "ORALISE",
      "site_logo":None,
-    "login_logo": "public/img/logo.png",
+    "login_logo": "",
+    
+
     #favicon
-       "site_icon": "public/img/favic.png",
+       "site_icon": "",
        
     "icons": {
         # Authentification
@@ -353,7 +355,7 @@ JAZZMIN_SETTINGS = {
         "dashboard.certificate": "fas fa-certificate",     # Certificate
         "dashboard.evaluation": "fas fa-chart-line",       # Evaluation
         "dashboard.notification": "fas fa-bell",           # Notification
-
+        "dashboard.ressource": "fas fa-inbox",              # Request
         # Sites
         "sites": "fas fa-globe",
         "sites.site": "fas fa-map-marker-alt",
@@ -364,10 +366,10 @@ JAZZMIN_SETTINGS = {
     "user_avatar": None,
     
     #this concern models applying like popup
-     "related_modal_active":False,
+     "related_modal_active":True,
 
      #this code concern admin-dashboard style
-     #"show_ui_builder": True,
+     "show_ui_builder": True,
     
 
 }

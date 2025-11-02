@@ -8,7 +8,7 @@
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center px-4 py-10">
-  <div class="md:bg-white md:rounded-3xl md:shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300 min-h-[600px]">
+  <div class="md:bg-white md:rounded-3xl md:shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300 min-h-[600px] dark:bg-gray-900 dark:rounded-3xl dark:shadow-2xl">
 
     <!-- FORMULAIRE -->
     <div class="p-10 flex flex-col justify-center h-full">
@@ -19,11 +19,11 @@
         {% csrf_token %}
 
         <div>
-          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white" }}
         </div>
 
         <div>
-          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition" }}
+          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white" }}
         </div>
 
         {% if form.errors %}
@@ -36,18 +36,7 @@
 
         <div class="text-center text-gray-400 text-sm">— {% trans 'ou connectez-vous avec' %} —</div>
 
-        <!-- SOCIAL LOGIN -->
-        <div class="space-y-3">
-          <a href="{% provider_login_url 'google' %}" class="flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition text-sm font-medium">
-            <img src="{% static 'assets/img/icons/google.svg' %}" alt="google" class="w-5 h-5"> {% trans 'Connexion avec Google' %}
-          </a>
-        </div>
-
-        <!-- LIENS -->
-        <div class="flex justify-between text-sm text-blue-600 mt-6 font-medium">
-          <a href="{% url 'account_reset_password' %}" class="hover:underline">Mot de passe oublié ?</a>
-          <a href="{% url 'account_signup' %}" class="hover:underline">Créer un compte</a>
-        </div>
+       
 
         <div class="text-center text-xs text-gray-400 mt-8">
           <a href="#" class="hover:underline">Conditions d'utilisation</a> |

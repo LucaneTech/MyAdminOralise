@@ -1,5 +1,5 @@
 from django import forms
-from dashboard.models import Profile, CustomUser, Resource
+from dashboard.models import Profile, CustomUser, Resource, Session
 from django import forms
 from allauth.account.forms import LoginForm, SignupForm,ResetPasswordForm
 from django.contrib.auth import authenticate
@@ -59,7 +59,7 @@ class CustomSignupForm(SignupForm):
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
         ('student', 'Student'),
-        ('visitor', 'Visitor'),
+      
        
     )
 
@@ -89,7 +89,19 @@ class CustomResetPasswordForm(ResetPasswordForm):
 class ResourceForm(forms.ModelForm):
     class Meta:
         model = Resource
-        fields = ['title', 'description', 'file', 'url', 'resource_type', 'skills']
+        fields = ['title', 'description', 'file', 'url', 'resource_type', 'languages']
         widgets = {
-            'skills': forms.CheckboxSelectMultiple,
+            'languages': forms.CheckboxSelectMultiple,
+        }
+
+
+class SessionForm(forms.ModelForm):
+    class Meta:
+        model = Session
+        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'student']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
+            'students': forms.CheckboxSelectMultiple(), 
         }

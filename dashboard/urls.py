@@ -11,7 +11,7 @@ from .views import (
     teacher_sessions_view, student_sessions_view,
     teacher_schedule_manage, teacher_evaluations_add, teacher_attendance_manage,
     teacher_resources_add_student, evaluation_edit,
-    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic,
+    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic,create_session_view
     
 )
 
@@ -54,6 +54,7 @@ urlpatterns = [
     path('notifications/', notifications_view, name='notifications_view'),
     path('payments/', payments_view, name='payments_view'),
     path('sessions/', student_sessions_view, name='student_sessions'),
+    path('sessions/create/', create_session_view, name='create_session'),
     
     # URLs étudiants
     path('student/<str:username>/', dashboard_view, name='dashboard_view'),

@@ -157,8 +157,8 @@
                                 <label for="skill">Matière</label>
                                 <select name="skill" id="skill" class="form-control" required>
                                     <option value="">Sélectionner une matière</option>
-                                    {% for skill in skills %}
-                                    <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                    {% for language in languages %}
+                                    <option value="{{ language.id }}">{{ language.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -181,9 +181,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="student">Étudiant (optionnel)</label>
+                                <label for="student">Étudiant</label>
                                 <select name="student" id="student" class="form-control">
-                                    <option value="">Cours collectif</option>
+                                   
                                     {% for student in students %}
                                     <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
                                     {% endfor %}
