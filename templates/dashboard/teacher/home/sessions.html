@@ -16,7 +16,8 @@
           <h6 class="h2 text-white d-inline-block mb-0">Mes séances</h6>
           <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i
+                    class="fas fa-home"></i></a></li>
               <li class="breadcrumb-item active" aria-current="page">Séances</li>
             </ol>
           </nav>
@@ -26,55 +27,237 @@
   </div>
 </div>
 
+<style>
+  /* Style général du modal */
+  #addCourseModal .modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Header du modal */
+  #addCourseModal .modal-header {
+    background-color: #147a81;
+    color: white;
+    border-bottom: none;
+  }
+
+  /* Titre du modal */
+  #addCourseModal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  /* Boutons du footer */
+  #addCourseModal .modal-footer .btn {
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+  }
+
+  /* Inputs et selects */
+  #addCourseModal input,
+  #addCourseModal select {
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+  }
+
+  /* Ajout d'un léger effet hover sur les inputs */
+  #addCourseModal input:focus,
+  #addCourseModal select:focus {
+    border-color: #142481;
+    box-shadow: 0 0 0 2px rgba(20, 122, 129, 0.25);
+    outline: none;
+  }
+
+  /* Overlay foncé semi-transparent */
+  .modal-backdrop.show {
+    opacity: 0.5;
+  }
+
+  /* Animation du modal */
+  .modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translateY(-50px);
+  }
+
+  .modal.show .modal-dialog {
+    transform: translateY(0);
+  }
+</style>
+
+<!-- Modal de création de session -->
+<div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-white" id="addCourseModalLabel">Ajouter un cours</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row">
+              <!-- Première ligne : Langue et Date -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.language.id_for_label }}" class="form-label">
+                    <strong>{{ form.language.label }}</strong>
+                  </label>
+                  {{ form.language }}
+                  {% if form.language.help_text %}
+                  <small class="form-text text-muted">{{ form.language.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.date.id_for_label }}" class="form-label">
+                    <strong>{{ form.date.label }}</strong>
+                  </label>
+                  {{ form.date }}
+                  {% if form.date.help_text %}
+                  <small class="form-text text-muted">{{ form.date.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Deuxième ligne : Heure de début et Heure de fin -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.start_time.id_for_label }}" class="form-label">
+                    <strong>{{ form.start_time.label }}</strong>
+                  </label>
+                  {{ form.start_time }}
+                  {% if form.start_time.help_text %}
+                  <small class="form-text text-muted">{{ form.start_time.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.end_time.id_for_label }}" class="form-label">
+                    <strong>{{ form.end_time.label }}</strong>
+                  </label>
+                  {{ form.end_time }}
+                  {% if form.end_time.help_text %}
+                  <small class="form-text text-muted">{{ form.end_time.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Troisième ligne : Statut et Étudiant -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.status.id_for_label }}" class="form-label">
+                    <strong>{{ form.status.label }}</strong>
+                  </label>
+                  {{ form.status }}
+                  {% if form.status.help_text %}
+                  <small class="form-text text-muted">{{ form.status.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.student.id_for_label }}" class="form-label">
+                    <strong>{{ form.student.label }}</strong>
+                  </label>
+                  {{ form.student }}
+                  {% if form.student.help_text %}
+                  <small class="form-text text-muted">{{ form.student.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Quatrième ligne : Lien de réunion (pleine largeur) -->
+            <div class="row">
+              <div class="col-12 mb-3">
+                <div class="form-group">
+                  <label for="{{ form.meeting_link.id_for_label }}" class="form-label">
+                    <strong>{{ form.meeting_link.label }}</strong>
+                  </label>
+                  {{ form.meeting_link }}
+                  {% if form.meeting_link.help_text %}
+                  <small class="form-text text-muted">{{ form.meeting_link.help_text }}</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-success">Ajouter le cours</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!--end of session creation-->
+
 <div class="container-fluid mt--6">
   <!-- Filtres -->
   <div class="row mb-4">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-body">
-          <form method="get" class="row">
-            <div class="col-md-2">
-              <label for="language">Langue</label>
-              <select name="language" id="language" class="form-control">
-                <option value="">Toutes les langues</option>
-                {% for language in languages %}
-                <option value="{{ language.code }}" {% if filters.language == language.code %}selected{% endif %}>{{ language.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label for="status">Statut</label>
-              <select name="status" id="status" class="form-control">
-                <option value="">Tous les statuts</option>
-                <option value="scheduled" {% if filters.status == 'scheduled' %}selected{% endif %}>Prévue</option>
-                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Terminée</option>
-                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Annulée</option>
-                <option value="rescheduled" {% if filters.status == 'rescheduled' %}selected{% endif %}>Reportée</option>
-                <option value="absent" {% if filters.status == 'absent' %}selected{% endif %}>Absence</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label for="date">Date</label>
-              <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
-            </div>
-            <div class="col-md-2">
-              <label>&nbsp;</label>
-              <button type="submit" class="btn btn-primary btn-block">
-                <i class="ni ni-zoom-split-in"></i> Filtrer
-              </button>
-            </div>
-            <div class="col-md-2">
-              <label>&nbsp;</label>
-              <a href="{% url 'create_session' %}" class="btn btn-success btn-block">
-               Ajouter
-              </a>
-            </div>
-           
-          </form>
-        </div>
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-body">
+        <form method="get" class="row">
+          <div class="col-md-2">
+            <label for="language">Langue</label>
+            <select name="language" id="language" class="form-control">
+              <option value="">Toutes les langues</option>
+              {% for language in languages %}
+              <option value="{{ language.code }}" 
+                {% if filters.language|default:'' == language.code %}selected{% endif %}>
+                {{ language.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="status">Statut</label>
+            <select name="status" id="status" class="form-control">
+              <option value="">Tous les statuts</option>
+              <option value="scheduled" {% if filters.status|default:'' == 'scheduled' %}selected{% endif %}>Prévue</option>
+              <option value="completed" {% if filters.status|default:'' == 'completed' %}selected{% endif %}>Terminée</option>
+              <option value="cancelled" {% if filters.status|default:'' == 'cancelled' %}selected{% endif %}>Annulée</option>
+              <option value="rescheduled" {% if filters.status|default:'' == 'rescheduled' %}selected{% endif %}>Reportée</option>
+              <option value="absent" {% if filters.status|default:'' == 'absent' %}selected{% endif %}>Absence</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="date">Date</label>
+            <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
+          </div>
+          <div class="col-md-2">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="ni ni-zoom-split-in"></i> Filtrer
+            </button>
+          </div>
+          <div class="col-md-2">
+            <label>&nbsp;</label>
+            <button type="button" class="btn btn-success btn-block btn-ajouter-session" data-toggle="modal" data-target="#addCourseModal">
+              <i class="ni ni-fat-add"></i> Ajouter
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div class="row">
     <div class="col-xl-12">
@@ -118,7 +301,9 @@
                   {{ session.duration_hours|floatformat:1 }}h
                 </td>
                 <td>
-                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% elif session.status == 'rescheduled' %}warning{% else %}secondary{% endif %}" id="status-badge-{{ session.id }}">
+                  <span
+                    class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% elif session.status == 'rescheduled' %}warning{% else %}secondary{% endif %}"
+                    id="status-badge-{{ session.id }}">
                     {{ session.get_status_display }}
                   </span>
                 </td>
@@ -128,30 +313,38 @@
                       <i class="ni ni-ruler-pencil"></i> Détails
                     </a>
                     {% if session.status == 'scheduled' %}
-                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                    <button type="button" class="btn btn-sm btn-success session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="completed">
                       <i class="ni ni-check-bold"></i> Terminée
                     </button>
-                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+                    <button type="button" class="btn btn-sm btn-warning session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="rescheduled">
                       <i class="ni ni-calendar-grid-58"></i> Reporter
                     </button>
-                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="cancelled">
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="cancelled">
                       <i class="ni ni-fat-remove"></i> Annuler
                     </button>
-                    <button type="button" class="btn btn-sm btn-secondary session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
+                    <button type="button" class="btn btn-sm btn-secondary session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="absent">
                       <i class="ni ni-user-run"></i> Absence
                     </button>
                     {% elif session.status == 'rescheduled' %}
-                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                    <button type="button" class="btn btn-sm btn-success session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="completed">
                       <i class="ni ni-check-bold"></i> Terminée
                     </button>
-                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="cancelled">
+                    <button type="button" class="btn btn-sm btn-danger session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="cancelled">
                       <i class="ni ni-fat-remove"></i> Annuler
                     </button>
                     {% elif session.status == 'absent' %}
-                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
+                    <button type="button" class="btn btn-sm btn-success session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="completed">
                       <i class="ni ni-check-bold"></i> Terminée
                     </button>
-                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
+                    <button type="button" class="btn btn-sm btn-warning session-status-btn"
+                      data-session-id="{{ session.id }}" data-status="rescheduled">
                       <i class="ni ni-calendar-grid-58"></i> Reporter
                     </button>
                     {% endif %}
@@ -172,7 +365,8 @@
 </div>
 
 <!-- Modal de confirmation -->
-<div class="modal fade" id="statusConfirmModal" tabindex="-1" role="dialog" aria-labelledby="statusConfirmModalLabel" aria-hidden="true">
+<div class="modal fade" id="statusConfirmModal" tabindex="-1" role="dialog" aria-labelledby="statusConfirmModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -196,91 +390,91 @@
 
 {% block javascripts %}
 <script>
-$(document).ready(function() {
+  $(document).ready(function () {
     var currentSessionId = null;
     var currentStatus = null;
-    
+
     // Récupérer le token CSRF
     function getCSRFToken() {
-        return $('[name=csrfmiddlewaretoken]').val();
+      return $('[name=csrfmiddlewaretoken]').val();
     }
-    
-    $('.session-status-btn').click(function() {
-        currentSessionId = $(this).data('session-id');
-        currentStatus = $(this).data('status');
-        
-        // Déterminer le nom du statut
-        var statusNames = {
-            'completed': 'Terminée',
-            'rescheduled': 'Reportée',
-            'cancelled': 'Annulée',
-            'absent': 'Absence'
-        };
-        
-        $('#new-status-display').text(statusNames[currentStatus]);
-        $('#statusConfirmModal').modal('show');
+
+    $('.session-status-btn').click(function () {
+      currentSessionId = $(this).data('session-id');
+      currentStatus = $(this).data('status');
+
+      // Déterminer le nom du statut
+      var statusNames = {
+        'completed': 'Terminée',
+        'rescheduled': 'Reportée',
+        'cancelled': 'Annulée',
+        'absent': 'Absence'
+      };
+
+      $('#new-status-display').text(statusNames[currentStatus]);
+      $('#statusConfirmModal').modal('show');
     });
-    
-    $('#confirmStatusChange').click(function() {
-        if (currentSessionId && currentStatus) {
-            updateSessionStatus(currentSessionId, currentStatus);
-        }
-        $('#statusConfirmModal').modal('hide');
+
+    $('#confirmStatusChange').click(function () {
+      if (currentSessionId && currentStatus) {
+        updateSessionStatus(currentSessionId, currentStatus);
+      }
+      $('#statusConfirmModal').modal('hide');
     });
-    
+
     function updateSessionStatus(sessionId, status) {
-        $.ajax({
-            url: '/session/' + sessionId + '/status/',
-            method: 'POST',
-            data: {
-                'status': status,
-                'csrfmiddlewaretoken': getCSRFToken()
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Mettre à jour l'interface
-                    updateSessionRow(sessionId, status);
-                    showSuccessMessage('Statut mis à jour avec succès');
-                } else {
-                    showErrorMessage(response.error || 'Erreur lors de la mise à jour');
-                }
-            },
-            error: function(xhr) {
-                console.error('Erreur AJAX:', xhr);
-                showErrorMessage('Erreur lors de la mise à jour du statut');
-            }
-        });
+      $.ajax({
+        url: '/session/' + sessionId + '/status/',
+        method: 'POST',
+        data: {
+          'status': status,
+          'csrfmiddlewaretoken': getCSRFToken()
+        },
+        success: function (response) {
+          if (response.success) {
+            // Mettre à jour l'interface
+            updateSessionRow(sessionId, status);
+            showSuccessMessage('Statut mis à jour avec succès');
+          } else {
+            showErrorMessage(response.error || 'Erreur lors de la mise à jour');
+          }
+        },
+        error: function (xhr) {
+          console.error('Erreur AJAX:', xhr);
+          showErrorMessage('Erreur lors de la mise à jour du statut');
+        }
+      });
     }
-    
+
     function updateSessionRow(sessionId, status) {
-        var row = $('#session-row-' + sessionId);
-        var statusBadge = $('#status-badge-' + sessionId);
-        var actionsCell = row.find('td:last');
-        
-        // Mettre à jour le badge de statut
-        var statusClasses = {
-            'completed': 'success',
-            'rescheduled': 'warning',
-            'cancelled': 'danger',
-            'absent': 'secondary'
-        };
-        
-        var statusNames = {
-            'completed': 'Terminée',
-            'rescheduled': 'Reportée',
-            'cancelled': 'Annulée',
-            'absent': 'Absence'
-        };
-        
-        statusBadge.removeClass().addClass('badge badge-' + statusClasses[status]);
-        statusBadge.text(statusNames[status]);
-        
-        // Mettre à jour les boutons d'action
-        var newActions = '';
-        if (status === 'completed') {
-            newActions = '<span class="text-success"><i class="ni ni-check-bold"></i> Séance terminée</span>';
-        } else if (status === 'rescheduled') {
-            newActions = `
+      var row = $('#session-row-' + sessionId);
+      var statusBadge = $('#status-badge-' + sessionId);
+      var actionsCell = row.find('td:last');
+
+      // Mettre à jour le badge de statut
+      var statusClasses = {
+        'completed': 'success',
+        'rescheduled': 'warning',
+        'cancelled': 'danger',
+        'absent': 'secondary'
+      };
+
+      var statusNames = {
+        'completed': 'Terminée',
+        'rescheduled': 'Reportée',
+        'cancelled': 'Annulée',
+        'absent': 'Absence'
+      };
+
+      statusBadge.removeClass().addClass('badge badge-' + statusClasses[status]);
+      statusBadge.text(statusNames[status]);
+
+      // Mettre à jour les boutons d'action
+      var newActions = '';
+      if (status === 'completed') {
+        newActions = '<span class="text-success"><i class="ni ni-check-bold"></i> Séance terminée</span>';
+      } else if (status === 'rescheduled') {
+        newActions = `
                 <div class="btn-group" role="group">
                     <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
                         <i class="ni ni-ruler-pencil"></i> Détails
@@ -293,10 +487,10 @@ $(document).ready(function() {
                     </button>
                 </div>
             `;
-        } else if (status === 'cancelled') {
-            newActions = '<span class="text-danger"><i class="ni ni-fat-remove"></i> Séance annulée</span>';
-        } else if (status === 'absent') {
-            newActions = `
+      } else if (status === 'cancelled') {
+        newActions = '<span class="text-danger"><i class="ni ni-fat-remove"></i> Séance annulée</span>';
+      } else if (status === 'absent') {
+        newActions = `
                 <div class="btn-group" role="group">
                     <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
                         <i class="ni ni-ruler-pencil"></i> Détails
@@ -309,60 +503,60 @@ $(document).ready(function() {
                     </button>
                 </div>
             `;
-        }
-        
-        actionsCell.html(newActions);
-        
-        // Réattacher les événements aux nouveaux boutons
-        actionsCell.find('.session-status-btn').click(function() {
-            currentSessionId = $(this).data('session-id');
-            currentStatus = $(this).data('status');
-            
-            var statusNames = {
-                'completed': 'Terminée',
-                'rescheduled': 'Reportée',
-                'cancelled': 'Annulée',
-                'absent': 'Absence'
-            };
-            
-            $('#new-status-display').text(statusNames[currentStatus]);
-            $('#statusConfirmModal').modal('show');
-        });
+      }
+
+      actionsCell.html(newActions);
+
+      // Réattacher les événements aux nouveaux boutons
+      actionsCell.find('.session-status-btn').click(function () {
+        currentSessionId = $(this).data('session-id');
+        currentStatus = $(this).data('status');
+
+        var statusNames = {
+          'completed': 'Terminée',
+          'rescheduled': 'Reportée',
+          'cancelled': 'Annulée',
+          'absent': 'Absence'
+        };
+
+        $('#new-status-display').text(statusNames[currentStatus]);
+        $('#statusConfirmModal').modal('show');
+      });
     }
-    
+
     function showSuccessMessage(message) {
-        // Créer une notification de succès
-        var alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
-            message +
-            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-            '<span aria-hidden="true">&times;</span>' +
-            '</button>' +
-            '</div>');
-        
-        $('.container-fluid').first().prepend(alert);
-        
-        // Auto-fermer après 3 secondes
-        setTimeout(function() {
-            alert.alert('close');
-        }, 3000);
+      // Créer une notification de succès
+      var alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+        message +
+        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+        '<span aria-hidden="true">&times;</span>' +
+        '</button>' +
+        '</div>');
+
+      $('.container-fluid').first().prepend(alert);
+
+      // Auto-fermer après 3 secondes
+      setTimeout(function () {
+        alert.alert('close');
+      }, 3000);
     }
-    
+
     function showErrorMessage(message) {
-        // Créer une notification d'erreur
-        var alert = $('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
-            message +
-            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-            '<span aria-hidden="true">&times;</span>' +
-            '</button>' +
-            '</div>');
-        
-        $('.container-fluid').first().prepend(alert);
-        
-        // Auto-fermer après 5 secondes
-        setTimeout(function() {
-            alert.alert('close');
-        }, 5000);
+      // Créer une notification d'erreur
+      var alert = $('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+        message +
+        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+        '<span aria-hidden="true">&times;</span>' +
+        '</button>' +
+        '</div>');
+
+      $('.container-fluid').first().prepend(alert);
+
+      // Auto-fermer après 5 secondes
+      setTimeout(function () {
+        alert.alert('close');
+      }, 5000);
     }
-});
+  });
 </script>
-{% endblock javascripts %} 
+{% endblock javascripts %}

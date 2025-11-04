@@ -157,9 +157,12 @@
                                 <label for="skill">Matière</label>
                                 <select name="skill" id="skill" class="form-control" required>
                                     <option value="">Sélectionner une matière</option>
-                                    {% for language in languages %}
-                                    <option value="{{ language.id }}">{{ language.name }}</option>
+                                    <div class="form-group">
+                                <label for="edit_skill">Matière</label>
+                                    {% for skill in skills %}
+                                    <option value="{{ skill.id }}">{{ skill.name }}</option>
                                     {% endfor %}
+                          
                                 </select>
                             </div>
                         </div>

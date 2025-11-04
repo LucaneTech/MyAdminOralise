@@ -394,7 +394,7 @@ class Session(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     notes = models.TextField(blank=True)
     feedback = models.TextField(blank=True)
-    meeting_link = models.URLField(blank=True, null=True)  # Pour les cours en ligne
+    meeting_link = models.URLField(blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

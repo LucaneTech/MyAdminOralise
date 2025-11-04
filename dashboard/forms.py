@@ -95,13 +95,39 @@ class ResourceForm(forms.ModelForm):
         }
 
 
+
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'student']
+        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'student', 'meeting_link']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'start_time': forms.TimeInput(attrs={'type': 'time'}),
-            'end_time': forms.TimeInput(attrs={'type': 'time'}),
-            'students': forms.CheckboxSelectMultiple(), 
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Sélectionnez une date'
+            }),
+            'start_time': forms.TimeInput(attrs={
+                'type': 'time', 
+                'class': 'form-control',
+                'placeholder': 'Heure de début'
+            }),
+            'end_time': forms.TimeInput(attrs={
+                'type': 'time',
+                'class': 'form-control', 
+                'placeholder': 'Heure de fin'
+            }),
+            'language': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'student': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'meeting_link': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://meet.google.com/...'
+            }),
         }
+    
