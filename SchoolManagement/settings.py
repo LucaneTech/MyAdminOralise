@@ -12,12 +12,15 @@ load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG")
 
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS =[ "oraliseadmin.up.railway.app","oraliseadmin.up.railway.app"]
-
 ALLOWED_HOSTS = [
     "oraliseadmin.up.railway.app",
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://oraliseadmin.up.railway.app",
+]
+
+
 
 
 
