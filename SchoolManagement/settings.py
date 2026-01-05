@@ -83,31 +83,30 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Default primary key field type about django-allauth settings
-# SITE_ID = 8
+SITE_ID = 1
 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    'corsheaders.middleware.CorsMiddleware', 
-    'allauth.account.middleware.AccountMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "allauth.account.middleware.AccountMiddleware", 
+    
+    # django-allauth middleware
+    'allauth.account.middleware.AccountMiddleware',
 ]
-# Configuration de l'authentification via les réseaux sociaux
+# os.environ.geturation de l'authentification via les réseaux sociaux
 
 SOCIALACCOUNT_PROVIDERS = {
     
     # 'github': {
     #      'APP':{
-    #         'client_id':config('GITHUB_ID'),
-    #         'secret': config('GITHUB_SECRET'),
+    #         'client_id':os.environ.get('GITHUB_ID'),
+    #         'secret': os.environ.get('GITHUB_SECRET'),
     #         'key':''
                  
     #      }
@@ -115,8 +114,8 @@ SOCIALACCOUNT_PROVIDERS = {
     # },
     #   'google': {
     #     'APP': {
-    #         'client_id': config('GOOGLE_ID'),
-    #         'secret': config('GOOGLE_SECRET'),
+    #         'client_id': os.environ.get('GOOGLE_ID'),
+    #         'secret': os.environ.get('GOOGLE_SECRET'),
     #         'key': ''
     #     },
     #     'SCOPE': [
@@ -212,6 +211,8 @@ DATABASES = {
 }
 
 
+
+# Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -255,7 +256,7 @@ ACCOUNT_FORMS = {
 AUTH_USER_MODEL = 'dashboard.CustomUser'
 
 
-#configure of email backend
+#os.environ.geture of email backend
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
