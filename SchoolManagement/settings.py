@@ -1,19 +1,22 @@
 from pathlib import Path
 from decouple import config
-
+import dj_database_url
+from dotenv import load_dotenv
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+load_dotenv()
+SECRET_KEY = os.environ.get("SECRET_KEY")
+DEBUG = os.environ.get("DEBUG")
 ALLOWED_HOSTS = ['*']
 # CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://127.0.0.1:8000/"]
 
 
-import os
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -81,20 +84,22 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Default primary key field type about django-allauth settings
-SITE_ID = 8
+# SITE_ID = 8
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    'corsheaders.middleware.CorsMiddleware', 
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
-    # django-allauth middleware
-    'allauth.account.middleware.AccountMiddleware',
+    "allauth.account.middleware.AccountMiddleware", 
 ]
 # Configuration de l'authentification via les réseaux sociaux
 
@@ -193,26 +198,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
-
-'''
+# Database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER':config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD') ,
-        'HOST':config('DB_HOST') ,
-        'OPTIONS': {'sslmode': 'require'},
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('DB_URL')
+    )
 }
-'''
 
 
 
