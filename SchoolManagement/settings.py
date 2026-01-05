@@ -208,7 +208,7 @@ WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.parse(
-        os.environ.get('DB_URL')
+        os.environ.get('DATABASE_URL')
     )
 }
 
