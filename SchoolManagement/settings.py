@@ -11,9 +11,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG")
-ALLOWED_HOSTS = ['*']
-# CSRF_TRUSTED_ORIGINS =[ "http://127.0.0.1:8000","https://127.0.0.1:8000/"]
 
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS =[ "oraliseadmin.up.railway.app","oraliseadmin.up.railway.app"]
+
+ALLOWED_HOSTS = [
+    "oraliseadmin.up.railway.app",
+]
 
 
 
@@ -158,8 +162,9 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
 SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SECURE_SSL_REDIRECT = False
-# SESSION_COOKIE_SECURE = False
-# CSRF_COOKIE_SECURE = False
+
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE')
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE')
 
 #redirection url after login
 LOGIN_REDIRECT_URL = 'dashboard_home'
