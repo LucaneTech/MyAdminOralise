@@ -10,7 +10,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = os.environ.get("DEBUG")
+DEBUG = os.environ.get("DEBUG", default="False")
+
 
 ALLOWED_HOSTS = [
     "oraliseadmin.up.railway.app",
@@ -28,8 +29,22 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# AWS S3 / Railway Bucket
+AWS_ACCESS_KEY_ID = os.environ.get("ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("BUCKET")
+AWS_S3_ENDPOINT_URL = os.environ.get("ENDPOINT")
+AWS_S3_REGION_NAME = os.environ.get("REGION")
+
+# Utiliser S3 pour tous les fichiers médias
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# MEDIA_URL n'est plus locale, elle pointe vers le bucket
+MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
 
 
 # Application definition
@@ -62,10 +77,11 @@ INSTALLED_APPS = [
     
     #django-compressor to compress css and js files
     'compressor',
+
+    #bucket of railway
+    'storages',
     
 ]
-#if DEBUG is False:
-   # INSTALLED_APPS += ['whitenoise.runserver_nostatic']
 
 #djang-compressor
 STATICFILES_FINDERS = [
@@ -171,10 +187,10 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 
 
 
-if not DEBUG:
-    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", True)
-    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", True)
-    CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", True)
+# if not DEBUG:
+#     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", True)
+#     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", True)
+#     CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", True)
 
 
 
@@ -291,24 +307,24 @@ JAZZMIN_UI_TWEAKS = {
     "brand_small_text": True,
     "brand_colour": "navbar-cyan",
     "accent": "accent-lightblue",
-    "navbar": "navbar-dark",
+    "navbar": "navbar-white navbar-light",
     "no_navbar_border": True,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": False,
-    "sidebar": "sidebar-dark-info",
+    "sidebar": "sidebar-dark-primary",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": False,
     "sidebar_nav_compact_style": True,
     "sidebar_nav_legacy_style": True,
     "sidebar_nav_flat_style": False,
-    "theme": "darkly",
+    "theme": "flatly",
     "dark_mode_theme": "cyborg",
     "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
         "info": "btn-info",
         "warning": "btn-warning",
         "danger": "btn-danger",
