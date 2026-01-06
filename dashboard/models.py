@@ -8,7 +8,6 @@ from django.db.models import Avg
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
@@ -36,12 +35,12 @@ class CustomUser(AbstractUser):
             return self.user_profile.profile_picture.url
         return static('profile_pics/profile.png')
 
-# Modèle Profile unifié
+
+
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='user_profile')
     profile_picture = models.ImageField(
-        upload_to='profile_pics/',
-        default='static/assets/img/profile.png',
+        upload_to='profile_pics/',  # pour les uploads
         blank=True,
         null=True
     )
@@ -49,14 +48,20 @@ class Profile(models.Model):
     country = models.CharField(max_length=50)
     number = models.CharField(max_length=20)
     address = models.CharField(max_length=100)
-    about = models.TextField(
-        max_length=1000, 
-        default=" "
-    )
+    about = models.TextField(max_length=1000, default=" ")
     theme_preference = models.CharField(max_length=10, choices=[('light', 'Light'), ('dark', 'Dark')], default='light')
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+    @property
+    def profile_picture_url(self):
+        # si l'utilisateur a uploadé une photo, on renvoie son URL
+        if self.profile_picture and hasattr(self.profile_picture, 'url'):
+            return self.profile_picture.url
+        # sinon, on renvoie l'image par défaut stockée dans static
+        return static('assets/img/profile.png')
+
 
 # Langues enseignées
 class Language(models.Model):
