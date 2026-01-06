@@ -14,11 +14,15 @@ DEBUG = os.environ.get("DEBUG")
 
 ALLOWED_HOSTS = [
     "oraliseadmin.up.railway.app",
+    "127.0.0.1",
+    "localhost",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://oraliseadmin.up.railway.app",
+    "http://127.0.0.1:8000",
 ]
+
 
 
 
@@ -161,16 +165,17 @@ SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'dashboard_home'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = 'dashboard_home'
 SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
 # SOCIAL_AUTH_USER_MODEL = 'dashboard.CustomUser'
-# SOCIAL_AUTH_FACEBOOK_AUTH_EXTRA_ARGUMENTS = {'auth_type': 'reauthenticate'}
+
 SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SECURE_SSL_REDIRECT = False
 
-SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE')
-CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE')
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 #redirection url after login
 LOGIN_REDIRECT_URL = 'dashboard_home'
+
 #redirection url after logout
 LOGOUT_REDIRECT_URL = 'account_login'
 
@@ -373,7 +378,7 @@ JAZZMIN_SETTINGS = {
      "related_modal_active":True,
 
      #this code concern admin-dashboard style
-     "show_ui_builder": True,
+     "show_ui_builder": False,
     
 
 }
