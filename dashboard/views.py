@@ -264,7 +264,6 @@ def profile_edit(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
 
-
     if request.method == 'POST':
         form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
@@ -293,14 +292,14 @@ def profile_edit(request):
 
 # Vue pour changer la photo de profil
 
-@login_required
-def update_profile_picture(request):
-    if request.method == 'POST':
-        profile = request.user.user_profile
-        profile.profile_picture = request.FILES.get('profile_picture')
-        profile.save()
-        return redirect('profile_view')
-    return render(request, 'profiles/update_picture.html')
+# @login_required
+# def update_profile_picture(request):
+#     if request.method == 'POST':
+#         profile = request.user.user_profile
+#         profile.profile_picture = request.FILES.get('profile_picture')
+#         profile.save()
+#         return redirect('profile_view')
+#     return render(request, 'profiles/update_picture.html')
 
 
 @login_required

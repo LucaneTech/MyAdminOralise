@@ -208,7 +208,7 @@
               {{user.full_name}} 
               <p>( {{ user.get_role_display }} )</p>
             </h5>
-            <div class="h5 font-weight-300">
+            <div class="h5 font-weight-300" >
               {{ request.user.email }}
             </div>
             <div class="h5 mt-4">
@@ -235,7 +235,7 @@
         </div>
         <div class="card-body">
             <h1 class="profile-edit-title">Modifier le profil</h1>
-          <form method="post" enctype="multipart/form-data" class="profile-edit-form">
+          <form method="POST" enctype="multipart/form-data" class="profile-edit-form">
         {% csrf_token %}
         
         <!-- Photo de profil -->

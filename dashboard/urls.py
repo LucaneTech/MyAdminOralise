@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
-    profile_view, update_profile_picture,
+    # update_profile_picture,
+    profile_view, 
     dashboard_view, profile_edit, schedule_view,
     resources_view,resources_add, requests_view, dashboard_search,
     settings_view, teacher_view, teacher_courses, teacher_schedule,
@@ -39,7 +40,7 @@ urlpatterns = [
     # URLs communes
     path('profile/view/', profile_view, name='profile_view'),
     path('profile/edit/', profile_edit, name='profile_edit'),
-    path('profile/update-picture/', update_profile_picture, name='update_picture'),
+    # path('profile/update-picture/', update_profile_picture, name='update_picture'),
     path('search/', dashboard_search, name='dashboard_search'),
     path('settings/', settings_view, name='settings_view'),
     path('schedule/', schedule_view, name='schedule_view'),

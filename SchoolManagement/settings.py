@@ -168,10 +168,19 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
 
 SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
-SECURE_SSL_REDIRECT = False
 
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# def env_bool(name, default=False):
+#     return os.environ.get(name, str(default)).lower() in ("1", "true", "yes")
+
+# if not DEBUG:
+#     SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", True)
+#     SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", True)
+#     CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", True)
+# else:
+#     SECURE_SSL_REDIRECT = False
+#     SESSION_COOKIE_SECURE = False
+#     CSRF_COOKIE_SECURE = False
+
 
 #redirection url after login
 LOGIN_REDIRECT_URL = 'dashboard_home'
