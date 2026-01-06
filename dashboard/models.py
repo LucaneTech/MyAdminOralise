@@ -41,7 +41,7 @@ class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='user_profile')
     profile_picture = models.ImageField(
         upload_to='profile_pics/',
-        default='profile_pics/profile.png',
+        default='static/assets/img/profile.png',
         blank=True,
         null=True
     )
