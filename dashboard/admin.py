@@ -14,10 +14,10 @@ class CustomUserAdmin(UserAdmin):
         ("Informations Personnelles", {
             "fields": ("username", "email", "first_name", "last_name"),
         }),
-        ("Permissions", {
+        ("Roles", {
             "fields": ("role", "is_active", "is_staff", "is_superuser"),
         }),
-         ("Dates Importantes", {
+         ("Dates de connexion", {
             "fields": ("last_login", "date_joined"),
         }),
     )
