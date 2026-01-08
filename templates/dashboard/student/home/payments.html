@@ -141,7 +141,7 @@
                   {{ payment.hours_purchased }}h
                 </td>
                 <td>
-                  {{ payment.amount }}€
+                  {{ payment.amount }}MAD
                 </td>
                 <td>
                   <span class="badge badge-{% if payment.status == 'paid' %}success{% elif payment.status == 'pending' %}warning{% elif payment.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
