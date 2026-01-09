@@ -112,7 +112,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Default primary key field type about django-allauth settings
+
 SITE_ID = 1
 # SITE_ID = 8
 
