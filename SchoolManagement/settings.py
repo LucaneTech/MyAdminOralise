@@ -105,7 +105,7 @@ COMPRESS_ROOT = STATIC_ROOT
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-# django-allauth settings
+
 AUTHENTICATION_BACKENDS = [
    
     'django.contrib.auth.backends.ModelBackend',
