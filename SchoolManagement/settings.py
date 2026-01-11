@@ -129,7 +129,6 @@ MIDDLEWARE = [
     # django-allauth middleware
     'allauth.account.middleware.AccountMiddleware',
 ]
-# os.environ.geturation de l'authentification via les réseaux sociaux
 
 SOCIALACCOUNT_PROVIDERS = {
     
