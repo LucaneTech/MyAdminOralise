@@ -82,7 +82,7 @@ class CustomSignupForm(SignupForm):
 class CustomResetPasswordForm(ResetPasswordForm):
     def __init__(self, *args, **kwargs):
         super(CustomResetPasswordForm, self).__init__(*args, **kwargs)
-        self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email'})
+        self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email', 'class': 'custom-input'})
         
 
     

@@ -113,8 +113,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SITE_ID = 1
-# SITE_ID = 8
+# SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -232,19 +232,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 # Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Database
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL')
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.parse(
+#         os.environ.get('DATABASE_URL')
+#     )
+# }
 
 
 
@@ -294,12 +294,16 @@ AUTH_USER_MODEL = 'dashboard.CustomUser'
 
 #os.environ.geture of email backend
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'profrancisco579@gmail.com'
+# EMAIL_HOST_PASSWORD ='gouawphttulrhwan'
+# DEFAULT_FROM_EMAIL = 'profrancisco579@gmail.com'
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
 
 #django-jazzmin settings for admin dashboard
 JAZZMIN_UI_TWEAKS = {
@@ -405,6 +409,19 @@ JAZZMIN_SETTINGS = {
     
 
 }
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.oralise.pro'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = 'Oralise <contact@oralise.pro>'
+
+
 
 
 #current year
