@@ -113,8 +113,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# SITE_ID = 1
-SITE_ID = 8
+SITE_ID = 1
+# SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -232,19 +232,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # Database
-# DATABASES = {
-#     'default': dj_database_url.parse(
-#         os.environ.get('DATABASE_URL')
-#     )
-# }
+DATABASES = {
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL')
+    )
+}
 
 
 
