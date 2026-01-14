@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = os.environ.get("DEBUG", default="False")
+DEBUG = False
 
 
 ALLOWED_HOSTS = [
@@ -113,8 +113,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SITE_ID = 1
-# SITE_ID = 8
+# SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -232,19 +232,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 # Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Database
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL')
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.parse(
+#         os.environ.get('DATABASE_URL')
+#     )
+# }
 
 
 
@@ -411,15 +411,15 @@ JAZZMIN_SETTINGS = {
 }
 
 
-
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'mail.oralise.pro'
-EMAIL_PORT = 465
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER ="contact@oralise.pro"
-EMAIL_HOST_PASSWORD = "19082025@Kali"
+EMAIL_HOST_USER =os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = 'Oralise <contact@oralise.pro>'
+
 
 
 
