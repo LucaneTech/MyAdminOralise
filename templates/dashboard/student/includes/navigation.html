@@ -7,14 +7,7 @@
       <!-- Search form -->
       <form class="navbar-search navbar-search-light form-inline mr-sm-3" id="navbar-search-main"
         action="{% url 'dashboard_search' %}" method="get">
-        <div class="form-group mb-0">
-          <div class="input-group input-group-alternative input-group-merge">
-            <div class="input-group-prepend">
-              <span class="input-group-text"><i class="fas fa-search"></i></span>
-            </div>
-            <input class="form-control" placeholder="Rechercher..." type="text" name="q" value="{{ query|default:'' }}">
-          </div>
-        </div>
+        
         <button type="button" class="close" data-action="search-close" data-target="#navbar-search-main"
           aria-label="Close">
           <span aria-hidden="true">×</span>
@@ -44,26 +37,27 @@
           <a class="nav-link pr-0" href="#" role="button" data-toggle="dropdown" aria-haspopup="true"
             aria-expanded="false">
             <div class="media align-items-center">
-              <span class="">
-                {% if profile.profile_picture %}
-                <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="50px" height="50px"
-                  class="rounded-circle" style="
-                                    object-fit: cover;
-                                    border: 1px solid #fff;
-                                    padding: 0.5px;
-                                    ">
+               <div style="
+          display:flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+         ">
+                {% if form.instance.profile_picture %}
+                <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
+                  id="profile-picture-preview" class="current-profile-picture">
                 {% else %}
-                <span width="50px" height="50px" class="rounded-circle" style="
-                                    
-                                    border: 1px solid #fff;
-                                    padding: 0.5px;
-                                    background-color: gray;
-                                    "></span>
+                <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062);
+                 ">
+
                 {% endif %}
-              </span>
+
+              </div>
 
               <div class="media-body  ml-2  d-none d-lg-block">
-                <span class="mb-0 text-sm  font-weight-bold">
+                <span class="mb-0 text-md  font-weight-bold text-uppercase">
                   {{ request.user.username }}
                 </span>
               </div>

@@ -9,88 +9,88 @@
 
 
 <style>
-    /* Conteneur principal */
-.profile-edit-container {
+  /* Conteneur principal */
+  .profile-edit-container {
     max-width: 700px;
     margin: 0 auto;
     padding: 2rem;
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-}
+  }
 
-.profile-edit-title {
+  .profile-edit-title {
     text-align: center;
     color: #2c3e50;
     margin-bottom: 2rem;
     font-size: 2rem;
-}
+  }
 
-/* Formulaire */
-.profile-edit-form {
+  /* Formulaire */
+  .profile-edit-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-}
+  }
 
-/* Groupes de formulaire */
-.form-group {
+  /* Groupes de formulaire */
+  .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-}
+  }
 
-.form-label {
+  .form-label {
     font-weight: 600;
     color: #34495e;
     font-size: 1rem;
-}
+  }
 
-/* Champs de formulaire */
-.form-input {
+  /* Champs de formulaire */
+  .form-input {
     padding: 0.75rem 1rem;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 1rem;
     transition: all 0.3s ease;
-}
+  }
 
-.form-input:focus {
+  .form-input:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     outline: none;
-}
+  }
 
-/* Champ spécifique pour la photo */
-.profile-picture-group {
+  /* Champ spécifique pour la photo */
+  .profile-picture-group {
     align-items: center;
     text-align: center;
-}
+  }
 
-.profile-picture-preview {
+  .profile-picture-preview {
     width: 150px;
     height: 150px;
     border-radius: 50%;
     overflow: hidden;
     margin: 1rem auto;
     border: 3px solid #f1f1f1;
-}
+  }
 
-.current-profile-picture {
+  .current-profile-picture {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
+  }
 
-.profile-picture-input {
+  .profile-picture-input {
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
     padding: 0.5rem;
-}
+  }
 
-/* Zone de texte */
-.form-textarea {
+  /* Zone de texte */
+  .form-textarea {
     padding: 0.75rem 1rem;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -99,60 +99,61 @@
     resize: vertical;
     min-height: 120px;
     transition: all 0.3s ease;
-}
+  }
 
-.form-textarea:focus {
+  .form-textarea:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     outline: none;
-}
+  }
 
-/* Aide texte */
-.form-help {
+  /* Aide texte */
+  .form-help {
     color: #7f8c8d;
     font-size: 0.85rem;
     margin-top: 0.25rem;
-}
+  }
 
-/* Boutons */
-.form-actions {
+  /* Boutons */
+  .form-actions {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 1rem;
     margin-top: 1rem;
-}
+  }
 
-.btn {
-    padding:10px;
+  .btn {
+    padding: 10px;
     border: none;
     border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-}
+  }
 
-.btn-primary {
+  .btn-primary {
     background-color: #3498db;
     color: white;
-}
+  }
 
-.btn-primary:hover {
+  .btn-primary:hover {
     background-color: #2980b9;
-}
+  }
 
-.btn-secondary {
+  .btn-secondary {
     background-color: #ecf0f1;
     color: #2c3e50;
-}
+  }
 
-.btn-secondary:hover {
+  .btn-secondary:hover {
     background-color: #bdc3c7;
-}
+  }
 </style>
 
-<div class="header pb-6 d-flex align-items-center" style="min-height: 500px; background-image: url(&quot;{% static 'assets/img/account/login.jpg' %}&quot;); background-size: cover; background-position: center;">
+<div class="header pb-6 d-flex align-items-center"
+  style="min-height: 500px; background-image: url(&quot;{% static 'assets/img/account/login.jpg' %}&quot;); background-size: cover; background-position: center;">
   <!-- Mask -->
   <span class="mask bg-gradient-default opacity-2"></span>
 </div>
@@ -162,61 +163,47 @@
   <div class="row">
     <div class="col-xl-4 order-xl-2">
       <div class="card card-profile">
-        <img src="{% static 'assets/img/account/login.jpg' %}" alt="Image placeholder" class="card-img-top">
-        <div class="row justify-content-center">
-          <div class="col-lg-3 order-lg-2">
-            <div class="card-profile-image">
-              <a href="#">
-                <img src="{{ profile.profile_picture.url }}" alt="Photo de profil" width="90px" height="90px"
-                class="rounded-circle" style="
-                object-fit: cover;
-                border: 1px solid #fff;
-                padding: 0.5px;
-                ">
-              
-              </a>
-            </div>
-          </div>
-        </div>
+
+         <div style="
+          display:flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+         ">
+                {% if form.instance.profile_picture %}
+                <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
+                  id="profile-picture-preview" class="current-profile-picture">
+                {% else %}
+                <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 100px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062);
+                 margin-bottom: 15px;
+                 margin-top: 15px;">
+
+                {% endif %}
+
+              </div>
         <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
           <div class="d-flex justify-content-between">
-            <a href="#" class="btn btn-sm btn-info  mr-4 ">Connect</a>
-            <a href="#" class="btn btn-sm btn-default float-right">Message</a>
+            <a href="#" class="btn btn-sm btn-info  mr-4 " id="connect">Connect</a>
+            <a href="#" class="btn btn-sm btn-default float-right" id="message">Message</a>
           </div>
         </div>
         <div class="card-body pt-0">
           <div class="row">
             <div class="col">
-              <div class="card-profile-stats d-flex justify-content-center">
-                <div>
-                  <span class="heading">{{ student.hours_remaining }}</span>
-                  <span class="description">Heures restantes</span>
-                </div>
-                <div>
-                  <span class="heading">{{ student.languages.count }}</span>
-                  <span class="description">Langues</span>
-                </div>
-                <div>
-                  <span class="heading">{{ student.total_sessions.count}}</span>
-                  <span class="description">Séances</span>
-                </div>
-              </div>
+              
             </div>
           </div>
           <div class="text-center">
             <h5 class="h3">
-              {{user.full_name}} 
+              {{user.full_name}}
               <p>( {{ user.get_role_display }} )</p>
             </h5>
             <div class="h5 font-weight-300">
               {{ request.user.email }}
             </div>
-            <div class="h5 mt-4">
-              <i class="ni business_briefcase-24 mr-2"></i>Matricule: {{ student.matricule }}
-            </div>
-            <div>
-              <i class="ni education_hat mr-2"></i>Inscrit le {{ student.date_joined|date:"d/m/Y" }}
-            </div>
+          
           </div>
         </div>
       </div>
@@ -234,88 +221,72 @@
           </div>
         </div>
         <div class="card-body">
-            <h1 class="profile-edit-title">Modifier le profil</h1>
+          <h1 class="profile-edit-title">Modifier le profil</h1>
           <form method="post" enctype="multipart/form-data" class="profile-edit-form">
-        {% csrf_token %}
-        
-        <!-- Photo de profil -->
-        <div class="form-group profile-picture-group">
-            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Photo de profil</label>
-            <div class="profile-picture-preview">
+            {% csrf_token %}
+
+            <!-- Photo de profil -->
+            <div class="form-group profile-picture-group">
+              <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Photo de profil</label>
+              <div class="profile-picture-preview">
                 {% if form.instance.profile_picture %}
-                    <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle" id="profile-picture-preview" class="current-profile-picture">
+                <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
+                  id="profile-picture-preview" class="current-profile-picture">
                 {% else %}
-                     <img src="{static 'assets/img/profile.png'}" alt="photo de profil">
+                <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" class="img-fluid">
 
                 {% endif %}
-               
+
+              </div>
+              <input type="file" name="{{ form.profile_picture.name }}" id="{{ form.profile_picture.id_for_label }}"
+                class="form-input profile-picture-input" accept="image/*">
+              <small class="form-help">Format JPG, PNG ou GIF. Taille max: 5MB.</small>
             </div>
-            <input type="file" 
-                   name="{{ form.profile_picture.name }}" 
-                   id="{{ form.profile_picture.id_for_label }}" 
-                   class="form-input profile-picture-input"
-                   accept="image/*">
-            <small class="form-help">Format JPG, PNG ou GIF. Taille max: 5MB.</small>
-        </div>
-        
-        <!-- Ville -->
-        <div class="form-group">
-            <label for="{{ form.city.id_for_label }}" class="form-label">Ville</label>
-            <input type="text" 
-                   name="{{ form.city.name }}" 
-                   id="{{ form.city.id_for_label }}" 
-                   value="{{ form.city.value|default_if_none:'' }}"
-                   class="form-input city-input"
-                   placeholder="Entrez votre ville">
-        </div>
-        
-        <!-- Pays -->
-        <div class="form-group">
-            <label for="{{ form.country.id_for_label }}" class="form-label">Pays</label>
-            <input type="text" 
-                   name="{{ form.country.name }}" 
-                   id="{{ form.country.id_for_label }}" 
-                   value="{{ form.country.value|default_if_none:'' }}"
-                   class="form-input country-input"
-                   placeholder="Entrez votre pays">
-        </div>
-        <!--whatsapp num-->
-        <div class="form-group">
-            <label for="{{ form.number.id_for_label }}" class="form-label">Numéro Whatsapp</label>
-            <input type="text" 
-                   name="{{ form.number.name }}" 
-                   id="{{ form.number.id_for_label }}" 
-                   value="{{ form.number.value|default_if_none:'' }}"
-                   class="form-input address-input"
-                   placeholder="Entrez votre numéro whatsapp">
-        </div>
-        
-        <!-- Adresse -->
-        <div class="form-group">
-            <label for="{{ form.address.id_for_label }}" class="form-label">Adresse</label>
-            <input type="text" 
-                   name="{{ form.address.name }}" 
-                   id="{{ form.address.id_for_label }}" 
-                   value="{{ form.address.value|default_if_none:'' }}"
-                   class="form-input address-input"
-                   placeholder="Entrez votre adresse complète">
-        </div>
-        
-        <!-- À propos -->
-        <div class="form-group">
-            <label for="{{ form.about.id_for_label }}" class="form-label">À propos de moi</label>
-            <textarea name="{{ form.about.name }}" 
-                      id="{{ form.about.id_for_label }}" 
-                      class="form-textarea about-textarea"
-                      rows="5"
-                      placeholder="Décrivez-vous en quelques mots...">{{ form.about.value|default_if_none:'' }}</textarea>
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary submit-btn">Enregistrer</button>
-            <a href="{% url 'profile_view' %}" class="btn btn-secondary cancel-btn">Annuler</a>
-        </div>
-    </form>
+
+            <!-- Ville -->
+            <div class="form-group">
+              <label for="{{ form.city.id_for_label }}" class="form-label">Ville</label>
+              <input type="text" name="{{ form.city.name }}" id="{{ form.city.id_for_label }}"
+                value="{{ form.city.value|default_if_none:'' }}" class="form-input city-input"
+                placeholder="Entrez votre ville">
+            </div>
+
+            <!-- Pays -->
+            <div class="form-group">
+              <label for="{{ form.country.id_for_label }}" class="form-label">Pays</label>
+              <input type="text" name="{{ form.country.name }}" id="{{ form.country.id_for_label }}"
+                value="{{ form.country.value|default_if_none:'' }}" class="form-input country-input"
+                placeholder="Entrez votre pays">
+            </div>
+            <!--whatsapp num-->
+            <div class="form-group">
+              <label for="{{ form.number.id_for_label }}" class="form-label">Numéro Whatsapp</label>
+              <input type="text" name="{{ form.number.name }}" id="{{ form.number.id_for_label }}"
+                value="{{ form.number.value|default_if_none:'' }}" class="form-input address-input"
+                placeholder="Entrez votre numéro whatsapp">
+            </div>
+
+            <!-- Adresse -->
+            <div class="form-group">
+              <label for="{{ form.address.id_for_label }}" class="form-label">Adresse</label>
+              <input type="text" name="{{ form.address.name }}" id="{{ form.address.id_for_label }}"
+                value="{{ form.address.value|default_if_none:'' }}" class="form-input address-input"
+                placeholder="Entrez votre adresse complète">
+            </div>
+
+            <!-- À propos -->
+            <div class="form-group">
+              <label for="{{ form.about.id_for_label }}" class="form-label">À propos de moi</label>
+              <textarea name="{{ form.about.name }}" id="{{ form.about.id_for_label }}"
+                class="form-textarea about-textarea" rows="5"
+                placeholder="Décrivez-vous en quelques mots...">{{ form.about.value|default_if_none:'' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary submit-btn">Enregistrer</button>
+              <a href="{% url 'profile_view' %}" class="btn btn-secondary cancel-btn">Annuler</a>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -325,33 +296,46 @@
 
 <script>
 
-document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function(e) {
+  document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function (e) {
     const preview = document.getElementById('profile-picture-preview');
     const file = e.target.files[0];
     const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        if (!preview) {
-            const previewContainer = document.querySelector('.profile-picture-preview');
-            previewContainer.innerHTML = `<img src="${e.target.result}" id="profile-picture-preview" class="current-profile-picture">`;
-        } else {
-            preview.src = e.target.result;
-        }
+
+    reader.onload = function (e) {
+      if (!preview) {
+        const previewContainer = document.querySelector('.profile-picture-preview');
+        previewContainer.innerHTML = `<img src="${e.target.result}" id="profile-picture-preview" class="current-profile-picture">`;
+      } else {
+        preview.src = e.target.result;
+      }
     };
-    
+
     if (file) {
-        reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
     }
-});
+  });
 </script>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+<!-- Specific JS goes HERE -->
+{% block javascripts %}
+
+<script>
+const buttons = document.querySelectorAll('#connect, #message');
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    alert('Option à venir 👀');
+  });
+});
+
+
+</script>
+{% endblock javascripts %}
 
 
 
 
-<!-- Specific JS goes HERE --> 
+<!-- Specific JS goes HERE -->
 {% comment %} {% block javascripts %}{% endblock javascripts %} {% endcomment %}

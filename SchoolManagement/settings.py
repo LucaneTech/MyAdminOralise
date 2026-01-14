@@ -113,8 +113,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SITE_ID = 1
-# SITE_ID = 8
+# SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -231,20 +231,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
-# Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
-# Database
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL')
-    )
-}
 
 
 
@@ -401,7 +403,7 @@ JAZZMIN_SETTINGS = {
     "user_avatar": None,
     
     #this concern models applying like popup
-     "related_modal_active":True,
+     "related_modal_active":False,
 
      #this code concern admin-dashboard style
      "show_ui_builder": False,
@@ -414,7 +416,7 @@ JAZZMIN_SETTINGS = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 465))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
