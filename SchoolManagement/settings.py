@@ -113,8 +113,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# SITE_ID = 1
-SITE_ID = 8
+SITE_ID = 1
+#SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
