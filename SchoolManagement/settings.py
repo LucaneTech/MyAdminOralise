@@ -22,7 +22,7 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://oraliseadmin.up.railway.app",
-    "https://monespace.oralise.pro/",
+    "https://monespace.oralise.pro",
     "http://127.0.0.1:8000",
 ]
 
