@@ -97,10 +97,6 @@ class RequestAdmin(admin.ModelAdmin):
     fields = ('student', 'request_type', 'subject', 'description', 'attachment', 'status', 'response')
     readonly_fields = ('created_at', 'updated_at')
 
-# @admin.register(Mark)
-# class MarkAdmin(admin.ModelAdmin):
-#     list_display = ('student', 'skill', 'mark')
-#     list_filter = ('student', 'skill', 'mark')
 
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):

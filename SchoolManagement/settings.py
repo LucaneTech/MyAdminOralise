@@ -2,6 +2,7 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 import os
+from django.contrib.messages import constants as messages
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -115,8 +116,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SITE_ID = 1
-#SITE_ID = 8
+# SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -132,53 +133,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
-SOCIALACCOUNT_PROVIDERS = {
-    
-    # 'github': {
-    #      'APP':{
-    #         'client_id':os.environ.get('GITHUB_ID'),
-    #         'secret': os.environ.get('GITHUB_SECRET'),
-    #         'key':''
-                 
-    #      }
-      
-    # },
-    #   'google': {
-    #     'APP': {
-    #         'client_id': os.environ.get('GOOGLE_ID'),
-    #         'secret': os.environ.get('GOOGLE_SECRET'),
-    #         'key': ''
-    #     },
-    #     'SCOPE': [
-    #         'profile',
-    #         'email',
-    #     ],
-    #     'AUTH_PARAMS': {
-    #         'access_type': 'online',
-    #     },
-    #     'OAUTH_PKCE_ENABLED': True,
-    # }
-    
-    # 'facebook': {
-    #     'APP': {
-    #         'client_id': '1333999141190521', 
-    #         'secret': '76476daf43f4274a9af88536aa3fe53e',  
-    #     },
-    #     'AUTH_PARAMS':{
-    #         'auth_type':'reauthenticate',
-    #     },
-        # 'SCOPE': ['email', 'public_profile'],
-        # 'AUTH_PARAMS': {'auth_type': 'reauthenticate'},            
-        # 'OAUTH_PKCE_ENABLED': True,
-        # 'FIELDS': ['id', 'email', 'name', 'first_name', 'last_name'], 
-        # 'EXCHANGE_TOKEN': True,
-        # 'METHOD': 'oauth2', 
-        # 'VERIFIED_EMAIL': False,
-        # 'VERSION': 'v18.0',
-
-        
- #   }
-}
+SOCIALACCOUNT_PROVIDERS = {}
 
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = False 
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'dashboard_home'
@@ -188,15 +143,6 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
 
 SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
-
-
-
-# if not DEBUG:
-#     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", True)
-#     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", True)
-#     CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", True)
-
-
 
 #redirection url after login
 LOGIN_REDIRECT_URL = 'dashboard_home'
@@ -234,19 +180,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.sqlite3',
-    #         'NAME': BASE_DIR / 'db.sqlite3',
-    #     }
-    # }
-DATABASES = {
-        'default': dj_database_url.parse(
-            os.environ.get("DATABASE_URL"),
-        )
+
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
+else:
+    DATABASES = {
+            'default': dj_database_url.parse(
+                os.environ.get("DATABASE_URL"),
+            )
+        }
 
 
+
+#delete admin django notifications
+MESSAGE_LEVEL = messages.ERROR
 
 
 # Password validation

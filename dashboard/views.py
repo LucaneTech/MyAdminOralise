@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.db.models import Count, Avg, Q
 from django.utils import timezone
 from django.contrib import messages
-
+from django.db.models import Sum
 
 from dashboard.models import (
     CustomUser, Student, Teacher, Profile, 
@@ -40,7 +40,8 @@ def dashboard_view(request, username=None):
         # Vérifier si l'utilisateur demandé existe
         requested_user = get_object_or_404(CustomUser, username=username)
         profile = get_object_or_404(Profile, user=requested_user)
-        
+        session = get_object_or_404(Session, student__user=requested_user)
+
         # Vérifier si l'utilisateur est un étudiant
         if requested_user.role != 'student':
             raise Http404("Cette page est réservée aux étudiants.")
@@ -49,6 +50,7 @@ def dashboard_view(request, username=None):
             'profile': profile,
             'user': request.user,
             'username': username,
+            'session': session,
         }
         
         student = get_object_or_404(Student, user=requested_user)
@@ -62,6 +64,7 @@ def dashboard_view(request, username=None):
             'total_hours_used': student.total_hours_used,
             'languages': student.languages.all(),
             'current_teacher': student.current_teacher,
+            
         })
         
         # Planning personnel (séances à venir)
@@ -1350,6 +1353,7 @@ def payments_view(request):
     
     student = get_object_or_404(Student, user=request.user)
     payments = Payment.objects.filter(student=student)
+    total_paid = payments.filter(status='paid').aggregate(total=Sum('amount'))['total'] or 0
     profile = get_object_or_404(Profile,user=request.user)
     user = request.user
     
@@ -1357,7 +1361,8 @@ def payments_view(request):
         'payments': payments,
         'student': student,
         'user': user,
-        'profile': profile
+        'profile': profile,
+        'total_paid': total_paid
     }
     return render(request, 'dashboard/student/home/payments.html', context)
 

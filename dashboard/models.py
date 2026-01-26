@@ -439,7 +439,7 @@ class Payment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_date = models.DateTimeField(auto_now_add=True)
     expiry_date = models.DateField(null=True, blank=True)
-    invoice_number = models.CharField(max_length=50, unique=True, blank=True)
+    invoice_number = models.CharField(max_length=50, unique=True, blank=True, auto_created=True)
     
     def __str__(self):
         return f"{self.student} - {self.amount}€ ({self.get_status_display()})"
