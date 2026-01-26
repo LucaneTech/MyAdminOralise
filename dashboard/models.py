@@ -529,6 +529,7 @@ class Request(models.Model):
     ]
     
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='requests')
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='received_requests', null=True, blank=True)
     request_type = models.CharField(max_length=20, choices=REQUEST_TYPES)
     subject = models.CharField(max_length=200)
     description = models.TextField()

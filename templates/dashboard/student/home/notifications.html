@@ -13,7 +13,8 @@
           <h6 class="h2 text-white d-inline-block mb-0">Notifications</h6>
           <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i
+                    class="fas fa-home"></i></a></li>
               <li class="breadcrumb-item active" aria-current="page">Notifications</li>
             </ol>
           </nav>
@@ -32,33 +33,59 @@
             <div class="col">
               <h3 class="mb-0">Toutes les notifications</h3>
             </div>
+            {% for notification in notifications %}
+            {% if notification %}
             <div class="col text-right">
-              <button type="button" class="btn btn-primary" id="markAllRead">
-                <i class="ni ni-check-bold"></i> Tout marquer comme lu
+              <button type="button" class="btn btn-sm btn-primary" id="markAllRead">
+                Marquer tout comme lu
               </button>
             </div>
+
+            {% endif %}
+            {% endfor %}
           </div>
         </div>
         <div class="card-body">
           {% if notifications %}
           <div class="list-group">
             {% for notification in notifications %}
-            <div class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-primary{% endif %}" data-notification-id="{{ notification.id }}">
-              <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">{{ notification.title }}</h5>
-                <small>{{ notification.created_at|timesince }} ago</small>
+            <div
+              class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-primary{% endif %}"
+              data-notification-id="{{ notification.id }} ">
+              <div class="d-flex w-100 justify-content-between flex-wrap">
+                <h5 class="mb-1 text-uppercase">{{ notification.title }}</h5>
+                <div class="d-flex">
+                  <small>{{ notification.created_at|timesince }} passée(s)</small>
+                  {% if notification.is_read %}
+                  <button type="button" class="btn btn-sm btn-outline-danger ml-3 delete-notification-btn"
+                    data-notification-id="{{ notification.id }}">
+                    Supprimer
+                  </button>
+
+                  {% endif %}
+                </div>
               </div>
-              <p class="mb-1">{{ notification.message }}</p>
+
               <small>
-                <span class="badge badge-{% if notification.notification_type == 'session_reminder' %}info{% elif notification.notification_type == 'payment_due' %}warning{% elif notification.notification_type == 'certificate_ready' %}success{% elif notification.notification_type == 'evaluation_ready' %}primary{% else %}secondary{% endif %}">
+                <p class="mb-1">{{ notification.message }}</p>
+                <span
+                  class="badge badge-{% if notification.notification_type == 'session_reminder' %}info{% elif notification.notification_type == 'payment_due' %}warning{% elif notification.notification_type == 'certificate_ready' %}success{% elif notification.notification_type == 'evaluation_ready' %}primary{% else %}secondary{% endif %}">
                   {{ notification.get_notification_type_display }}
                 </span>
+
                 {% if not notification.is_read %}
-                <button type="button" class="btn btn-sm btn-outline-primary ml-2 mark-read-btn" data-notification-id="{{ notification.id }}">
+                <button type="button" class="btn btn-sm btn-outline-primary ml-2 mark-read-btn"
+                  data-notification-id="{{ notification.id }}">
                   Marquer comme lu
                 </button>
+                {% else %}
+                <span class="text-muted ml-2">--Lu--</span>
                 {% endif %}
+
               </small>
+
+
+
             </div>
             {% endfor %}
           </div>
@@ -70,6 +97,8 @@
           </div>
           {% endif %}
         </div>
+
+
       </div>
     </div>
   </div>
@@ -78,66 +107,76 @@
 
 {% block javascripts %}
 <script>
-$(document).ready(function() {
-    // Marquer une notification comme lue
-    $('.mark-read-btn').click(function() {
-        var notificationId = $(this).data('notification-id');
-        var $listItem = $(this).closest('.list-group-item');
-        
-        $.ajax({
-            url: '{% url "notifications_view" %}',
-            method: 'POST',
-            data: {
-                'notification_id': notificationId,
-                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-            },
-            success: function(response) {
-                if (response.success) {
-                    $listItem.removeClass('list-group-item-primary');
-                    $('.mark-read-btn[data-notification-id="' + notificationId + '"]').remove();
-                }
-            },
-            error: function(xhr) {
-                alert('Erreur lors de la mise à jour de la notification');
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.mark-read-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        const notificationId = this.dataset.notificationId;
+        const notificationItem = this.closest('.list-group-item');
+
+        fetch("{% url 'notifications_view' %}", {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `notification_id=${notificationId}`
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // UI update
+              this.remove();
+              notificationItem.classList.remove('list-group-item-primary');
             }
+          });
+      });
+    });
+  });
+
+  document.getElementById('markAllRead').addEventListener('click', function () {
+    fetch("{% url 'notifications_mark_all_read' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // UI update
+          document.querySelectorAll('.list-group-item-primary').forEach(item => {
+            item.classList.remove('list-group-item-primary');
+            const markReadBtn = item.querySelector('.mark-read-btn');
+            if (markReadBtn) {
+              markReadBtn.remove();
+            }
+          });
+        }
+      });
+  });
+  document.querySelectorAll('.delete-notification-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const notificationId = this.dataset.notificationId;
+      const notificationItem = this.closest('.list-group-item');
+
+      fetch("{% url 'delete_notification' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `notification_id=${notificationId}`
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            notificationItem.remove();
+          }
         });
     });
-    
-    // Marquer toutes les notifications comme lues
-    $('#markAllRead').click(function() {
-        var unreadNotifications = $('.mark-read-btn');
-        var processed = 0;
-        
-        unreadNotifications.each(function() {
-            var notificationId = $(this).data('notification-id');
-            var $listItem = $(this).closest('.list-group-item');
-            
-            $.ajax({
-                url: '{% url "notifications_view" %}',
-                method: 'POST',
-                data: {
-                    'notification_id': notificationId,
-                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $listItem.removeClass('list-group-item-primary');
-                        $('.mark-read-btn[data-notification-id="' + notificationId + '"]').remove();
-                    }
-                    processed++;
-                    if (processed === unreadNotifications.length) {
-                        location.reload();
-                    }
-                },
-                error: function(xhr) {
-                    processed++;
-                    if (processed === unreadNotifications.length) {
-                        location.reload();
-                    }
-                }
-            });
-        });
-    });
-});
+  });
+
 </script>
-{% endblock javascripts %} 
+
+{% endblock javascripts %}

@@ -1,3 +1,4 @@
+from urllib import request
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.generic import DetailView, UpdateView
@@ -387,7 +388,8 @@ def resources_add(request):
     return render(request, 'dashboard/teacher/home/resources_add.html', context)
 
 
-
+@login_required
+@login_required
 def requests_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
@@ -400,48 +402,47 @@ def requests_view(request):
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
         
-        # Traitement du formulaire de nouvelle demande
+        # Formulaire de nouvelle demande
         if request.method == 'POST':
             request_type = request.POST.get('request_type')
             subject = request.POST.get('subject')
             description = request.POST.get('description')
             attachment = request.FILES.get('attachment')
             
-            # create a new request
-            new_request = Request.objects.create(
+            Request.objects.create(
                 student=student,
                 request_type=request_type,
                 subject=subject,
                 description=description,
                 attachment=attachment
             )
-            
-            # Rediriger vers la même page pour éviter la soumission multiple
             return redirect('requests_view')
         
-        # gitting all reuest 
         requests = Request.objects.filter(student=student)
-        
-        #requests statistics
-        total_requests = requests.count()
-        pending_requests = requests.filter(status='pending').count()
-        approved_requests = requests.filter(status='approved').count()
-        rejected_requests = requests.filter(status='rejected').count()
-        
         context.update({
             'requests': requests,
-            'total_requests': total_requests,
-            'pending_requests': pending_requests,
-            'approved_requests': approved_requests,
-            'rejected_requests': rejected_requests,
+            'total_requests': requests.count(),
+            'pending_requests': requests.filter(status='pending').count(),
+            'approved_requests': requests.filter(status='approved').count(),
+            'rejected_requests': requests.filter(status='rejected').count(),
             'student': student
         })
         return render(request, 'dashboard/student/home/requests.html', context)
     
     elif user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=user)
+        
+        # toutes les requêtes des étudiants de cet enseignant
+        requests = Request.objects.filter(student__teacher=teacher)
+        
         context.update({
-            'teacher': teacher
+            'teacher': teacher,
+            'requests': requests,
+            'total_requests': requests.count(),
+            'pending_requests': requests.filter(status='pending').count(),
+            'processing_requests': requests.filter(status='processing').count(),
+            'approved_requests': requests.filter(status='approved').count(),
+            'rejected_requests': requests.filter(status='rejected').count()
         })
         return render(request, 'dashboard/teacher/home/requests.html', context)
 
@@ -1325,13 +1326,17 @@ def evaluations_view(request):
 def notifications_view(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
     profile = get_object_or_404(Profile, user = request.user)
-    if request.method == 'POST':
-        notification_id = request.POST.get('notification_id')
-        if notification_id:
-            notification = get_object_or_404(Notification, id=notification_id, user=request.user)
-            notification.is_read = True
-            notification.save()
-            return JsonResponse({'success': True})
+    notification_id = request.POST.get('notification_id')
+
+    #check if notification_id is provided to mark as read
+    if notification_id:
+        notification = Notification.objects.get(
+            id=notification_id,
+            user=request.user
+        )
+        notification.is_read = True
+        notification.save()
+        return JsonResponse({'success': True})
     
     context = {
         'notifications': notifications,
@@ -1344,6 +1349,29 @@ def notifications_view(request):
         return render(request, 'dashboard/student/home/notifications.html', context)
     else:
         return render(request, 'dashboard/teacher/home/notifications.html', context)
+
+@login_required
+def notifications_mark_all_read(request):
+    if request.method == 'POST':
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+
+@login_required
+def delete_notification(request):
+    notification_id = request.POST.get('notification_id')
+
+    #check if notification_id is provided to mark as read
+    if notification_id:
+        notification = Notification.objects.get(
+            id=notification_id,
+            user=request.user
+        )
+        notification.is_read = True
+        notification.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'ID de notification manquant'})
+
 
 @login_required
 def payments_view(request):

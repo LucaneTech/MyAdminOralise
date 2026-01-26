@@ -1,0 +1,42 @@
+{% extends "dashboard/teacher/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h3>Requêtes des étudiants</h3>
+
+    <div class="row mb-4">
+        <div class="col">
+            <span>Total : {{ total_requests }}</span> |
+            <span>En attente : {{ pending_requests }}</span> |
+            <span>En cours : {{ processing_requests }}</span> |
+            <span>Approuvées : {{ approved_requests }}</span> |
+            <span>Rejetées : {{ rejected_requests }}</span>
+        </div>
+    </div>
+
+    {% if requests %}
+        <div class="list-group">
+            {% for req in requests %}
+            <div class="list-group-item list-group-item-action {% if req.status == 'pending' %}list-group-item-warning{% elif req.status == 'processing' %}list-group-item-info{% elif req.status == 'approved' %}list-group-item-success{% elif req.status == 'rejected' %}list-group-item-danger{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ req.subject }} ({{ req.student.user.username }})</h5>
+                    <small>{{ req.created_at|timesince }} passé(s)</small>
+                </div>
+                <p>{{ req.description }}</p>
+                {% if req.attachment %}
+                <a href="{{ req.attachment.url }}" target="_blank">Voir la pièce jointe</a>
+                {% endif %}
+                <small class="d-block mt-2">
+                    <span class="badge badge-secondary">{{ req.get_request_type_display }}</span>
+                    <span class="badge badge-primary">{{ req.get_status_display }}</span>
+                </small>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <h5 class="text-muted">Aucune requête pour le moment</h5>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

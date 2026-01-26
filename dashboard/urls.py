@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import (
     # update_profile_picture,
+    delete_notification,
+    notifications_mark_all_read,
     profile_view, 
     dashboard_view, profile_edit, schedule_view,
     resources_view,resources_add, requests_view, dashboard_search,
@@ -53,6 +55,8 @@ urlpatterns = [
     path('certificates/', certificates_view, name='certificates_view'),
     path('evaluations/', evaluations_view, name='evaluations_view'),
     path('notifications/', notifications_view, name='notifications_view'),
+    path('notifications/mark-read/', notifications_mark_all_read, name='notifications_mark_all_read'),
+    path('notifications/delete/', delete_notification, name='delete_notification'),
     path('payments/', payments_view, name='payments_view'),
     path('sessions/', student_sessions_view, name='student_sessions'),
     
