@@ -1508,7 +1508,7 @@ def student_sessions_view(request):
     if date_filter:
         sessions = sessions.filter(date=date_filter)
     
-    sessions = sessions.order_by('-date', '-start_time')
+    sessions = sessions.order_by('date', 'start_time')
     
     context = {  
         'sessions': sessions,
