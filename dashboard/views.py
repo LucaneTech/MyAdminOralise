@@ -397,7 +397,6 @@ def resources_add(request):
 def requests_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
-    teacher = get_object_or_404(Teacher, user=user)
     
     context = {
         'profile': profile,
@@ -408,7 +407,7 @@ def requests_view(request):
     # ----- POUR LES ÉTUDIANTS -----
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
-        teacher = student.current_teacher
+
         # Création d'une nouvelle demande
         if request.method == 'POST':
             request_type = request.POST.get('request_type')
@@ -430,7 +429,6 @@ def requests_view(request):
         
         context.update({
             'student': student,
-            'teacher': teacher,
             'requests': requests,
             'total_requests': requests.count(),
             'pending_requests': requests.filter(status='pending').count(),
@@ -442,7 +440,7 @@ def requests_view(request):
 
     # ----- POUR LES ENSEIGNANTS (optionnel) -----
     elif user.role == 'teacher':
-
+        teacher = get_object_or_404(Teacher, user=user)
         # Toutes les demandes des étudiants liés à cet enseignant
         requests = Request.objects.filter(student__current_teacher=teacher)
 
