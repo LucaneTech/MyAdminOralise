@@ -397,16 +397,18 @@ def resources_add(request):
 def requests_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
+    
     context = {
         'profile': profile,
         'user': user,
         'username': user.username,
     }
 
+    # ----- POUR LES ÉTUDIANTS -----
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
-        
-        # Formulaire de nouvelle demande
+
+        # Création d'une nouvelle demande
         if request.method == 'POST':
             request_type = request.POST.get('request_type')
             subject = request.POST.get('subject')
@@ -422,25 +424,26 @@ def requests_view(request):
             )
             return redirect('requests_view')
         
-        requests = Request.objects.filter(student=student)
+        # Toutes les demandes de l'étudiant
+        requests_qs = Request.objects.filter(student=student)
 
         context.update({
-            'requests': requests,
-            'total_requests': requests.count(),
-            'pending_requests': requests.filter(status='pending').count(),
-            'approved_requests': requests.filter(status='approved').count(),
-            'rejected_requests': requests.filter(status='rejected').count(),
-            'student': student
+            'student': student,
+            'requests': requests_qs,
+            'total_requests': requests_qs.count(),
+            'pending_requests': requests_qs.filter(status='pending').count(),
+            'approved_requests': requests_qs.filter(status='approved').count(),
+            'rejected_requests': requests_qs.filter(status='rejected').count()
         })
-        return render(request, 'dashboard/student/home/requests.html', context)
-    
-    elif user.role == 'teacher':
-       
-        # Remplacez get_object_or_404 par .filter().first()
-        teacher = Teacher.objects.filter(user=user).first()
 
-        # toutes les requêtes des étudiants de cet enseignant
-        requests = Request.objects.filter(student__current_teacher=teacher).first()
+        return render(request, 'dashboard/student/home/requests.html', context)
+
+    # ----- POUR LES ENSEIGNANTS (optionnel) -----
+    elif user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=user)
+
+        # Toutes les demandes des étudiants liés à cet enseignant
+        # requests = Request.objects.filter(student__current_teacher=teacher)
 
         context.update({
             'teacher': teacher,
@@ -451,6 +454,7 @@ def requests_view(request):
             'approved_requests': requests.filter(status='approved').count(),
             'rejected_requests': requests.filter(status='rejected').count()
         })
+
         return render(request, 'dashboard/teacher/home/requests.html', context)
 
 
