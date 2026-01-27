@@ -397,6 +397,7 @@ def resources_add(request):
 def requests_view(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
+    teacher = get_object_or_404(Teacher, user=user)
     
     context = {
         'profile': profile,
@@ -407,7 +408,7 @@ def requests_view(request):
     # ----- POUR LES ÉTUDIANTS -----
     if user.role == 'student':
         student = get_object_or_404(Student, user=user)
-
+        teacher = student.current_teacher
         # Création d'une nouvelle demande
         if request.method == 'POST':
             request_type = request.POST.get('request_type')
@@ -425,25 +426,25 @@ def requests_view(request):
             return redirect('requests_view')
         
         # Toutes les demandes de l'étudiant
-        requests_qs = Request.objects.filter(student=student)
-
+        requests = Request.objects.filter(student=student)
+        
         context.update({
             'student': student,
-            'requests': requests_qs,
-            'total_requests': requests_qs.count(),
-            'pending_requests': requests_qs.filter(status='pending').count(),
-            'approved_requests': requests_qs.filter(status='approved').count(),
-            'rejected_requests': requests_qs.filter(status='rejected').count()
+            'teacher': teacher,
+            'requests': requests,
+            'total_requests': requests.count(),
+            'pending_requests': requests.filter(status='pending').count(),
+            'approved_requests': requests.filter(status='approved').count(),
+            'rejected_requests': requests.filter(status='rejected').count()
         })
 
         return render(request, 'dashboard/student/home/requests.html', context)
 
     # ----- POUR LES ENSEIGNANTS (optionnel) -----
     elif user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=user)
 
         # Toutes les demandes des étudiants liés à cet enseignant
-        # requests = Request.objects.filter(student__current_teacher=teacher)
+        requests = Request.objects.filter(student__current_teacher=teacher)
 
         context.update({
             'teacher': teacher,
