@@ -177,7 +177,7 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
-# Notes
+# Notes = not important in this app
 class Mark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)

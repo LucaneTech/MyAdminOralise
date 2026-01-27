@@ -3,6 +3,7 @@ import dj_database_url
 from dotenv import load_dotenv
 import os
 from django.contrib.messages import constants as messages
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -116,8 +117,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-SITE_ID = 1
-# SITE_ID = 8
+# SITE_ID = 1
+SITE_ID = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,7 +146,7 @@ SOCIALACCOUNT_LOGIN_ON_GET=True
 SOCIALACCOUNT_QUERY_EMAIL = True
 
 #redirection url after login
-LOGIN_REDIRECT_URL = 'dashboard_home'
+LOGIN_REDIRECT_URL = '/'
 
 #redirection url after logout
 LOGOUT_REDIRECT_URL = 'account_login'
@@ -182,22 +183,23 @@ WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
 
 
 
- #   DATABASES = {
-       # 'default': {
-          #  'ENGINE': #'django.db.backends.sqlite3',
-      #      'NAME': BASE_DIR / 'db.sqlite3',
-     #   }
-  #  }
 DATABASES = {
-            'default': dj_database_url.parse(
-                os.environ.get("DATABASE_URL"),
-            )
-        }
+       'default': {
+           'ENGINE': 'django.db.backends.sqlite3',
+           'NAME': BASE_DIR / 'db.sqlite3',
+       }
+    }
+
+# DATABASES = {
+#             'default': dj_database_url.parse(
+#                 os.environ.get("DATABASE_URL"),
+#             )
+#         }
 
 
 
 #delete admin django notifications
-MESSAGE_LEVEL = messages.ERROR
+# MESSAGE_LEVEL = messages.ERROR
 
 
 # Password validation

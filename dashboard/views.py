@@ -23,6 +23,7 @@ import json
 def custom_404_view(request, exception):
     return render(request, '404.html', status=404)
 
+
 @login_required
 def dashboard_view(request, username=None):
     # Si aucun username n'est fourni, utiliser celui de l'utilisateur connecté
@@ -35,13 +36,15 @@ def dashboard_view(request, username=None):
 
     #if user'role is preUser
     if request.user.role == 'preUser':
-        return redirect('home')
+        return redirect('dashboard_home')
     
     try:
         # Vérifier si l'utilisateur demandé existe
         requested_user = get_object_or_404(CustomUser, username=username)
         profile = get_object_or_404(Profile, user=requested_user)
-        session = get_object_or_404(Session, student__user=requested_user)
+        # Remplacez get_object_or_404 par .filter().first()
+        session = Session.objects.filter(student__user=requested_user).first()
+
 
         # Vérifier si l'utilisateur est un étudiant
         if requested_user.role != 'student':
@@ -388,7 +391,8 @@ def resources_add(request):
     return render(request, 'dashboard/teacher/home/resources_add.html', context)
 
 
-@login_required
+
+
 @login_required
 def requests_view(request):
     user = request.user
@@ -432,8 +436,10 @@ def requests_view(request):
     elif user.role == 'teacher':
         teacher = get_object_or_404(Teacher, user=user)
         
+        # Remplacez get_object_or_404 par .filter().first()
+
         # toutes les requêtes des étudiants de cet enseignant
-        requests = Request.objects.filter(student__teacher=teacher)
+        requests = Request.objects.filter(student__teacher=teacher).first()
         
         context.update({
             'teacher': teacher,
