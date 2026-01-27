@@ -82,9 +82,11 @@ class Student(models.Model):
     total_hours_purchased = models.IntegerField(default=0)
     total_hours_used = models.IntegerField(default=0)
     current_teacher = models.ForeignKey('Teacher', on_delete=models.SET_NULL, null=True, blank=True, related_name='current_students')
-    
+
     @property
     def hours_remaining(self):
+        
+        
         return self.total_hours_purchased - self.total_hours_used
     
     @property

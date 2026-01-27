@@ -423,6 +423,7 @@ def requests_view(request):
             return redirect('requests_view')
         
         requests = Request.objects.filter(student=student)
+
         context.update({
             'requests': requests,
             'total_requests': requests.count(),
@@ -434,13 +435,13 @@ def requests_view(request):
         return render(request, 'dashboard/student/home/requests.html', context)
     
     elif user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=user)
-        
+       
         # Remplacez get_object_or_404 par .filter().first()
+        teacher = Teacher.objects.filter(user=user).first()
 
         # toutes les requêtes des étudiants de cet enseignant
-        requests = Request.objects.filter(student__teacher=teacher).first()
-        
+        requests = Request.objects.filter(student__current_teacher=teacher).first()
+
         context.update({
             'teacher': teacher,
             'requests': requests,

@@ -199,7 +199,7 @@ DATABASES = {
 
 
 #delete admin django notifications
-# MESSAGE_LEVEL = messages.ERROR
+MESSAGE_LEVEL = messages.ERROR
 
 
 # Password validation
@@ -244,19 +244,6 @@ ACCOUNT_FORMS = {
 }
 #Customise of user's role login
 AUTH_USER_MODEL = 'dashboard.CustomUser'
-
-
-#os.environ.geture of email backend
-
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'profrancisco579@gmail.com'
-# EMAIL_HOST_PASSWORD ='gouawphttulrhwan'
-# DEFAULT_FROM_EMAIL = 'profrancisco579@gmail.com'
-
-
-
 
 #django-jazzmin settings for admin dashboard
 JAZZMIN_UI_TWEAKS = {
