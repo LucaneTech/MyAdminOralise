@@ -102,8 +102,10 @@
                                         <th>Sujet</th>
                                         <th>Description</th>
                                         <th>Statut</th>
+                                        <th>Destinataire</th>
                                         <th>Date de création</th>
                                         <th>Actions</th>
+                                     
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -127,17 +129,22 @@
                                                 <span class="badge badge-danger">Rejetée</span>
                                             {% endif %}
                                         </td>
+                                         <td>{{ request.teacher }}</td>
                                         <td>{{ request.created_at|date:"d/m/Y H:i" }}</td>
                                         <td>
                                             {% if request.attachment %}
                                                 <a href="{{ request.attachment.url }}" class="btn btn-sm btn-info" target="_blank">
                                                     <i class="ni ni-single-copy-04"></i> Pièce jointe
                                                 </a>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
                                             {% endif %}
                                             {% if request.response %}
                                                 <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#responseModal{{ request.id }}">
                                                     <i class="ni ni-email-83"></i> Voir réponse
                                                 </button>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -170,6 +177,19 @@
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="form-group">
+                        <label for="teacher_id" class="form-control-label">Destinataire</label>
+                        <select class="form-control" id="teacher_id" name="teacher_id" required>
+                            <option value="">Sélectionnez un Prof</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">
+                            Veuillez sélectionner un type de demande.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="requestType" class="form-control-label">Type de demande</label>
                         <select class="form-control" id="requestType" name="request_type" required>
                             <option value="">Sélectionnez un type</option>
@@ -200,6 +220,8 @@
                         <label for="attachment" class="form-control-label">Pièce jointe (optionnel)</label>
                         <input type="file" class="form-control-file" id="attachment" name="attachment">
                     </div>
+
+                   
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>

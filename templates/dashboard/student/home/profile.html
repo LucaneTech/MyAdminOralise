@@ -45,7 +45,7 @@
                   <span class="description">Langues</span>
                 </div>
                 <div>
-                  <span class="heading">{{ student.total_sessions}}</span>
+                  <span class="heading">{{ total_sessions }}</span>
                   <span class="description">Séances</span>
                 </div>
               </div>
@@ -121,7 +121,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label class="form-control-label">Adresse</label>
-                    <input type="text" class="form-control" value="{{ profile.address }}" readonly>
+                    <input type="text" class="form-control" value="{{ user.profile.address }}" readonly>
                   </div>
                 </div>
               </div>
@@ -129,19 +129,19 @@
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Ville</label>
-                    <input type="text" class="form-control" value="{{ profile.city }}" readonly>
+                    <input type="text" class="form-control" value="{{ user.profile.city }}" readonly>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Pays</label>
-                    <input type="text" class="form-control" value="{{ profile.country }}" readonly>
+                    <input type="text" class="form-control" value="{{ user.profile.country }}" readonly>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Téléphone</label>
-                    <input type="text" class="form-control" value="{{ profile.number }}" readonly>
+                    <input type="text" class="form-control" value="{{ user.profile.number }}" readonly>
                   </div>
                 </div>
               </div>
@@ -151,7 +151,7 @@
             <div class="pl-lg-4">
               <div class="form-group">
                 <label class="form-control-label">Bio</label>
-                <textarea rows="4" class="form-control" readonly>{{ profile.about }}</textarea>
+                <textarea rows="4" class="form-control" readonly>{{ user.profile.about }}</textarea>
               </div>
             </div>
           </form>

@@ -32,36 +32,56 @@
             <div class="card">
                 <div class="card-header border-0">
                     <h3 class="mb-3">Filtres</h3>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-control-label">Classe</label>
-                                <select class="form-control" id="filterClass">
-                                    <option value="">Toutes</option>
-                                    {% for class in classes %}
-                                    <option value="{{ class.id }}">{{ class.name }}</option>
-                                    {% endfor %}
-                                </select>
+                    <form method="GET" id="filterForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Langues</label>
+                                    <select class="form-control" name="langue" id="filterClass">
+                                        <option value="">Toutes</option>
+                                        {% for langue in langues %}
+                                        <option value="{{ langue.id }}" 
+                                                {% if selected_langue == langue.id|stringformat:"i" %}selected{% endif %}>
+                                            {{ langue.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Étudiants</label>
+                                    <select class="form-control" name="etudiant" id="filterFiliere">
+                                        <option value="">Tous</option>
+                                        {% for student in all_students %}
+                                        <option value="{{ student.id }}"
+                                                {% if selected_etudiant == student.id|stringformat:"i" %}selected{% endif %}>
+                                            {{ student.user.first_name }} {{ student.user.last_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-control-label">Recherche</label>
+                                    <input type="text" class="form-control" name="recherche" 
+                                           id="searchStudent" placeholder="Nom, prénom..."
+                                           value="{{ search_query|default:'' }}">
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-control-label">Filière</label>
-                                <select class="form-control" id="filterFiliere">
-                                    <option value="">Toutes</option>
-                                    {% for filiere in filieres %}
-                                    <option value="{{ filiere.id }}">{{ filiere.name }}</option>
-                                    {% endfor %}
-                                </select>
+                        <div class="row mt-3">
+                            <div class="col-md-12 text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Rechercher
+                                </button>
+                                <a href="{% url 'teacher_students' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Réinitialiser
+                                </a>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-control-label">Recherche</label>
-                                <input type="text" class="form-control" id="searchStudent" placeholder="Nom, prénom...">
-                            </div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -73,18 +93,28 @@
             <div class="card">
                 <!-- Card header -->
                 <div class="card-header border-0">
-                    <h3 class="mb-0">Liste des étudiants</h3>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Liste des étudiants ({{  total_students }})</h3>
+                        </div>
+                        <div class="col text-right">
+                            <a href="{% url 'export_students' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-download"></i> Exporter
+                            </a>
+                        </div>
+                    </div>
                 </div>
+                
+                {% if students %}
                 <!-- Light table -->
                 <div class="table-responsive">
                     <table class="table align-items-center table-flush">
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col" class="sort" data-sort="name">Nom</th>
-                                <th scope="col" class="sort" data-sort="class">Classe</th>
-                                <th scope="col" class="sort" data-sort="branch">Filière</th>
-                                <th scope="col" class="sort" data-sort="performance">Performance</th>
-                                <th scope="col" class="sort" data-sort="attendance">Présence</th>
+                                <th scope="col" class="sort" data-sort="class">Langues</th>
+                                <th scope="col" class="sort" data-sort="performance">Adresse</th>
+                                <th scope="col" class="sort" data-sort="matricule">Matricule</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
@@ -93,52 +123,36 @@
                             <tr>
                                 <th scope="row">
                                     <div class="media align-items-center">
-                                        <a href="#" class="avatar rounded-circle mr-3">
+                                        <a href="{% url 'student_detail' student.id %}" class="avatar rounded-circle mr-3">
                                             {% if student.user.profile.profile_picture %}
-                                            <img alt="Image placeholder" src="{{ student.user.profile.profile_picture.url }}">
+                                            <img alt="Image de {{ student.user.get_full_name }}" 
+                                                 src="{{ student.user.profile.profile_picture.url }}"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
                                             {% else %}
-                                            <img alt="profile_image" src="{% static 'assets/img/theme/team-4.jpg' %}">
+                                            <img src="{% static 'assets/img/profile.png' %}" 
+                                                 alt="Image par défaut"
+                                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                                             {% endif %}
                                         </a>
                                         <div class="media-body">
                                             <span class="name mb-0 text-sm">{{ student.user.get_full_name }}</span>
+                                            <br>
+                                            <small class="text-muted">{{ student.user.email }}</small>
                                         </div>
                                     </div>
                                 </th>
-                                <td>{{ student.class_name }}</td>
-                                <td>{{ student.filiere }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="mr-2">{{ student.average }}/20</span>
-                                        <div>
-                                            <div class="progress">
-                                                <div class="progress-bar bg-{% if student.average >= 10 %}success{% else %}danger{% endif %}"
-                                                    role="progressbar"
-                                                    aria-valuenow="{{ student.average|multiply:5 }}"
-                                                    aria-valuemin="0"
-                                                    aria-valuemax="100"
-                                                    style="width: {{ student.average|multiply:5 }}%;">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {% for langue in student.languages.all %}
+                                    <span class="badge badge-primary">{{ langue.name }}</span>
+                                    {% empty %}
+                                    <span class="text-muted">Aucune</span>
+                                    {% endfor %}
                                 </td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="mr-2">{{ student.attendance }}%</span>
-                                        <div>
-                                            <div class="progress">
-                                                <div class="progress-bar bg-{% if student.attendance >= 75 %}success{% elif student.attendance >= 50 %}warning{% else %}danger{% endif %}"
-                                                    role="progressbar"
-                                                    aria-valuenow="{{ student.attendance }}"
-                                                    aria-valuemin="0"
-                                                    aria-valuemax="100"
-                                                    style="width: {{ student.attendance }}%;">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {{ student.user.profile.address }}<br>
+                                    <small class="text-muted">{{ student.user.profile.city }} - {{ student.user.profile.country }}</small>
                                 </td>
+                                <td>{{ student.matricule }}</td>
                                 <td class="text-right">
                                     <div class="dropdown">
                                         <a class="btn btn-sm btn-icon-only text-light" href="#" role="button"
@@ -146,9 +160,18 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
-                                            <a class="dropdown-item" href="#">Voir le profil</a>
-                                            <a class="dropdown-item" href="#">Voir les notes</a>
-                                            <a class="dropdown-item" href="#">Voir les présences</a>
+                                            <a class="dropdown-item" href="{% url 'student_detail' student.id %}">
+                                                <i class="fas fa-eye mr-2"></i>Voir le profil
+                                            </a>
+                                            <a class="dropdown-item" href="#" id="stat">
+                                                <i class="fas fa-chart-bar mr-2"></i>Statistiques
+                                            </a>
+                                            
+                                            
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item text-danger" href="#" id='del'>
+                                                <i class="fas fa-trash mr-2"></i>Retirer
+                                            </a>
                                         </div>
                                     </div>
                                 </td>
@@ -157,7 +180,64 @@
                         </tbody>
                     </table>
                 </div>
-            
+                
+                <!-- Pagination -->
+                {% if students.has_other_pages %}
+                <div class="card-footer py-4">
+                    <nav aria-label="...">
+                        <ul class="pagination justify-content-end mb-0">
+                            {% if students.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ students.previous_page_number }}{% if selected_langue %}&langue={{ selected_langue }}{% endif %}{% if selected_etudiant %}&etudiant={{ selected_etudiant }}{% endif %}{% if search_query %}&recherche={{ search_query }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in students.paginator.page_range %}
+                                {% if students.number == i %}
+                                <li class="page-item active">
+                                    <a class="page-link">{{ i }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if selected_langue %}&langue={{ selected_langue }}{% endif %}{% if selected_etudiant %}&etudiant={{ selected_etudiant }}{% endif %}{% if search_query %}&recherche={{ search_query }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if students.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ students.next_page_number }}{% if selected_langue %}&langue={{ selected_langue }}{% endif %}{% if selected_etudiant %}&etudiant={{ selected_etudiant }}{% endif %}{% if search_query %}&recherche={{ search_query }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="card-body text-center">
+                    <div class="py-5">
+                        <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                        <h4>Aucun étudiant trouvé</h4>
+                        <p class="text-muted">
+                            {% if search_query or selected_langue or selected_etudiant %}
+                                Aucun étudiant ne correspond à vos critères de recherche.
+                            {% else %}
+                                Vous n'avez pas encore d'étudiants assignés.
+                            {% endif %}
+                        </p>
+                        {% if search_query or selected_langue or selected_etudiant %}
+                        <a href="{% url 'teacher_students' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-times mr-2"></i>Réinitialiser les filtres
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -166,14 +246,40 @@
 
 {% block javascripts %}
 <script>
-    // Gestion des filtres
+$(document).ready(function() {
+    // Soumission automatique du formulaire au changement
     $('#filterClass, #filterFiliere').change(function() {
-        // Logique de filtrage à implémenter
+        $('#filterForm').submit();
+    });
+    
+    // Recherche avec délai (pour éviter trop de soumissions)
+    let searchTimer;
+    $('#searchStudent').on('keyup', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+            $('#filterForm').submit();
+        }, 500); // 500ms de délai
+    });
+    
+    // Effacer la recherche
+    $('#clearSearch').click(function() {
+        $('#searchStudent').val('');
+        $('#filterForm').submit();
+    });
+    
+    // Export CSV
+    $('#exportBtn').click(function() {
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = '{% url "export_students" %}?' + params.toString();
     });
 
-    // Recherche d'étudiants
-    $('#searchStudent').on('keyup', function() {
-        // Logique de recherche à implémenter
+    $('#stat').click(function() {
+        alert('Fonctionnalité de statistiques en cours de développement.');
     });
+    $('#del').click(function() {
+        alert('Fonctionnalité de suppression en cours de développement.');
+    });
+   
+});
 </script>
-{% endblock javascripts %} 
+{% endblock javascripts %}

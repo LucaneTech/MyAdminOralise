@@ -1,3 +1,4 @@
+from django import views
 from django.urls import path
 from .views import (
     # update_profile_picture,
@@ -5,7 +6,8 @@ from .views import (
     notifications_mark_all_read,
     profile_view, 
     dashboard_view, profile_edit, schedule_view,
-    resources_view,resources_add, requests_view, dashboard_search,
+    resources_view,resources_add, requests_view, 
+
     settings_view, teacher_view, teacher_courses, teacher_schedule,
     teacher_assignments, teacher_students, teacher_attendance, teacher_marks,
     teacher_skills, api_filter_students, api_filter_assignments,
@@ -14,8 +16,9 @@ from .views import (
     teacher_sessions_view, student_sessions_view,
     teacher_schedule_manage, teacher_evaluations_add, teacher_attendance_manage,
     teacher_resources_add_student, evaluation_edit,
-    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic
-    
+    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic, export_students_csv, teacher_student_detail
+ 
+
 )
 
 urlpatterns = [
@@ -26,10 +29,12 @@ urlpatterns = [
     path('teacher/schedule/api/', teacher_schedule_api, name='teacher_schedule_api'),
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
     path('teacher/students/', teacher_students, name='teacher_students'),
+    path('teacher/students/<int:student_id>/', teacher_student_detail, name='student_detail'),
+    path('teacher/export-students/', export_students_csv, name='export_students'),
     path('teacher/attendance/', teacher_attendance, name='teacher_attendance'),
     path('teacher/attendance/dynamic/', teacher_attendance_dynamic, name='teacher_attendance_dynamic'),
     path('teacher/attendance/manage/', teacher_attendance_manage, name='teacher_attendance_manage'),
-    path('teacher/marks/', teacher_marks, name='teacher_marks'),
+    path('teacher/marks/', teacher_marks, name='teacher_marks'), 
     path('teacher/skills/', teacher_skills, name='teacher_skills'),
     path('teacher/resources/', resources_view, name='teacher_resources'),
     path('teacher/resources_add/',resources_add, name= 'teacher_resources_add'),
@@ -43,7 +48,7 @@ urlpatterns = [
     path('profile/view/', profile_view, name='profile_view'),
     path('profile/edit/', profile_edit, name='profile_edit'),
     # path('profile/update-picture/', update_profile_picture, name='update_picture'),
-    path('search/', dashboard_search, name='dashboard_search'),
+    
     path('settings/', settings_view, name='settings_view'),
     path('schedule/', schedule_view, name='schedule_view'),
     path('resources/', resources_view, name='resources_view'),

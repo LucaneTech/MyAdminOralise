@@ -59,16 +59,16 @@
             <div class="col">
               <div class="card-profile-stats d-flex justify-content-center">
                 <div>
-                  <span class="heading">{{ teacher.total_courses }}</span>
-                  <span class="description">Cours</span>
+                  <span class="heading">{{ teacher.sessions.count }}</span>
+                  <span class="description">Langue(s)</span>
                 </div>
                 <div>
-                  <span class="heading">{{ teacher.total_students }}</span>
-                  <span class="description">Étudiants</span>
+                  <span class="heading">{{ teacher.current_students.count }}</span>
+                  <span class="description">Étudiant(s)</span>
                 </div>
                 <div>
-                  <span class="heading">{{ teacher.total_assignments }}</span>
-                  <span class="description">Devoirs</span>
+                  <span class="heading">{{ total_sessions }}</span>
+                  <span class="description">Séance(s)</span>
                 </div>
               </div>
             </div>
@@ -141,7 +141,7 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label class="form-control-label" for="input-address">Adresse</label>
-                    <input id="input-address" class="form-control" type="text" value="{{ profile.address|default:'' }}" readonly>
+                    <input id="input-address" class="form-control " type="text" value="{{ user.profile.address }}" readonly>
                   </div>
                 </div>
               </div>
@@ -149,19 +149,19 @@
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label" for="input-city">Ville</label>
-                    <input type="text" id="input-city" class="form-control" value="{{ profile.city|default:'' }}" readonly>
+                    <input type="text" id="input-city" class="form-control" value="{{ user.profile.city }}" readonly>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label" for="input-country">Pays</label>
-                    <input type="text" id="input-country" class="form-control" value="{{ profile.country|default:'' }}" readonly>
+                    <input type="text" id="input-country" class="form-control" value="{{ user.profile.country }}" readonly>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
-                    <label class="form-control-label" for="input-postal-code">Code postal</label>
-                    <input type="text" id="input-postal-code" class="form-control" value="{{ profile.postal_code|default:'' }}" readonly>
+                    <label class="form-control-label" for="input-postal-code">Numéro Whatsapp</label>
+                    <input type="text" id="input-postal-code" class="form-control" value="{{ user.profile.number }}" readonly>
                   </div>
                 </div>
               </div>
@@ -172,7 +172,7 @@
             <div class="pl-lg-4">
               <div class="form-group">
                 <label class="form-control-label">Biographie</label>
-                <textarea rows="4" class="form-control" readonly>{{ profile.about|default:'' }}</textarea>
+                <textarea rows="4" class="form-control" readonly>{{ user.profile.about }}</textarea>
               </div>
             </div>
           </form>

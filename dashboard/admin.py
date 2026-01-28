@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     CustomUser, Student, Teacher, Schedule,  
     Resource, Request, Language, Session, Payment, Certificate, 
-    Evaluation, Notification, Comment,Skill
+    Evaluation, Notification, Comment,Skill, Profile
 )
 
 
@@ -35,10 +35,17 @@ class CustomUserAdmin(UserAdmin):
 # Enregistrement des modèles dans Django Admin
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user__username','user__email', 'matricule', 'current_teacher')
-    list_filter = ('matricule','user','current_teacher',)
+    list_display = ('user__username','user__email', 'matricule', 'total_hours_used')
+    list_filter = ('matricule','user')
     search_fields= ('user__first_name', 'user__last_name', 'matricule')
 
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'city', 'country', 'number', 'address', 'about')
+    search_fields = ('user__username', 'user__email', 'city', 'country')
+    list_filter = ('city', 'country')
+     
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('user__username','user__email', 'speciality', 'date_joined', 'is_available')
@@ -92,9 +99,9 @@ class ResourceAdmin(admin.ModelAdmin):
 
 @admin.register(Request)
 class RequestAdmin(admin.ModelAdmin):
-    list_display = ('student', 'request_type', 'subject', 'status', 'created_at')
+    list_display = ('student', 'request_type', 'teacher', 'subject', 'status', 'created_at')
     list_filter = ('student', 'request_type', 'status')
-    fields = ('student', 'request_type', 'subject', 'description', 'attachment', 'status', 'response')
+    fields = ('student', 'request_type', 'teacher', 'subject', 'description', 'attachment', 'status', 'response')
     readonly_fields = ('created_at', 'updated_at')
 
 

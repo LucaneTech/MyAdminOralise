@@ -8,15 +8,23 @@ from django.db.models import Avg
 from django.utils import timezone
 from datetime import datetime, timedelta
 
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
         ('student', 'Student'),
-     
     )
 
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(
+        max_length=20, 
+        choices=ROLE_CHOICES,
+        verbose_name="rôle"
+    )
+
+    class Meta:
+        verbose_name = "utilisateur"
+        verbose_name_plural = "utilisateurs"
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -38,18 +46,49 @@ class CustomUser(AbstractUser):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='user_profile')
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='user_profile',
+        verbose_name="utilisateur"
+    )
     profile_picture = models.ImageField(
         upload_to='profile_pics/', 
         blank=True,
-        null=True
+        null=True,
+        verbose_name="photo de profil"
     )
-    city = models.CharField(max_length=50)
-    country = models.CharField(max_length=50)
-    number = models.CharField(max_length=20)
-    address = models.CharField(max_length=100)
-    about = models.TextField(max_length=1000, default=" ")
-    theme_preference = models.CharField(max_length=10, choices=[('light', 'Light'), ('dark', 'Dark')], default='light')
+    city = models.CharField(
+        max_length=50,
+        verbose_name="ville"
+    )
+    country = models.CharField(
+        max_length=50,
+        verbose_name="pays"
+    )
+    number = models.CharField(
+        max_length=20,
+        verbose_name="numéro de téléphone"
+    )
+    address = models.CharField(
+        max_length=100,
+        verbose_name="adresse"
+    )
+    about = models.TextField(
+        max_length=1000, 
+        default=" ",
+        verbose_name="à propos"
+    )
+    theme_preference = models.CharField(
+        max_length=10, 
+        choices=[('light', 'Light'), ('dark', 'Dark')], 
+        default='light',
+        verbose_name="préférence de thème"
+    )
+
+    class Meta:
+        verbose_name = "profil"
+        verbose_name_plural = "profils"
 
     def __str__(self):
         return f"Profile of {self.user.username}"
@@ -61,32 +100,65 @@ class Profile(models.Model):
             return self.profile_picture.url
         # sinon, on renvoie l'image par défaut stockée dans static
         return static('assets/img/profile.png')
-
-
-# Langues enseignées
+    
+ # Langues enseignées
 class Language(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    code = models.CharField(max_length=10, unique=True)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    name = models.CharField(max_length=100, unique=True, verbose_name="nom")
+    code = models.CharField(max_length=10, unique=True, verbose_name="code")
+    description = models.TextField(blank=True, verbose_name="description")
+    is_active = models.BooleanField(default=True, verbose_name="actif")
+    
+    class Meta:
+        verbose_name = "langue"
+        verbose_name_plural = "langues"
     
     def __str__(self):
         return self.name
 
 # Étudiant
 class Student(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    matricule = models.CharField(max_length=20, unique=True, editable=False)
-    languages = models.ManyToManyField(Language, related_name='students')
-    date_joined = models.DateField(default=timezone.now)
-    total_hours_purchased = models.IntegerField(default=0)
-    total_hours_used = models.IntegerField(default=0)
-    current_teacher = models.ForeignKey('Teacher', on_delete=models.SET_NULL, null=True, blank=True, related_name='current_students')
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE,
+        verbose_name="utilisateur"
+    )
+    matricule = models.CharField(
+        max_length=20, 
+        unique=True, 
+        editable=False,
+        verbose_name="matricule"
+    )
+    languages = models.ManyToManyField(
+        Language, 
+        related_name='students',
+        verbose_name="langues"
+    )
+    date_joined = models.DateField(
+        default=timezone.now,
+        verbose_name="date d'inscription"
+    )
+    total_hours_purchased = models.IntegerField(
+        default=0,
+        verbose_name="heures totales achetées"
+    )
+    total_hours_used = models.IntegerField(
+        default=0,
+        verbose_name="heures totales utilisées"
+    )
+    current_teachers =  models.ManyToManyField(
+        'Teacher', 
+        null=True,
+        blank=True, 
+        related_name='current_students',
+        verbose_name="enseignants actuels"  
+    )
+
+    class Meta:
+        verbose_name = "étudiant"
+        verbose_name_plural = "étudiants"
 
     @property
     def hours_remaining(self):
-        
-        
         return self.total_hours_purchased - self.total_hours_used
     
     @property
@@ -125,13 +197,39 @@ def generate_student_matricule(sender, instance, **kwargs):
 
 # Enseignant
 class Teacher(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    speciality = models.CharField(max_length=100)
-    date_joined = models.DateField(default=timezone.now)
-    languages = models.ManyToManyField(Language, related_name='teachers')
-    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, default=0)
-    is_available = models.BooleanField(default=True)
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE,
+        verbose_name="utilisateur"
+    )
+    speciality = models.CharField(
+        max_length=100,
+        verbose_name="spécialité"
+    )
+    date_joined = models.DateField(
+        default=timezone.now,
+        verbose_name="date d'inscription"
+    )
+    languages = models.ManyToManyField(
+        Language, 
+        related_name='teachers',
+        verbose_name="langues"
+    )
+    hourly_rate = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        default=0,
+        verbose_name="taux horaire"
+    )
+    is_available = models.BooleanField(
+        default=True,
+        verbose_name="disponible"
+    )
     
+    class Meta:
+        verbose_name = "enseignant"
+        verbose_name_plural = "enseignants"
+
     @property
     def total_students(self):
         return Student.objects.filter(current_teacher=self).count()
@@ -161,13 +259,35 @@ class Teacher(models.Model):
 
 # Compétences/Skills
 class Skill(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    teachers = models.ManyToManyField(Teacher)
-    students = models.ManyToManyField(Student)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(
+        max_length=100,
+        verbose_name="nom"
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name="description"
+    )
+    teachers = models.ManyToManyField(
+        Teacher,
+        verbose_name="enseignants"
+    )
+    students = models.ManyToManyField(
+        Student,
+        verbose_name="étudiants"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
     
+    class Meta:
+        verbose_name = "compétence"
+        verbose_name_plural = "compétences"
+
     @property
     def average_mark(self):
         marks = Mark.objects.filter(skill=self)
@@ -179,15 +299,40 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
-# Notes = not important in this app
+# Notes
 class Mark(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    mark = models.DecimalField(max_digits=4, decimal_places=2)
-    comment = models.TextField(blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE,
+        verbose_name="étudiant"
+    )
+    skill = models.ForeignKey(
+        Skill, 
+        on_delete=models.CASCADE,
+        verbose_name="compétence"
+    )
+    mark = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2,
+        verbose_name="note"
+    )
+    comment = models.TextField(
+        blank=True,
+        verbose_name="commentaire"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
     
+    class Meta:
+        verbose_name = "note"
+        verbose_name_plural = "notes"
+
     def __str__(self):
         return f"{self.student} - {self.skill}: {self.mark}"
 
@@ -202,21 +347,67 @@ class Schedule(models.Model):
         ('Samedi', 'Samedi'),
     ]
 
-    day = models.CharField(max_length=10, choices=DAY_CHOICES)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True)
-    classroom = models.CharField(max_length=30, blank=True, null=True)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    day = models.CharField(
+        max_length=10, 
+        choices=DAY_CHOICES,
+        verbose_name="jour"
+    )
+    skill = models.ForeignKey(
+        Skill, 
+        on_delete=models.CASCADE,
+        verbose_name="compétence"
+    )
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="étudiant"
+    )
+    teacher = models.ForeignKey(
+        Teacher, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="enseignant"
+    )
+    classroom = models.CharField(
+        max_length=30, 
+        blank=True, 
+        null=True,
+        verbose_name="salle de classe"
+    )
+    start_time = models.TimeField(
+        verbose_name="heure de début"
+    )
+    end_time = models.TimeField(
+        verbose_name="heure de fin"
+    )
+    language = models.ForeignKey(
+        Language, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="langue"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="actif"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
 
     class Meta:
         ordering = ['day', 'start_time']
         unique_together = ['day', 'skill', 'teacher', 'start_time']
+        verbose_name = "emploi du temps"
+        verbose_name_plural = "emplois du temps"
 
     def __str__(self):
         return f"{self.skill.name} - {self.day} ({self.start_time} - {self.end_time})"
@@ -254,7 +445,7 @@ class Schedule(models.Model):
             }
             return language_colors.get(self.language.name, 'course-default')
         return 'course-default'
-
+    
 # Présence
 class Attendance(models.Model):
     STATUS = (
@@ -264,20 +455,60 @@ class Attendance(models.Model):
         ('excused', 'Justifié'),
     )
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, null=True, blank=True)
-    date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS)
-    arrival_time = models.TimeField(null=True, blank=True)
-    note = models.TextField(blank=True)
-    session = models.ForeignKey('Session', on_delete=models.SET_NULL, null=True, blank=True, related_name='attendances')
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE,
+        verbose_name="étudiant"
+    )
+    skill = models.ForeignKey(
+        Skill, 
+        on_delete=models.CASCADE,
+        verbose_name="compétence"
+    )
+    teacher = models.ForeignKey(
+        Teacher, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        verbose_name="enseignant"
+    )
+    date = models.DateField(verbose_name="date")
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS,
+        verbose_name="statut"
+    )
+    arrival_time = models.TimeField(
+        null=True, 
+        blank=True,
+        verbose_name="heure d'arrivée"
+    )
+    note = models.TextField(
+        blank=True,
+        verbose_name="note"
+    )
+    session = models.ForeignKey(
+        'Session', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='attendances',
+        verbose_name="séance"
+    )
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
     
     class Meta:
         unique_together = ('student', 'skill', 'date')
         ordering = ['-date', 'student__user__first_name']
+        verbose_name = "présence"
+        verbose_name_plural = "présences"
     
     def __str__(self):
         return f"{self.student} - {self.skill} - {self.date}: {self.status}"
@@ -344,14 +575,40 @@ class Assignment(models.Model):
         ('closed', 'Terminé'),
     )
     
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    type = models.CharField(max_length=20, choices=TYPES)
-    status = models.CharField(max_length=20, choices=STATUS, default='draft')
-    due_date = models.DateTimeField()
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    title = models.CharField(
+        max_length=200,
+        verbose_name="titre"
+    )
+    description = models.TextField(verbose_name="description")
+    skill = models.ForeignKey(
+        Skill, 
+        on_delete=models.CASCADE,
+        verbose_name="compétence"
+    )
+    type = models.CharField(
+        max_length=20, 
+        choices=TYPES,
+        verbose_name="type"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS, 
+        default='draft',
+        verbose_name="statut"
+    )
+    due_date = models.DateTimeField(verbose_name="date d'échéance")
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
+    
+    class Meta:
+        verbose_name = "devoir"
+        verbose_name_plural = "devoirs"
     
     @property
     def is_late(self):
@@ -369,18 +626,45 @@ class Assignment(models.Model):
         return self.title
 
 class Submission(models.Model):
-    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    file = models.FileField(upload_to='submissions/')
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    mark = models.ForeignKey(Mark, on_delete=models.SET_NULL, null=True, blank=True)
-    feedback = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.student} - {self.assignment}"
+    assignment = models.ForeignKey(
+        Assignment, 
+        on_delete=models.CASCADE, 
+        related_name='submissions',
+        verbose_name="devoir"
+    )
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE,
+        verbose_name="étudiant"
+    )
+    file = models.FileField(
+        upload_to='submissions/',
+        verbose_name="fichier"
+    )
+    submitted_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de soumission"
+    )
+    mark = models.ForeignKey(
+        Mark, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="note"
+    )
+    feedback = models.TextField(
+        null=True, 
+        blank=True,
+        verbose_name="feedback"
+    )
 
     class Meta:
         unique_together = ['assignment', 'student']
+        verbose_name = "soumission"
+        verbose_name_plural = "soumissions"
+
+    def __str__(self):
+        return f"{self.student} - {self.assignment}"
 
 # Séances de cours
 class Session(models.Model):
@@ -392,18 +676,58 @@ class Session(models.Model):
         ('absent', 'Absence')
     ]
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='sessions')
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='sessions')
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
-    notes = models.TextField(blank=True)
-    feedback = models.TextField(blank=True)
-    meeting_link = models.URLField(blank=False, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE, 
+        related_name='sessions',
+        verbose_name="étudiant"
+    )
+    teacher = models.ForeignKey(
+        Teacher, 
+        on_delete=models.CASCADE, 
+        related_name='sessions',
+        verbose_name="enseignant"
+    )
+    language = models.ForeignKey(
+        Language, 
+        on_delete=models.CASCADE,
+        verbose_name="langue"
+    )
+    date = models.DateField(verbose_name="date")
+    start_time = models.TimeField(verbose_name="heure de début")
+    end_time = models.TimeField(verbose_name="heure de fin")
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='scheduled',
+        verbose_name="statut"
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name="notes"
+    )
+    feedback = models.TextField(
+        blank=True,
+        verbose_name="feedback"
+    )
+    meeting_link = models.URLField(
+        blank=False, 
+        null=False,
+        verbose_name="lien de réunion"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
+    
+    class Meta:
+        ordering = ['-date', '-start_time']
+        verbose_name = "séance"
+        verbose_name_plural = "séances"
     
     @property
     def duration_hours(self):
@@ -414,9 +738,6 @@ class Session(models.Model):
     
     def __str__(self):
         return f"{self.student} - {self.language} - {self.date} ({self.get_status_display()})"
-    
-    class Meta:
-        ordering = ['-date', '-start_time']
 
 # Paiements
 class Payment(models.Model):
@@ -433,36 +754,94 @@ class Payment(models.Model):
         ('refunded', 'Remboursé')
     ]
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    hours_purchased = models.IntegerField()
-    hours_remaining = models.IntegerField()
-    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    payment_date = models.DateTimeField(auto_now_add=True)
-    expiry_date = models.DateField(null=True, blank=True)
-    invoice_number = models.CharField(max_length=50, unique=True, blank=True, auto_created=True)
-    
-    def __str__(self):
-        return f"{self.student} - {self.amount}€ ({self.get_status_display()})"
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE, 
+        related_name='payments',
+        verbose_name="étudiant"
+    )
+    amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        verbose_name="montant"
+    )
+    hours_purchased = models.IntegerField(verbose_name="heures achetées")
+    hours_remaining = models.IntegerField(verbose_name="heures restantes")
+    payment_type = models.CharField(
+        max_length=20, 
+        choices=PAYMENT_TYPES,
+        verbose_name="type de paiement"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='pending',
+        verbose_name="statut"
+    )
+    payment_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de paiement"
+    )
+    expiry_date = models.DateField(
+        null=True, 
+        blank=True,
+        verbose_name="date d'expiration"
+    )
+    invoice_number = models.CharField(
+        max_length=50, 
+        unique=True, 
+        blank=True, 
+        auto_created=True,
+        verbose_name="numéro de facture"
+    )
     
     class Meta:
         ordering = ['-payment_date']
+        verbose_name = "paiement"
+        verbose_name_plural = "paiements"
+    
+    def __str__(self):
+        return f"{self.student} - {self.amount}€ ({self.get_status_display()})"
 
 # Certificats
 class Certificate(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='certificates')
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    level = models.CharField(max_length=50)
-    issued_date = models.DateField(auto_now_add=True)
-    certificate_file = models.FileField(upload_to='certificates/', null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    
-    def __str__(self):
-        return f"{self.student} - {self.language} - {self.level}"
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE, 
+        related_name='certificates',
+        verbose_name="étudiant"
+    )
+    language = models.ForeignKey(
+        Language, 
+        on_delete=models.CASCADE,
+        verbose_name="langue"
+    )
+    level = models.CharField(
+        max_length=50,
+        verbose_name="niveau"
+    )
+    issued_date = models.DateField(
+        auto_now_add=True,
+        verbose_name="date d'émission"
+    )
+    certificate_file = models.FileField(
+        upload_to='certificates/', 
+        null=True, 
+        blank=True,
+        verbose_name="fichier du certificat"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="actif"
+    )
     
     class Meta:
         ordering = ['-issued_date']
+        verbose_name = "certificat"
+        verbose_name_plural = "certificats"
+    
+    def __str__(self):
+        return f"{self.student} - {self.language} - {self.level}"
 
 # Évaluations
 class Evaluation(models.Model):
@@ -474,19 +853,49 @@ class Evaluation(models.Model):
         ('comprehension', 'Compréhension')
     ]
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='evaluations')
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='evaluations')
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    evaluation_type = models.CharField(max_length=20, choices=EVALUATION_TYPES)
-    score = models.DecimalField(max_digits=4, decimal_places=2)
-    comments = models.TextField(blank=True)
-    evaluation_date = models.DateField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.student} - {self.language} - {self.get_evaluation_type_display()}: {self.score}"
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE, 
+        related_name='evaluations',
+        verbose_name="étudiant"
+    )
+    teacher = models.ForeignKey(
+        Teacher, 
+        on_delete=models.CASCADE, 
+        related_name='evaluations',
+        verbose_name="enseignant"
+    )
+    language = models.ForeignKey(
+        Language, 
+        on_delete=models.CASCADE,
+        verbose_name="langue"
+    )
+    evaluation_type = models.CharField(
+        max_length=20, 
+        choices=EVALUATION_TYPES,
+        verbose_name="type d'évaluation"
+    )
+    score = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2,
+        verbose_name="score"
+    )
+    comments = models.TextField(
+        blank=True,
+        verbose_name="commentaires"
+    )
+    evaluation_date = models.DateField(
+        auto_now_add=True,
+        verbose_name="date d'évaluation"
+    )
     
     class Meta:
         ordering = ['-evaluation_date']
+        verbose_name = "évaluation"
+        verbose_name_plural = "évaluations"
+    
+    def __str__(self):
+        return f"{self.student} - {self.language} - {self.get_evaluation_type_display()}: {self.score}"
 
 # Ressources pédagogiques
 class Resource(models.Model):
@@ -497,22 +906,61 @@ class Resource(models.Model):
         ('other', 'Autre')
     ]
     
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    file = models.FileField(upload_to='resources/', null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
-    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES)
-    languages = models.ManyToManyField(Language, related_name='resources')
-    uploaded_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    skills = models.ManyToManyField(Skill, blank=True)  
-
-    def __str__(self):
-        return f"{self.uploaded_by.username} - {self.title}"
+    title = models.CharField(
+        max_length=200,
+        verbose_name="titre"
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name="description"
+    )
+    file = models.FileField(
+        upload_to='resources/', 
+        null=True, 
+        blank=True,
+        verbose_name="fichier"
+    )
+    url = models.URLField(
+        null=True, 
+        blank=True,
+        verbose_name="URL"
+    )
+    resource_type = models.CharField(
+        max_length=20, 
+        choices=RESOURCE_TYPES,
+        verbose_name="type de ressource"
+    )
+    languages = models.ManyToManyField(
+        Language, 
+        related_name='resources',
+        verbose_name="langues"
+    )
+    uploaded_by = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE,
+        verbose_name="téléchargé par"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
+    skills = models.ManyToManyField(
+        Skill, 
+        blank=True,
+        verbose_name="compétences"
+    )
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = "ressource pédagogique"
+        verbose_name_plural = "ressources pédagogiques"
+
+    def __str__(self):
+        return f"{self.uploaded_by.username} - {self.title}"
 
 # Demandes/Réquêtes
 class Request(models.Model):
@@ -530,22 +978,63 @@ class Request(models.Model):
         ('rejected', 'Rejetée')
     ]
     
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='requests')
-    # teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='received_requests', null=True, blank=True)
-    request_type = models.CharField(max_length=20, choices=REQUEST_TYPES)
-    subject = models.CharField(max_length=200)
-    description = models.TextField()
-    attachment = models.FileField(upload_to='request_attachments/', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    response = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.student.user.username} - {self.subject} ({self.get_status_display()})"
+    student = models.ForeignKey(
+        Student, 
+        on_delete=models.CASCADE, 
+        related_name='requests',
+        verbose_name="étudiant"
+    )
+    teacher = models.ForeignKey(
+        Teacher, 
+        on_delete=models.CASCADE, 
+        related_name='received_requests', 
+        null=True, 
+        blank=True,
+        verbose_name="enseignant"
+    )
+    request_type = models.CharField(
+        max_length=20, 
+        choices=REQUEST_TYPES,
+        verbose_name="type de demande"
+    )
+    subject = models.CharField(
+        max_length=200,
+        verbose_name="sujet"
+    )
+    description = models.TextField(verbose_name="description")
+    attachment = models.FileField(
+        upload_to='request_attachments/', 
+        null=True, 
+        blank=True,
+        verbose_name="pièce jointe"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='pending',
+        verbose_name="statut"
+    )
+    response = models.TextField(
+        blank=True, 
+        null=True,
+        verbose_name="réponse"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de création"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="date de mise à jour"
+    )
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = "demande"
+        verbose_name_plural = "demandes"
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.subject} ({self.get_status_display()})"
 
 # Notifications
 class Notification(models.Model):
@@ -557,64 +1046,84 @@ class Notification(models.Model):
         ('system', 'Système')
     ]
     
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
-    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    
-    def __str__(self):
-        return f"{self.user} - {self.title}"
+    user = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='notifications',
+        verbose_name="utilisateur"
+    )
+    notification_type = models.CharField(
+        max_length=20, 
+        choices=NOTIFICATION_TYPES,
+        verbose_name="type de notification"
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name="titre"
+    )
+    message = models.TextField(verbose_name="message")
+    is_read = models.BooleanField(
+        default=False,
+        verbose_name="lu"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date de création"
+    )
     
     class Meta:
         ordering = ['-created_at']
+        verbose_name = "notification"
+        verbose_name_plural = "notifications"
+    
+    def __str__(self):
+        return f"{self.user} - {self.title}"
 
-
-
-
-#student comment about teacher 
-
+# Commentaires étudiant sur enseignant
 class Comment(models.Model):
-    comment = models.TextField(blank=True, null=True)
+    comment = models.TextField(
+        blank=True, 
+        null=True,
+        verbose_name="commentaire"
+    )
     rating = models.PositiveSmallIntegerField(
         choices=[(i, str(i)) for i in range(1, 6)],
-        help_text="Note de 1 (mauvais) à 5 (excellent)"
+        help_text="Note de 1 (mauvais) à 5 (excellent)",
+        verbose_name="note"
     )
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name="étudiant"
     )
     teacher = models.ForeignKey(
         'Teacher',
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name="enseignant"
     )
     language = models.ForeignKey(
         'Language',
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name="langue"
     )
-    comment_at = models.DateTimeField(auto_now_add=True)
+    comment_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="date du commentaire"
+    )
 
     class Meta:
         unique_together = ('student', 'teacher', 'language')
         ordering = ['-comment_at']
+        verbose_name = "commentaire"
+        verbose_name_plural = "commentaires"
 
     def __str__(self):
         return f"{self.student} → {self.teacher} ({self.rating}/5)"
-
-
-
-
-
-
-
-
-
-
+    
+    
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:

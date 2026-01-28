@@ -7,16 +7,16 @@ from django.contrib.auth import authenticate
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = [ 'profile_picture', 'city', 'country','number', 'address', 'about']
+        fields = [ 'profile_picture', 'address', 'city','country', 'number', 'about']
         widgets = {
             'about': forms.Textarea(attrs={'rows': 4}),
         }
         labels = {
             'profile_picture': 'Photo de profil',
+            'address': 'Adresse',
             'city': 'Ville',
             'country': 'Pays',
             'number': 'Numéro',
-            'address': 'Adresse',
             'about': 'À propos de moi'
         }
  
