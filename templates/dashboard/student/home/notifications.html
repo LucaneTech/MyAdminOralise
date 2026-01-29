@@ -33,16 +33,15 @@
             <div class="col">
               <h3 class="mb-0">Toutes les notifications</h3>
             </div>
-            {% for notification in notifications %}
-            {% if notification %}
+            
+            {% if notifications %}
             <div class="col text-right">
               <button type="button" class="btn btn-sm btn-primary" id="markAllRead">
                 Marquer tout comme lu
               </button>
             </div>
-
             {% endif %}
-            {% endfor %}
+
           </div>
         </div>
         <div class="card-body">

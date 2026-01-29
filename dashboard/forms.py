@@ -131,3 +131,20 @@ class SessionForm(forms.ModelForm):
             }),
         }
     
+
+
+def __init__(self, *args, **kwargs):
+        # Récupérer l'enseignant pour filtrer les étudiants
+        self.teacher = kwargs.pop('teacher', None)
+        self.session_instance = kwargs.get('instance', None)
+        super(SessionForm, self).__init__(*args, **kwargs)
+        
+        if self.teacher:
+            # Filtrer les langues disponibles pour cet enseignant
+            self.fields['language'].queryset = self.teacher.languages.all()
+            
+            # Filtrer les étudiants (selon votre logique métier)
+            # Option 1: Tous les étudiants
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            self.fields['student'].queryset = User.objects.filter(role='student')

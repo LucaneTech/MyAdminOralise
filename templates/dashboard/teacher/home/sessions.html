@@ -85,7 +85,135 @@
   .modal.show .modal-dialog {
     transform: translateY(0);
   }
-</style>
+
+  /* Badge personnalisé pour les statuts */
+  .badge-status {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    border-radius: 0.25rem;
+  }
+
+  /* Style pour les boutons d'action */
+  .btn-action-group .btn {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Animation pour les changements de statut */
+  @keyframes statusChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .status-updated {
+    animation: statusChange 0.5s ease;
+  }
+
+  /* Style pour la modal de confirmation */
+  .confirmation-modal .modal-content {
+    border-radius: 10px;
+  }
+
+  .confirmation-modal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .confirmation-modal .modal-footer {
+    border-top: 1px solid #e9ecef;
+  }
+  
+   /* Styles personnalisés pour les cartes de statistiques */
+    .stat-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        z-index: 1;
+    }
+    
+    .stat-card-total::before {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stat-card-scheduled::before {
+        background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
+    }
+    
+    .stat-card-completed::before {
+        background: linear-gradient(90deg, #00b09b 0%, #96c93d 100%);
+    }
+    
+    .stat-card-rescheduled::before {
+        background: linear-gradient(90deg, #f46b45 0%, #eea849 100%);
+    }
+    
+    .stat-card-icon {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        position: relative;
+        z-index: 2;
+        color: #ffffff;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .stat-trend {
+        position: absolute;
+        bottom: 10px;
+        left: 15px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Animations */
+    @keyframes countUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .stat-number {
+        animation: countUp 0.8s ease-out;
+    }
+  </style>
 
 <!-- Modal de création de session -->
 <div class="modal fade" id="addCourseModal" tabindex="-1" role="dialog" aria-labelledby="addCourseModalLabel"
@@ -170,12 +298,23 @@
               </div>
               <div class="col-md-6 mb-3">
                 <div class="form-group">
-                  <label for="{{ form.student.id_for_label }}" class="form-label">
-                    <strong>{{ form.student.label }}</strong>
+                  <label for="student" class="form-label">
+                    <strong>Étudiant</strong>
                   </label>
-                  {{ form.student }}
-                  {% if form.student.help_text %}
-                  <small class="form-text text-muted">{{ form.student.help_text }}</small>
+                  <select name="student" id="student" class="form-control">
+                    <option value="">Sélectionner un étudiant</option>
+                    {% for student in availables_students %}
+                    <option value="{{ student.id }}" 
+                            {% if form.student.value == student.id|stringformat:"s" %}selected{% endif %}>
+                      {{ student.user.username }} {{ student.user.get_full_name }} ({{student.matricule}})
+                      {% if student.email %} - {{ student.email }}{% endif %}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  {% if form.student.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.student.errors }}
+                  </div>
                   {% endif %}
                 </div>
               </div>
@@ -206,59 +345,293 @@
   </div>
 </div>
 <!--end of session creation-->
-
-<div class="container-fluid mt--6">
-  <!-- Filtres -->
-  <div class="row mb-4">
-  <div class="col-xl-12">
-    <div class="card">
-      <div class="card-body">
-        <form method="get" class="row">
-          <div class="col-md-2">
-            <label for="language">Langue</label>
-            <select name="language" id="language" class="form-control">
-              <option value="">Toutes les langues</option>
-              {% for language in languages %}
-              <option value="{{ language.code }}" 
-                {% if filters.language|default:'' == language.code %}selected{% endif %}>
-                {{ language.name }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label for="status">Statut</label>
-            <select name="status" id="status" class="form-control">
-              <option value="">Tous les statuts</option>
-              <option value="scheduled" {% if filters.status|default:'' == 'scheduled' %}selected{% endif %}>Prévue</option>
-              <option value="completed" {% if filters.status|default:'' == 'completed' %}selected{% endif %}>Terminée</option>
-              <option value="cancelled" {% if filters.status|default:'' == 'cancelled' %}selected{% endif %}>Annulée</option>
-              <option value="rescheduled" {% if filters.status|default:'' == 'rescheduled' %}selected{% endif %}>Reportée</option>
-              <option value="absent" {% if filters.status|default:'' == 'absent' %}selected{% endif %}>Absence</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label for="date">Date</label>
-            <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
-          </div>
-          <div class="col-md-2">
-            <label>&nbsp;</label>
-            <button type="submit" class="btn btn-primary btn-block">
-              <i class="ni ni-zoom-split-in"></i> Filtrer
-            </button>
-          </div>
-          <div class="col-md-2">
-            <label>&nbsp;</label>
-            <button type="button" class="btn btn-success btn-block btn-ajouter-session" data-toggle="modal" data-target="#addCourseModal">
-              <i class="ni ni-fat-add"></i> Ajouter
-            </button>
-          </div>
-        </form>
+<!-- Modal d'édition de session -->
+<div class="modal fade" id="editSessionModal" tabindex="-1" role="dialog" aria-labelledby="editSessionModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-white" id="editSessionModalLabel">Modifier la séance</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
+      
+      <form id="editSessionForm" method="post" action="" data-url-template="#">
+        {% csrf_token %}
+        <input type="hidden" id="edit_session_id" name="session_id">
+        
+        <div class="modal-body">
+          <div id="edit-form-container">
+            <!-- Le formulaire Django sera injecté ici dynamiquement -->
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Chargement...</span>
+              </div>
+              <p class="mt-2">Chargement du formulaire...</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="saveEditBtn">
+            <i class="ni ni-check-bold mr-1"></i>Mettre à jour
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
+<!-- Template partiel pour le formulaire d'édition (injecté dynamiquement) -->
+<template id="editFormTemplate">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Langue -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_language" class="form-label">
+            <strong>Langue</strong>
+          </label>
+          <select name="language" id="id_language" class="form-control" required>
+            <!-- Options seront ajoutées dynamiquement -->
+          </select>
+          <div class="invalid-feedback d-block" id="language_error"></div>
+        </div>
+      </div>
+      
+      <!-- Date -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_date" class="form-label">
+            <strong>Date</strong>
+          </label>
+          <input type="date" name="date" id="id_date" class="form-control" required>
+          <div class="invalid-feedback d-block" id="date_error"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Heure de début -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_start_time" class="form-label">
+            <strong>Heure de début</strong>
+          </label>
+          <input type="time" name="start_time" id="id_start_time" class="form-control" required>
+          <div class="invalid-feedback d-block" id="start_time_error"></div>
+        </div>
+      </div>
+      
+      <!-- Heure de fin -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_end_time" class="form-label">
+            <strong>Heure de fin</strong>
+          </label>
+          <input type="time" name="end_time" id="id_end_time" class="form-control" required>
+          <div class="invalid-feedback d-block" id="end_time_error"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Statut -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_status" class="form-label">
+            <strong>Statut</strong>
+          </label>
+          <select name="status" id="id_status" class="form-control" required>
+            <!-- Options seront ajoutées dynamiquement -->
+          </select>
+          <div class="invalid-feedback d-block" id="status_error"></div>
+        </div>
+      </div>
+      
+      <!-- Étudiant -->
+      <div class="col-md-6 mb-3">
+        <div class="form-group">
+          <label for="id_student" class="form-label">
+            <strong>Étudiant</strong>
+          </label>
+          <select name="student" id="id_student" class="form-control">
+            <option value="">Sélectionner un étudiant</option>
+            <!-- Options seront ajoutées dynamiquement -->
+          </select>
+          <div class="invalid-feedback d-block" id="student_error"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Lien de réunion -->
+      <div class="col-12 mb-3">
+        <div class="form-group">
+          <label for="id_meeting_link" class="form-label">
+            <strong>Lien de réunion</strong>
+          </label>
+          <input type="url" name="meeting_link" id="id_meeting_link" class="form-control"
+            placeholder="https://meet.google.com/...">
+          <div class="invalid-feedback d-block" id="meeting_link_error"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notes (champ supplémentaire) -->
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="form-group">
+          <label for="edit_notes" class="form-label">
+            <strong>Notes (optionnel)</strong>
+          </label>
+          <textarea name="notes" id="edit_notes" class="form-control" rows="3"
+            placeholder="Ajoutez des notes sur cette séance..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<div class="container-fluid mt--6">
+  <!-- Filtres et statistiques -->
+  <div class="row mb-4">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              
+<div class="row">
+    <!-- Total des séances -->
+    <div class="col-md-3 mb-4">
+        <div class="stat-card stat-card-total text-white" 
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <i class="ni ni-bullet-list-67 stat-card-icon"></i>
+            <div class="text-center">
+                <h3 class="stat-number mb-1" id="total-count">{{ sessions|length }}</h3>
+                <p class="stat-label mb-0">Total séances</p>
+            </div>
+           
+        </div>
+    </div>
+    
+    <!-- Séances prévues -->
+    <div class="col-md-3 mb-4">
+        <div class="stat-card stat-card-scheduled text-white" 
+             style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
+            <i class="ni ni-time-alarm stat-card-icon"></i>
+            <div class="text-center">
+                <h3 class="stat-number mb-1" id="scheduled-count">{{ scheduled_count }}</h3>
+                <p class="stat-label mb-0">Prévues</p>
+            </div>
+           
+        </div>
+    </div>
+    
+    <!-- Séances terminées -->
+    <div class="col-md-3 mb-4">
+        <div class="stat-card stat-card-completed text-white" 
+             style="background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);">
+            <i class="ni ni-check-bold stat-card-icon"></i>
+            <div class="text-center">
+                <h3 class="stat-number mb-1" id="completed-count">{{ completed_count }}</h3>
+                <p class="stat-label mb-0">Terminées</p>
+            </div>
+           
+        </div>
+    </div>
+    
+    <!-- Séances reportées -->
+    <div class="col-md-3 mb-4">
+        <div class="stat-card stat-card-rescheduled text-white" 
+             style="background: linear-gradient(135deg, #f46b45 0%, #eea849 100%);">
+            <i class="ni ni-calendar-grid-58 stat-card-icon"></i>
+            <div class="text-center">
+                <h3 class="stat-number mb-1" id="rescheduled-count">{{ rescheduled_count }}</h3>
+                <p class="stat-label mb-0">Reportées</p>
+            </div>
+           
+        </div>
+    </div>
+</div>
+            </div>
+            <div class="col-md-4 text-right">
+              <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#addCourseModal">
+                <i class="ni ni-fat-add mr-2"></i>Nouvelle séance
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="row mb-4">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-body">
+          <form method="get" class="row">
+            <div class="col-md-2">
+              <label for="language">Langue</label>
+              <select name="language" id="language" class="form-control">
+                <option value="">Toutes les langues</option>
+                {% for language in languages %}
+                <option value="{{ language.code }}" 
+                  {% if filters.language|default:'' == language.code %}selected{% endif %}>
+                  {{ language.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="status">Statut</label>
+              <select name="status" id="status" class="form-control">
+                <option value="">Tous les statuts</option>
+                <option value="scheduled" {% if filters.status|default:'' == 'scheduled' %}selected{% endif %}>Prévue</option>
+                <option value="completed" {% if filters.status|default:'' == 'completed' %}selected{% endif %}>Terminée</option>
+                <option value="cancelled" {% if filters.status|default:'' == 'cancelled' %}selected{% endif %}>Annulée</option>
+                <option value="rescheduled" {% if filters.status|default:'' == 'rescheduled' %}selected{% endif %}>Reportée</option>
+                <option value="absent" {% if filters.status|default:'' == 'absent' %}selected{% endif %}>Absence</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="date">Date</label>
+              <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
+            </div>
+            <div class="col-md-2">
+              <label for="student">Étudiant</label>
+              <select name="student" id="student" class="form-control">
+                <option value="">Tous les étudiants</option>
+                {% for student in availables_students %}
+                <option value="{{ student.id }}" {% if filters.student|default:'' == student.id|stringformat:"s" %}selected{% endif %}>
+                  {{ student.user.get_full_name|default:student.user.username }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label>&nbsp;</label>
+              <button type="submit" class="btn btn-primary btn-block">
+                <i class="ni ni-zoom-split-in"></i> Filtrer
+              </button>
+            </div>
+            <div class="col-md-2">
+              <label>&nbsp;</label>
+              <a href="{% url 'teacher_sessions' %}" class="btn btn-secondary btn-block">
+                <i class="ni ni-refresh"></i> Réinitialiser
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des séances -->
   <div class="row">
     <div class="col-xl-12">
       <div class="card">
@@ -266,6 +639,9 @@
           <div class="row align-items-center">
             <div class="col">
               <h3 class="mb-0">Liste des séances</h3>
+            </div>
+            <div class="col text-right">
+              <span class="badge badge-primary">{{ sessions|length }} séance(s)</span>
             </div>
           </div>
         </div>
@@ -284,90 +660,191 @@
             </thead>
             <tbody>
               {% for session in sessions %}
-              <tr id="session-row-{{ session.id }}">
+              <tr id="session-row-{{ session.id }}" class="session-row">
                 <th scope="row">
-                  {{ session.date|date:"d/m/Y" }}
+                  <div class="font-weight-bold">{{ session.date|date:"d/m/Y" }}</div>
+                  {% if session.is_today %}
+                  <span class="badge badge-success">Aujourd'hui</span>
+                  {% elif session.is_past and session.status == 'scheduled' %}
+                  <span class="badge badge-warning">En retard</span>
+                  {% endif %}
                 </th>
                 <td>
-                  {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
+                  <div class="font-weight-bold">{{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}</div>
+                  <small class="text-muted">{{ session.duration_hours|floatformat:1 }}h</small>
                 </td>
                 <td>
-                  {{ session.student.user.get_full_name }}
+                  <div class="font-weight-bold">{{ session.student.user.get_full_name|default:session.student.user.username }}</div>
+                  {% if session.student.matricule %}
+                  <small class="text-muted">{{ session.student.matricule }}</small>
+                  {% endif %}
                 </td>
                 <td>
-                  {{ session.language.name }}
+                  <span class="badge badge-info">{{ session.language.name }}</span>
+                  {% if session.language.flag %}
+                  <img src="{{ session.language.flag.url }}" alt="{{ session.language.name }}" width="20" class="ml-1">
+                  {% endif %}
                 </td>
                 <td>
-                  {{ session.duration_hours|floatformat:1 }}h
+                  <div class="progress-wrapper">
+                    <div class="progress-info">
+                      <div class="progress-label">
+                        <span>{{ session.duration_hours|floatformat:1 }}h</span>
+                      </div>
+                    </div>
+                    <div class="progress">
+                      <div class="progress-bar bg-{{ session.status_color }}" role="progressbar"
+                        style="width: {{ session.completion_percentage }}%"></div>
+                    </div>
+                  </div>
                 </td>
                 <td>
-                  <span
-                    class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% elif session.status == 'rescheduled' %}warning{% else %}secondary{% endif %}"
-                    id="status-badge-{{ session.id }}">
-                    {{ session.get_status_display }}
+                  <span class="badge badge-{{ session.status_color }} badge-status" id="status-badge-{{ session.id }}">
+                    <i class="{{ session.status_icon }} mr-1"></i>{{ session.get_status_display }}
                   </span>
+                  {% if session.notes %}
+                  <br>
+                  <small class="text-muted" data-toggle="tooltip" title="{{ session.notes }}">
+                    <i class="ni ni-chat-round mr-1"></i>Notes
+                  </small>
+                  {% endif %}
                 </td>
                 <td>
-                  <div class="btn-group" role="group">
-                    <a href="{% url 'session_detail' session.id %}" class="btn btn-sm btn-info">
-                      <i class="ni ni-ruler-pencil"></i> Détails
+                  <div class="btn-action-group">
+                    <!-- Actions communes -->
+                    <button type="button" class="btn btn-sm btn-info btn-edit-session" 
+                            data-session-id="{{ session.id }}"
+                            data-toggle="tooltip" title="Modifier">
+                      <i class="ni ni-settings"></i>
+                    </button>
+                    
+                    <a href="{% url 'session_detail' session.id %}" class="btn btn-sm btn-primary"
+                       data-toggle="tooltip" title="Détails">
+                      <i class="ni ni-zoom-split-in"></i>
                     </a>
+
+                    {% if session.meeting_link %}
+                    <a href="{{ session.meeting_link }}" target="_blank" class="btn btn-sm btn-success"
+                       data-toggle="tooltip" title="Rejoindre la réunion">
+                      <i class="ni ni-send"></i>
+                    </a>
+                    {% endif %}
+
+                    <!-- Actions spécifiques au statut -->
                     {% if session.status == 'scheduled' %}
                     <button type="button" class="btn btn-sm btn-success session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="completed">
-                      <i class="ni ni-check-bold"></i> Terminée
+                            data-session-id="{{ session.id }}" data-status="completed"
+                            data-toggle="tooltip" title="Marquer comme terminée">
+                      <i class="ni ni-check-bold"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-warning session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="rescheduled">
-                      <i class="ni ni-calendar-grid-58"></i> Reporter
+                            data-session-id="{{ session.id }}" data-status="rescheduled"
+                            data-toggle="tooltip" title="Reporter">
+                      <i class="ni ni-calendar-grid-58"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-danger session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="cancelled">
-                      <i class="ni ni-fat-remove"></i> Annuler
+                            data-session-id="{{ session.id }}" data-status="cancelled"
+                            data-toggle="tooltip" title="Annuler">
+                      <i class="ni ni-fat-remove"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-secondary session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="absent">
-                      <i class="ni ni-user-run"></i> Absence
+                            data-session-id="{{ session.id }}" data-status="absent"
+                            data-toggle="tooltip" title="Marquer comme absente">
+                      <i class="ni ni-user-run"></i>
                     </button>
+                    
                     {% elif session.status == 'rescheduled' %}
                     <button type="button" class="btn btn-sm btn-success session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="completed">
-                      <i class="ni ni-check-bold"></i> Terminée
+                            data-session-id="{{ session.id }}" data-status="completed">
+                      <i class="ni ni-check-bold"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-danger session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="cancelled">
-                      <i class="ni ni-fat-remove"></i> Annuler
+                            data-session-id="{{ session.id }}" data-status="cancelled">
+                      <i class="ni ni-fat-remove"></i>
                     </button>
+                    
                     {% elif session.status == 'absent' %}
                     <button type="button" class="btn btn-sm btn-success session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="completed">
-                      <i class="ni ni-check-bold"></i> Terminée
+                            data-session-id="{{ session.id }}" data-status="completed">
+                      <i class="ni ni-check-bold"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-warning session-status-btn"
-                      data-session-id="{{ session.id }}" data-status="rescheduled">
-                      <i class="ni ni-calendar-grid-58"></i> Reporter
+                            data-session-id="{{ session.id }}" data-status="rescheduled">
+                      <i class="ni ni-calendar-grid-58"></i>
                     </button>
                     {% endif %}
+
+                    <!-- Bouton de suppression (toujours visible) -->
+                    <button type="button" class="btn btn-sm btn-danger btn-delete-session"
+                            data-session-id="{{ session.id }}"
+                            data-toggle="tooltip" title="Supprimer">
+                      <i class="ni ni-basket"></i>
+                    </button>
                   </div>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" class="text-center">Aucune séance trouvée</td>
+                <td colspan="7" class="text-center py-5">
+                  <div class="empty-state">
+                    <i class="ni ni-calendar-grid-58 fa-3x text-muted mb-3"></i>
+                    <h4>Aucune séance trouvée</h4>
+                    <p class="text-muted">Commencez par créer une nouvelle séance</p>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addCourseModal">
+                      <i class="ni ni-fat-add mr-2"></i>Créer une séance
+                    </button>
+                  </div>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
+        <!-- Pagination -->
+        {% if sessions.has_other_pages %}
+        <div class="card-footer py-4">
+          <nav aria-label="Pagination">
+            <ul class="pagination justify-content-end mb-0">
+              {% if sessions.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ sessions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+              {% endif %}
+              
+              {% for i in sessions.paginator.page_range %}
+                {% if sessions.number == i %}
+                <li class="page-item active">
+                  <span class="page-link">{{ i }}</span>
+                </li>
+                {% else %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                </li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if sessions.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ sessions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal de confirmation -->
-<div class="modal fade" id="statusConfirmModal" tabindex="-1" role="dialog" aria-labelledby="statusConfirmModalLabel"
+<!-- Modal de confirmation pour changement de statut -->
+<div class="modal fade confirmation-modal" id="statusConfirmModal" tabindex="-1" role="dialog" aria-labelledby="statusConfirmModalLabel"
   aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="statusConfirmModalLabel">Confirmer le changement de statut</h5>
@@ -376,12 +853,81 @@
         </button>
       </div>
       <div class="modal-body">
+        <div class="text-center mb-4">
+          <i class="ni ni-notification-70 fa-3x text-warning"></i>
+        </div>
         <p>Êtes-vous sûr de vouloir changer le statut de cette séance ?</p>
-        <p><strong>Nouveau statut :</strong> <span id="new-status-display"></span></p>
+        <p><strong>Nouveau statut :</strong> <span id="new-status-display" class="badge badge-primary"></span></p>
+        <div id="status-warning" class="alert alert-warning mt-3" style="display: none;">
+          <i class="ni ni-bell-55"></i> Cette action est irréversible pour certains statuts.
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-primary" id="confirmStatusChange">Confirmer</button>
+        <button type="button" class="btn btn-primary" id="confirmStatusChange">
+          <i class="ni ni-check-bold mr-2"></i>Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmation pour suppression -->
+<div class="modal fade confirmation-modal" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title text-white" id="deleteConfirmModalLabel">Supprimer la séance</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+       
+        <p class="text-center" style = "font-size: 2rem;"><strong>Attention !</strong></p>
+        <p>Êtes-vous sûr de vouloir supprimer cette séance ?</p>
+        <div class="alert alert-danger">
+          <i class="ni ni-bell-55"></i> Cette action est irréversible. Toutes les données associées à cette séance seront perdues.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteSession">
+          <i class="ni ni-basket mr-2"></i>Supprimer définitivement
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de notes rapides -->
+<div class="modal fade" id="quickNotesModal" tabindex="-1" role="dialog" aria-labelledby="quickNotesModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickNotesModalLabel">Notes de séance</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="quickNotesForm">
+          {% csrf_token %}
+          <input type="hidden" id="notes_session_id" name="session_id">
+          <div class="form-group">
+            <label for="quick_notes">Notes</label>
+            <textarea class="form-control" id="quick_notes" name="notes" rows="4"
+                      placeholder="Ajoutez vos notes sur cette séance..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="saveQuickNotes">
+          <i class="ni ni-check-bold mr-2"></i>Enregistrer
+        </button>
       </div>
     </div>
   </div>
@@ -393,35 +939,179 @@
   $(document).ready(function () {
     var currentSessionId = null;
     var currentStatus = null;
+    var currentAction = null; // 'status' ou 'delete'
+
+    // Initialiser les tooltips Bootstrap
+    $('[data-toggle="tooltip"]').tooltip();
 
     // Récupérer le token CSRF
     function getCSRFToken() {
       return $('[name=csrfmiddlewaretoken]').val();
     }
 
+    // Gestion des boutons de changement de statut
     $('.session-status-btn').click(function () {
       currentSessionId = $(this).data('session-id');
       currentStatus = $(this).data('status');
+      currentAction = 'status';
 
       // Déterminer le nom du statut
       var statusNames = {
         'completed': 'Terminée',
         'rescheduled': 'Reportée',
         'cancelled': 'Annulée',
-        'absent': 'Absence'
+        'absent': 'Absence',
+        'deleted': 'Supprimée'
       };
 
       $('#new-status-display').text(statusNames[currentStatus]);
+      
+      // Afficher un avertissement pour certains statuts
+      var warningDiv = $('#status-warning');
+      if (currentStatus === 'cancelled' || currentStatus === 'deleted') {
+        warningDiv.show();
+      } else {
+        warningDiv.hide();
+      }
+
       $('#statusConfirmModal').modal('show');
     });
 
+    
+     // Confirmation suppression
+    $('#confirmDeleteSession').click(function () {
+            if (currentSessionId && currentAction === 'delete') {
+        deleteSession(currentSessionId);
+      }
+      $('#deleteConfirmModal').modal('hide');
+    });
+
+    // Confirmation changement de statut
     $('#confirmStatusChange').click(function () {
-      if (currentSessionId && currentStatus) {
+      if (currentSessionId && currentStatus && currentAction === 'status') {
         updateSessionStatus(currentSessionId, currentStatus);
       }
       $('#statusConfirmModal').modal('hide');
     });
 
+   
+
+    // Sauvegarde des notes rapides
+    $('#saveQuickNotes').click(function () {
+      saveQuickNotes();
+    });
+
+    // Gestion des boutons de suppression
+    $('.btn-delete-session').click(function () {
+      currentSessionId = $(this).data('session-id');
+      currentAction = 'delete';
+      $('#deleteConfirmModal').modal('show');
+    });
+
+    // Gestion des boutons d'édition
+    $('.btn-edit-session').click(function () {
+      currentSessionId = $(this).data('session-id');
+      currentAction = 'edit';
+       $('#editSessionModal').modal('show');
+      loadSessionData(currentSessionId);
+      
+    });
+
+    // Fonction pour charger les données de session pour l'édition
+    function loadSessionData(currentSessionId) {
+      $.ajax({
+        url: 'update/' + currentSessionId + '/',
+        method: 'GET',
+        headers: {
+          'X-CSRFToken': getCSRFToken()
+        },
+        success: function (response) {
+          // Remplir le formulaire d'édition
+          $('#edit_session_id').val(sessions.id);
+          $('#edit_language').val(sessions.language_id);
+          $('#edit_date').val(sessions.date);
+          $('#edit_start_time').val(sessions.start_time);
+          $('#edit_end_time').val(sessions.end_time);
+          $('#edit_status').val(sessions.status);
+          $('#edit_student').val(sessions.student_id);
+          $('#edit_meeting_link').val(sessions.meeting_link);
+          $('#edit_notes').val(sessions.notes);
+
+          $('#editSessionModal').modal('show');
+        },
+        error: function (xhr) {
+          console.error('Erreur AJAX:', xhr);
+          showErrorMessage('Erreur lors du chargement des données');
+        }
+      });
+    }
+
+    // Soumission du formulaire d'édition
+    $('#editSessionForm').submit(function (e) {
+      e.preventDefault();
+      editSession(currentSessionId);
+    });
+
+    // Fonction d'édition de session
+    function editSession(currentSessionId) {
+      var formData = $('#editSessionForm').serialize();
+      
+      $.ajax({
+        url: 'update/' + currentSessionId + '/',
+        method: 'POST',
+        data: formData,
+        headers: {
+          'X-CSRFToken': getCSRFToken()
+        },
+        success: function (response) {
+          if (response.success) {
+            // Mettre à jour la ligne dans le tableau
+            updateSessionRowAfterEdit(response.session);
+            showSuccessMessage('Séance modifiée avec succès');
+            $('#editSessionModal').modal('hide');
+          } else {
+            showErrorMessage(response.error || 'Erreur lors de la modification');
+          }
+        },
+        error: function (xhr) {
+          console.error('Erreur AJAX:', xhr);
+          showErrorMessage('Erreur lors de la modification de la séance');
+        }
+      });
+    }
+
+    // Fonction de suppression de session
+    function deleteSession(sessionId) {
+      $.ajax({
+        url: 'delete/' + sessionId + '/',
+        method: 'POST',
+        data: {
+          'csrfmiddlewaretoken': getCSRFToken()
+        },
+        success: function (response) { 
+          if (response.success) {
+            // Animation de suppression
+            var row = $('#session-row-' + sessionId);
+            row.fadeOut(300, function() {
+              $(this).remove();
+              if ($('.session-row').length === 0) {
+                // Recharger la page si plus de séances
+                location.reload();
+              }
+            });
+            showSuccessMessage('Séance supprimée avec succès');
+          } else {
+            showErrorMessage(response.error || 'Erreur lors de la suppression');
+          }
+        },
+        error: function (xhr) {
+          console.error('Erreur AJAX:', xhr);
+          showErrorMessage('Erreur lors de la suppression de la séance');
+        }
+      });
+    }
+
+    // Fonction de mise à jour du statut
     function updateSessionStatus(sessionId, status) {
       $.ajax({
         url: '/session/' + sessionId + '/status/',
@@ -433,7 +1123,7 @@
         success: function (response) {
           if (response.success) {
             // Mettre à jour l'interface
-            updateSessionRow(sessionId, status);
+            updateSessionRow(sessionId, status, response.session);
             showSuccessMessage('Statut mis à jour avec succès');
           } else {
             showErrorMessage(response.error || 'Erreur lors de la mise à jour');
@@ -446,117 +1136,325 @@
       });
     }
 
-    function updateSessionRow(sessionId, status) {
+    // Fonction pour sauvegarder les notes rapides
+    function saveQuickNotes() {
+      var sessionId = $('#notes_session_id').val();
+      var notes = $('#quick_notes').val();
+      
+      $.ajax({
+        url: '/session/' + sessionId + '/notes/',
+        method: 'POST',
+        data: {
+          'notes': notes,
+          'csrfmiddlewaretoken': getCSRFToken()
+        },
+        success: function (response) {
+          if (response.success) {
+            showSuccessMessage('Notes enregistrées avec succès');
+            $('#quickNotesModal').modal('hide');
+            
+            // Mettre à jour l'affichage des notes
+            var notesBadge = $('#session-row-' + sessionId + ' .notes-badge');
+            if (notes.trim()) {
+              if (notesBadge.length === 0) {
+                $('#session-row-' + sessionId + ' td:nth-child(6)').append(
+                  '<br><small class="text-muted notes-badge" data-toggle="tooltip" title="' + notes + '">' +
+                  '<i class="ni ni-chat-round mr-1"></i>Notes</small>'
+                );
+              } else {
+                notesBadge.attr('title', notes);
+              }
+            } else {
+              notesBadge.remove();
+            }
+            
+            // Reinitialiser les tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+          } else {
+            showErrorMessage('Erreur lors de l\'enregistrement des notes');
+          }
+        },
+        error: function (xhr) {
+          console.error('Erreur AJAX:', xhr);
+          showErrorMessage('Erreur lors de l\'enregistrement des notes');
+        }
+      });
+    }
+
+    // Mettre à jour une ligne après édition
+    function updateSessionRowAfterEdit(sessionData) {
+      var row = $('#session-row-' + sessionData.id);
+      
+      // Mettre à jour les cellules
+      row.find('th:first').html(
+        '<div class="font-weight-bold">' + formatDate(sessionData.date) + '</div>' +
+        (sessionData.is_today ? '<span class="badge badge-success">Aujourd\'hui</span>' : '') +
+        (sessionData.is_past && sessionData.status === 'scheduled' ? '<span class="badge badge-warning">En retard</span>' : '')
+      );
+      
+      row.find('td:nth-child(2)').html(
+        '<div class="font-weight-bold">' + formatTime(sessionData.start_time) + ' - ' + formatTime(sessionData.end_time) + '</div>' +
+        '<small class="text-muted">' + sessionData.duration_hours + 'h</small>'
+      );
+      
+      row.find('td:nth-child(4)').html(
+        '<span class="badge badge-info">' + sessionData.language_name + '</span>'
+      );
+      
+      // Mettre à jour le badge de statut
+      var statusBadge = $('#status-badge-' + sessionData.id);
+      statusBadge.removeClass().addClass('badge badge-' + sessionData.status_color + ' badge-status');
+      statusBadge.html('<i class="' + sessionData.status_icon + ' mr-1"></i>' + sessionData.status_display);
+      
+      // Ajouter une animation de mise à jour
+      row.addClass('status-updated');
+      setTimeout(function() {
+        row.removeClass('status-updated');
+      }, 500);
+    }
+
+    // Mettre à jour une ligne après changement de statut
+    function updateSessionRow(sessionId, status, sessionData) {
       var row = $('#session-row-' + sessionId);
       var statusBadge = $('#status-badge-' + sessionId);
       var actionsCell = row.find('td:last');
-
-      // Mettre à jour le badge de statut
-      var statusClasses = {
-        'completed': 'success',
-        'rescheduled': 'warning',
-        'cancelled': 'danger',
-        'absent': 'secondary'
-      };
-
-      var statusNames = {
-        'completed': 'Terminée',
-        'rescheduled': 'Reportée',
-        'cancelled': 'Annulée',
-        'absent': 'Absence'
-      };
-
-      statusBadge.removeClass().addClass('badge badge-' + statusClasses[status]);
-      statusBadge.text(statusNames[status]);
-
-      // Mettre à jour les boutons d'action
-      var newActions = '';
-      if (status === 'completed') {
-        newActions = '<span class="text-success"><i class="ni ni-check-bold"></i> Séance terminée</span>';
-      } else if (status === 'rescheduled') {
-        newActions = `
-                <div class="btn-group" role="group">
-                    <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
-                        <i class="ni ni-ruler-pencil"></i> Détails
-                    </a>
-                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="${sessionId}" data-status="completed">
-                        <i class="ni ni-check-bold"></i> Terminée
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="${sessionId}" data-status="cancelled">
-                        <i class="ni ni-fat-remove"></i> Annuler
-                    </button>
-                </div>
-            `;
-      } else if (status === 'cancelled') {
-        newActions = '<span class="text-danger"><i class="ni ni-fat-remove"></i> Séance annulée</span>';
-      } else if (status === 'absent') {
-        newActions = `
-                <div class="btn-group" role="group">
-                    <a href="/session/${sessionId}/" class="btn btn-sm btn-info">
-                        <i class="ni ni-ruler-pencil"></i> Détails
-                    </a>
-                    <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="${sessionId}" data-status="completed">
-                        <i class="ni ni-check-bold"></i> Terminée
-                    </button>
-                    <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="${sessionId}" data-status="rescheduled">
-                        <i class="ni ni-calendar-grid-58"></i> Reporter
-                    </button>
-                </div>
-            `;
-      }
-
-      actionsCell.html(newActions);
-
-      // Réattacher les événements aux nouveaux boutons
-      actionsCell.find('.session-status-btn').click(function () {
-        currentSessionId = $(this).data('session-id');
-        currentStatus = $(this).data('status');
-
+      
+      if (sessionData) {
+        // Utiliser les données fournies par le serveur
+        statusBadge.removeClass().addClass('badge badge-' + sessionData.status_color + ' badge-status');
+        statusBadge.html('<i class="' + sessionData.status_icon + ' mr-1"></i>' + sessionData.status_display);
+        
+        // Mettre à jour les actions
+        updateActionButtons(actionsCell, sessionId, sessionData.status, sessionData.status_color, sessionData.status_icon);
+      } else {
+        // Mettre à jour avec les valeurs par défaut (fallback)
+        var statusClasses = {
+          'completed': 'success',
+          'rescheduled': 'warning',
+          'cancelled': 'danger',
+          'absent': 'secondary',
+          'deleted': 'dark'
+        };
+        
         var statusNames = {
           'completed': 'Terminée',
           'rescheduled': 'Reportée',
           'cancelled': 'Annulée',
-          'absent': 'Absence'
+          'absent': 'Absence',
+          'deleted': 'Supprimée'
         };
+        
+        var statusIcons = {
+          'completed': 'ni ni-check-bold',
+          'rescheduled': 'ni ni-calendar-grid-58',
+          'cancelled': 'ni ni-fat-remove',
+          'absent': 'ni ni-user-run',
+          'deleted': 'ni ni-basket'
+        };
+        
+        statusBadge.removeClass().addClass('badge badge-' + statusClasses[status] + ' badge-status');
+        statusBadge.html('<i class="' + statusIcons[status] + ' mr-1"></i>' + statusNames[status]);
+        
+        // Mettre à jour les boutons d'action
+        updateActionButtons(actionsCell, sessionId, status, statusClasses[status], statusIcons[status]);
+      }
+      
+      // Animation de mise à jour
+      row.addClass('status-updated');
+      setTimeout(function() {
+        row.removeClass('status-updated');
+      }, 500);
+    }
 
+    // Mettre à jour les boutons d'action
+    function updateActionButtons(actionsCell, sessionId, status, statusColor, statusIcon) {
+      var newActions = '<div class="btn-action-group">' +
+        '<button type="button" class="btn btn-sm btn-info btn-edit-session" ' +
+          'data-session-id="' + sessionId + '" data-toggle="tooltip" title="Modifier">' +
+          '<i class="ni ni-settings"></i>' +
+        '</button>' +
+        '<a href="/session/' + sessionId + '/" class="btn btn-sm btn-primary" ' +
+          'data-toggle="tooltip" title="Détails">' +
+          '<i class="ni ni-zoom-split-in"></i>' +
+        '</a>';
+      
+      // Ajouter des boutons spécifiques selon le statut
+      if (status === 'scheduled') {
+        newActions += 
+          '<button type="button" class="btn btn-sm btn-success session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="completed" data-toggle="tooltip" title="Terminer">' +
+            '<i class="ni ni-check-bold"></i>' +
+          '</button>' +
+          '<button type="button" class="btn btn-sm btn-warning session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="rescheduled" data-toggle="tooltip" title="Reporter">' +
+            '<i class="ni ni-calendar-grid-58"></i>' +
+          '</button>' +
+          '<button type="button" class="btn btn-sm btn-danger session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="cancelled" data-toggle="tooltip" title="Annuler">' +
+            '<i class="ni ni-fat-remove"></i>' +
+          '</button>' +
+          '<button type="button" class="btn btn-sm btn-secondary session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="absent" data-toggle="tooltip" title="Absence">' +
+            '<i class="ni ni-user-run"></i>' +
+          '</button>';
+      } else if (status === 'rescheduled') {
+        newActions += 
+          '<button type="button" class="btn btn-sm btn-success session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="completed" data-toggle="tooltip" title="Terminer">' +
+            '<i class="ni ni-check-bold"></i>' +
+          '</button>' +
+          '<button type="button" class="btn btn-sm btn-danger session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="cancelled" data-toggle="tooltip" title="Annuler">' +
+            '<i class="ni ni-fat-remove"></i>' +
+          '</button>';
+      } else if (status === 'absent') {
+        newActions += 
+          '<button type="button" class="btn btn-sm btn-success session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="completed" data-toggle="tooltip" title="Terminer">' +
+            '<i class="ni ni-check-bold"></i>' +
+          '</button>' +
+          '<button type="button" class="btn btn-sm btn-warning session-status-btn" ' +
+            'data-session-id="' + sessionId + '" data-status="rescheduled" data-toggle="tooltip" title="Reporter">' +
+            '<i class="ni ni-calendar-grid-58"></i>' +
+          '</button>';
+      }
+      
+      // Bouton de suppression toujours présent
+      newActions += 
+        '<button type="button" class="btn btn-sm btn-danger btn-delete-session" ' +
+          'data-session-id="' + sessionId + '" data-toggle="tooltip" title="Supprimer">' +
+          '<i class="ni ni-basket"></i>' +
+        '</button>' +
+      '</div>';
+      
+      actionsCell.html(newActions);
+      
+      // Réattacher les événements
+      reattachEventHandlers();
+    }
+
+    // Réattacher les gestionnaires d'événements
+    function reattachEventHandlers() {
+      $('.session-status-btn').off('click').click(function () {
+        currentSessionId = $(this).data('session-id');
+        currentStatus = $(this).data('status');
+        currentAction = 'status';
+        
+        var statusNames = {
+          'completed': 'Terminée',
+          'rescheduled': 'Reportée',
+          'cancelled': 'Annulée',
+          'absent': 'Absence',
+          'deleted': 'Supprimée'
+        };
+        
         $('#new-status-display').text(statusNames[currentStatus]);
         $('#statusConfirmModal').modal('show');
       });
+      
+      $('.btn-delete-session').off('click').click(function () {
+        currentSessionId = $(this).data('session-id');
+        currentAction = 'delete';
+        $('#deleteConfirmModal').modal('show');
+      });
+      
+      $('.btn-edit-session').off('click').click(function () {
+        currentSessionId = $(this).data('session-id');
+        currentAction = 'edit';
+        $('#editSessionModal').modal('show');
+        loadSessionData(currentSessionId);
+      });
+      
+      // Reinitialiser les tooltips
+      $('[data-toggle="tooltip"]').tooltip();
     }
 
+    // Fonctions d'aide pour le formatage
+    function formatDate(dateString) {
+      var date = new Date(dateString);
+      return ('0' + date.getDate()).slice(-2) + '/' + 
+             ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+             date.getFullYear();
+    }
+    
+    function formatTime(timeString) {
+      var time = timeString.split(':');
+      return time[0] + ':' + time[1];
+    }
+
+    // Fonctions de notification
     function showSuccessMessage(message) {
       // Créer une notification de succès
       var alert = $('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+        '<i class="ni ni-check-bold mr-2"></i>' +
         message +
         '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
         '<span aria-hidden="true">&times;</span>' +
         '</button>' +
         '</div>');
-
+      
       $('.container-fluid').first().prepend(alert);
-
+      
       // Auto-fermer après 3 secondes
       setTimeout(function () {
         alert.alert('close');
       }, 3000);
     }
-
+    
     function showErrorMessage(message) {
       // Créer une notification d'erreur
       var alert = $('<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+        '<i class="ni ni-bell-55 mr-2"></i>' +
         message +
         '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
         '<span aria-hidden="true">&times;</span>' +
         '</button>' +
         '</div>');
-
+      
       $('.container-fluid').first().prepend(alert);
-
+      
       // Auto-fermer après 5 secondes
       setTimeout(function () {
         alert.alert('close');
       }, 5000);
     }
+
+    // Gestion des dates dans les filtres
+    $('#date').change(function() {
+      if ($(this).val()) {
+        $('#language, #status, #student').val('');
+      }
+    });
+    
+    $('#language, #status, #student').change(function() {
+      if ($(this).val()) {
+        $('#date').val('');
+      }
+    });
+
+    // Export des données
+    $('.btn-export').click(function() {
+      var format = $(this).data('format');
+      exportSessions(format);
+    });
+
+    function exportSessions(format) {
+      var params = new URLSearchParams(window.location.search);
+      params.set('format', format);
+      
+      window.location.href = '/export/sessions/?' + params.toString();
+    }
+
+    // Initialisation
+    reattachEventHandlers();
+    
+    // Auto-refresh toutes les 5 minutes pour les séances en cours
+    setInterval(function() {
+      if ($('.badge-success:contains("Aujourd\'hui")').length > 0) {
+        location.reload();
+      }
+    }, 300000); // 5 minutes
   });
+
 </script>
 {% endblock javascripts %}

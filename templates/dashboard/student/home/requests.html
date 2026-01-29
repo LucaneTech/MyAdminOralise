@@ -137,14 +137,20 @@
                                                     <i class="ni ni-single-copy-04"></i> Pièce jointe
                                                 </a>
                                             {% else %}
-                                                <span class="text-muted">-</span>
+                                                 <div class="btn btn-sm btn-info" target="_blank">
+                                                    <i class="ni ni-single-copy-04"></i> Aucune pièce jointe 
+                                                </div>
                                             {% endif %}
                                             {% if request.response %}
                                                 <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#responseModal{{ request.id }}">
                                                     <i class="ni ni-email-83"></i> Voir réponse
                                                 </button>
                                                 {% else %}
-                                                <span class="text-muted">-</span>
+                                         
+                                                 <div class="btn btn-sm btn-success" target="_blank">
+                                                    <i class="ni ni-email-83"></i> Pas de réponse
+                                                 </
+                                                </div>
                                             {% endif %}
                                         </td>
                                     </tr>

@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.decorators.http import require_POST
 
 
 from dashboard.models import (
@@ -516,13 +517,13 @@ def requests_view(request):
     elif user.role == "teacher":
         teacher = get_object_or_404(Teacher, user=user)
         # Toutes les demandes des étudiants liés à cet enseignant
-        requests = Request.objects.filter(student__current_teacher=teacher)
-
+        requests = Request.objects.filter(student__current_teachers=teacher)
+        total_request = requests.count() if requests else 0
         context.update(
             {
                 "teacher": teacher,
                 "requests": requests,
-                "total_requests": requests.count(),
+                "total_requests": total_request,
                 "pending_requests": requests.filter(status="pending").count(),
                 "processing_requests": requests.filter(status="processing").count(),
                 "approved_requests": requests.filter(status="approved").count(),
@@ -531,6 +532,150 @@ def requests_view(request):
         )
 
         return render(request, "dashboard/teacher/home/requests.html", context)
+
+
+
+@login_required
+@require_POST
+def update_request_status(request):
+    """Vue AJAX pour mettre à jour le statut d'une demande"""
+    try:
+        # Récupérer les données POST
+        request_id = request.POST.get('request_id')
+        action = request.POST.get('action')
+        
+        # Vérifier que l'utilisateur est un enseignant
+        if request.user.role != "teacher":
+            return JsonResponse({
+                'success': False,
+                'error': 'Accès réservé aux enseignants'
+            }, status=403)
+        
+        # Récupérer l'enseignant connecté
+        teacher = Teacher.objects.get(user=request.user)
+        
+        # Récupérer la demande (vérifier qu'elle appartient à cet enseignant)
+        req = Request.objects.get(id=request_id, teacher=teacher)
+        
+        # Mettre à jour le statut selon l'action
+        status_map = {
+            'process': 'processing',
+            'approve': 'approved', 
+            'reject': 'rejected',
+            'pending': 'pending'
+        }
+        
+        if action not in status_map:
+            return JsonResponse({
+                'success': False,
+                'error': 'Action invalide'
+            }, status=400)
+        
+        req.status = status_map[action]
+        req.save()
+        
+        # Récupérer les nouvelles statistiques
+        teacher_requests = Request.objects.filter(teacher=teacher)
+        stats = {
+            'total': teacher_requests.count(),
+            'pending': teacher_requests.filter(status='pending').count(),
+            'processing': teacher_requests.filter(status='processing').count(),
+            'approved': teacher_requests.filter(status='approved').count(),
+            'rejected': teacher_requests.filter(status='rejected').count(),
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Statut mis à jour : {req.get_status_display()}',
+            'request': {
+                'id': req.id,
+                'status': req.status,
+                'status_display': req.get_status_display(),
+            },
+            'stats': stats
+        })
+        
+    except Teacher.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Enseignant non trouvé'
+        }, status=404)
+        
+    except Request.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Demande non trouvée ou non autorisée'
+        }, status=404)
+        
+    except Exception as e:
+        # Pour déboguer, affichez l'erreur
+        import traceback
+        print(f"Erreur update_request_status: {e}")
+        print(traceback.format_exc())
+        
+        return JsonResponse({
+            'success': False,
+            'error': f'Erreur serveur: {str(e)}'
+        }, status=500)
+
+@login_required
+@require_POST
+def add_request_response(request):
+    """Vue AJAX pour ajouter une réponse à une demande"""
+    try:
+        # Récupérer les données POST
+        request_id = request.POST.get('request_id')
+        response_text = request.POST.get('response', '').strip()
+        
+        # Vérifications
+        if request.user.role != "teacher":
+            return JsonResponse({
+                'success': False,
+                'error': 'Accès réservé aux enseignants'
+            }, status=403)
+        
+        if not response_text:
+            return JsonResponse({
+                'success': False,
+                'error': 'Le message de réponse est requis'
+            }, status=400)
+        
+        # Récupérer l'enseignant et la demande
+        teacher = Teacher.objects.get(user=request.user)
+        req = Request.objects.get(id=request_id, teacher=teacher)
+        
+        # Ajouter la réponse
+        req.response = response_text
+        req.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Réponse envoyée avec succès',
+            'request_id': req.id,
+            'response': response_text
+        })
+        
+    except Teacher.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Enseignant non trouvé'
+        }, status=404)
+        
+    except Request.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Demande non trouvée ou non autorisée'
+        }, status=404)
+        
+    except Exception as e:
+        import traceback
+        print(f"Erreur add_request_response: {e}")
+        print(traceback.format_exc())
+        
+        return JsonResponse({
+            'success': False,
+            'error': f'Erreur serveur: {str(e)}'
+        }, status=500)
 
 
 def settings_view(request):
@@ -1701,15 +1846,16 @@ def payments_view(request):
     return render(request, "dashboard/student/home/payments.html", context)
 
 
+
 @login_required
 def teacher_sessions_view(request):
-    """Vue des séances pour les enseignants avec filtres"""
+   
     if request.user.role != "teacher":
         raise Http404("Cette page est réservée aux enseignants")
 
     teacher = get_object_or_404(Teacher, user=request.user)
     profile = get_object_or_404(Profile, user=request.user)
-
+    availables_students = Student.objects.filter(current_teachers=teacher)
     # Filtres
     language_filter = request.GET.get("language")
     status_filter = request.GET.get("status")
@@ -1724,8 +1870,10 @@ def teacher_sessions_view(request):
     if date_filter:
         sessions = sessions.filter(date=date_filter)
 
-    sessions = sessions.order_by("-date", "-start_time")
-
+    sessions = sessions.order_by("date", "start_time")
+    scheduled_count = sessions.filter(status='scheduled').count()
+    completed_count = sessions.filter(status='completed').count()
+    rescheduled_count = sessions.filter(status='rescheduled').count()
     # formular management
     if request.method == "POST":
         form = SessionForm(request.POST)
@@ -1740,6 +1888,9 @@ def teacher_sessions_view(request):
         form = SessionForm()
 
     context = {
+        "scheduled_count": scheduled_count,
+        "completed_count": completed_count,
+        "rescheduled_count": rescheduled_count,
         "form": form,
         "sessions": sessions,
         "teacher": teacher,
@@ -1752,8 +1903,33 @@ def teacher_sessions_view(request):
             "date": date_filter,
         },
         "user": request.user,
+        "availables_students": availables_students
     }
     return render(request, "dashboard/teacher/home/sessions.html", context)
+
+
+@login_required
+def get_student_session_by_id(request, session_id):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    student = Student.objects.filter(id=session_id, current_teachers=teacher).first()
+    sessions = Session.objects.filter(student__id=session_id, teacher=teacher).order_by("date", "start_time")
+     
+    context ={
+        "sessions": sessions,
+        "student": student   
+    }
+    
+    return render(  request, "dashboard/teacher/home/sessions.html", context  )
+
+@login_required
+def delete_student_session_by_id(request, session_id):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    session = get_object_or_404(Session, id=session_id, teacher=teacher)
+    session.delete()
+    messages.success(request, "La session a été supprimée avec succès !")
+    return redirect("teacher_sessions")
+
+
 
 
 @login_required

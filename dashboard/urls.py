@@ -2,7 +2,10 @@ from django import views
 from django.urls import path
 from .views import (
     # update_profile_picture,
+    add_request_response,
     delete_notification,
+    delete_student_session_by_id,
+    get_student_session_by_id,
     notifications_mark_all_read,
     profile_view, 
     dashboard_view, profile_edit, schedule_view,
@@ -16,7 +19,10 @@ from .views import (
     teacher_sessions_view, student_sessions_view,
     teacher_schedule_manage, teacher_evaluations_add, teacher_attendance_manage,
     teacher_resources_add_student, evaluation_edit,
-    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic, export_students_csv, teacher_student_detail
+    teacher_schedule_enhanced, teacher_schedule_api, teacher_attendance_dynamic, export_students_csv, teacher_student_detail,
+    update_request_status,
+    update_request_status, 
+    #edit_session_view  
  
 
 )
@@ -40,12 +46,15 @@ urlpatterns = [
     path('teacher/resources_add/',resources_add, name= 'teacher_resources_add'),
     path('teacher/resources/add/student/', teacher_resources_add_student, name='teacher_resources_add_student'),
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),
+    path('teacher/sessions/delete/<int:session_id>/', delete_student_session_by_id, name='delete_student_session_by_id'),
+    # path('teacher/sessions/update/<int:session_id>/', edit_session_view, name='edit_session'),
+    
     path('teacher/evaluations/add/', teacher_evaluations_add, name='teacher_evaluations_add'),
     path('teacher/evaluations/<int:evaluation_id>/edit/', evaluation_edit, name='evaluation_edit'),
     path('teacher/<str:username>/', teacher_view, name='teacher_view'),
     
     # URLs communes
-    path('profile/view/', profile_view, name='profile_view'),
+    path('profile/view/', profile_view, name='profile_view'), 
     path('profile/edit/', profile_edit, name='profile_edit'),
     # path('profile/update-picture/', update_profile_picture, name='update_picture'),
     
@@ -53,6 +62,8 @@ urlpatterns = [
     path('schedule/', schedule_view, name='schedule_view'),
     path('resources/', resources_view, name='resources_view'),
     path('requests/', requests_view, name='requests_view'),
+    path('requests/update-status/', update_request_status, name='update_request_status'),
+    path('requests/add-response/', add_request_response, name='add_request_response'),
     
     # Nouvelles URLs pour le cahier des charges
     path('session/<int:session_id>/', session_detail_view, name='session_detail'),
