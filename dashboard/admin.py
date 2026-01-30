@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     CustomUser, Student, Teacher, Schedule,  
     Resource, Request, Language, Session, Payment, Certificate, 
-    Evaluation, Notification, Comment,Skill, Profile
+    Evaluation, Notification, Comment, Profile
 )
 
 
@@ -40,6 +40,12 @@ class StudentAdmin(admin.ModelAdmin):
     search_fields= ('user__first_name', 'user__last_name', 'matricule')
 
 
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'description')
+    list_filter = ('name','code')
+    search_fields= ('name', 'code')
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'city', 'country', 'number', 'address', 'about')
@@ -52,12 +58,7 @@ class TeacherAdmin(admin.ModelAdmin):
     list_filter = ('is_available', 'languages')
     search_fields = ('user__first_name', 'user__last_name', 'speciality')
 
-# admin.site.register(Skill)
-admin.site.register(Skill)
-@admin.register(Language)
-class LanguageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'description')
-    search_fields = ('name', 'code')
+
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):

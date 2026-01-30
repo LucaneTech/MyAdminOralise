@@ -16,8 +16,8 @@
                     {% regroup schedule by day as schedule_by_day %}
                     {% for day in schedule_by_day %}
                     <div class="card mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="mb-0">{{ day.grouper }}</h4>
+                        <div class="card-header bg-primary">
+                            <h4 class="mb-0 text-white">{{ day.grouper }}</h4>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -25,16 +25,16 @@
                                     <thead>
                                         <tr>
                                             <th>Horaire</th>
-                                            <th>Compétence</th>
+                                            <th>Langue</th>
                                             <th>Enseignant</th>
-                                            <th>Salle</th>
+                                            <th>Lieu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for session in day.list %}
                                         <tr>
                                             <td>{{ session.start_time|time:"H:i" }}h - {{ session.end_time|time:"H:i" }}h</td>
-                                            <td>{{ session.skill.name }}</td>
+                                            <td>{{ session.language.name }}</td>
                                             <td>{{ session.teacher.user.full_name }}</td>
                                             <td>{{ session.classroom }}</td>
                                         </tr>

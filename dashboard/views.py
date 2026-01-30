@@ -21,15 +21,12 @@ from dashboard.models import (
     Student,
     Teacher,
     Profile,
-    Skill,
-    Mark,
+    Language,
     Schedule,
     Resource,
     Request,
     Assignment,
     Submission,
-    Attendance,
-    Language,
     Session,
     Payment,
     Certificate,
@@ -148,15 +145,13 @@ def dashboard_view(request, username=None):
         completed_count = Session.objects.filter(
             student=student, status="completed"
         ).count()
-        attendance_rate = (
-            (completed_count / total_sessions * 100) if total_sessions > 0 else 0
-        )
+        
 
         context.update(
             {
                 "total_sessions": total_sessions,
                 "completed_sessions_count": completed_count,
-                "attendance_rate": round(attendance_rate, 2),
+              
             }
         )
 
@@ -371,36 +366,6 @@ def profile_edit(request):
 #     return render(request, 'profiles/update_picture.html')
 
 
-@login_required
-def schedule_view(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=user)
-    context = {
-        "profile": profile,
-        "user": user,
-        "username": user.username,
-    }
-
-    if user.role == "student":
-        student = get_object_or_404(Student, user=user)
-        # Récupérer les schedules liés aux compétences de l'étudiant
-        schedule = Schedule.objects.filter(student=student).order_by(
-            "day", "start_time"
-        )
-        context["schedule"] = schedule
-        return render(request, "dashboard/student/home/schedule.html", context)
-
-    elif user.role == "teacher":
-        teacher = get_object_or_404(Teacher, user=user)
-        schedule = Schedule.objects.filter(teacher=teacher).order_by(
-            "day", "start_time"
-        )
-        context["schedule"] = schedule
-        return render(request, "dashboard/teacher/home/schedule.html", context)
-
-    else:
-        return render(request, "404.html", context)
-
 
 def resources_view(request):
     user = request.user
@@ -433,20 +398,20 @@ def resources_add(request):
         messages.error(request, "Page réservée aux enseignants.")
         return redirect("dashboard_home")
     teacher = get_object_or_404(Teacher, user=user)
-    teacher_skills = Skill.objects.filter(teachers=teacher)
+    teacher_languages = Language.objects.filter(teachers=teacher)
     if request.method == "POST":
         form = ResourceForm(request.POST, request.FILES)
         if form.is_valid():
             resource = form.save(commit=False)
             resource.uploaded_by = user
             resource.save()
-            # Ajoute les skills sélectionnés (liés à la branch)
+            # Ajoute les languages sélectionnés (liés à la branch)
             form.save_m2m()
             return redirect("teacher_resources")
     else:
         form = ResourceForm()
-        # Limite les skills proposés à ceux du teacher
-        form.fields["skills"].queryset = teacher_skills
+        # Limite les languages proposés à ceux du teacher
+        form.fields["languages"].queryset = teacher_languages
     context = {
         "form": form,
         "teacher": teacher,
@@ -732,10 +697,10 @@ def settings_view(request):
 #         today = timezone.now().date()
 
 #         # Statistiques générales
-#         skills = Skill.objects.filter(teachers=teacher)
-#         total_skills = skills.count()
-#         total_students = Student.objects.filter(skill__in=skills).distinct().count()
-#         total_assignments = Assignment.objects.filter(skill__in=skills).count()
+#         languages = Language.objects.filter(teachers=teacher)
+#         total_languages = languages.count()
+#         total_students = Student.objects.filter(language__in=languages).distinct().count()
+#         total_assignments = Assignment.objects.filter(language__in=languages).count()
 
 #         # Emploi du temps du jour
 #         today_schedule = Schedule.objects.filter(
@@ -745,18 +710,18 @@ def settings_view(request):
 
 #         # Devoirs récents
 #         recent_assignments = Assignment.objects.filter(
-#             skill__in=skills
+#             language__in=languages
 #         ).order_by('-created_at')[:5]
 
 #         # Statistiques de présence
 #         attendance_stats = Attendance.objects.filter(
-#             skill__in=skills,
+#             language__in=languages,
 #             date=today
 #         ).values('status').annotate(count=Count('id'))
 
 #         # Notes récentes
 #         recent_marks = Mark.objects.filter(
-#             skill__in=skills
+#             language__in=languages
 #         ).order_by('-id')[:5]
 
 #         # Ressources récentes
@@ -769,7 +734,7 @@ def settings_view(request):
 #             'user': request.user,
 #             'username': username,
 #             'teacher': teacher,
-#             'total_skills': total_skills,
+#             'total_languages': total_languages,
 #             'total_students': total_students,
 #             'total_assignments': total_assignments,
 #             'today_schedule': today_schedule,
@@ -777,7 +742,7 @@ def settings_view(request):
 #             'attendance_stats': attendance_stats,
 #             'recent_marks': recent_marks,
 #             'recent_resources': recent_resources,
-#             'skills': skills,
+#             'languages': languages,
 #             'segment': 'index'
 #         }
 
@@ -792,11 +757,11 @@ def teacher_courses(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
     teacher = get_object_or_404(Teacher, user=user)
-    skills = Skill.objects.filter(teachers=teacher)
+    languages = Language.objects.filter(teachers=teacher)
 
     context = {
         "profile": profile,
-        "skills": skills,
+        "languages": languages,
         "teacher": teacher,
         "user": user,
         "username": user.username,
@@ -805,36 +770,21 @@ def teacher_courses(request):
     return render(request, "dashboard/teacher/home/courses.html", context)
 
 
-def teacher_schedule(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=user)
-    teacher = get_object_or_404(Teacher, user=user)
-    schedule = Schedule.objects.filter(teacher=teacher)
-
-    context = {
-        "profile": profile,
-        "teacher": teacher,
-        "user": user,
-        "username": user.username,
-        "schedule": schedule,
-        "segment": "schedule",
-    }
-    return render(request, "dashboard/teacher/home/schedule.html", context)
 
 
 def teacher_assignments(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
     teacher = get_object_or_404(Teacher, user=user)
-    skills = Skill.objects.filter(teachers=teacher)
-    assignments = Assignment.objects.filter(skill__in=skills)
+    languages = Language.objects.filter(teachers=teacher)
+    assignments = Assignment.objects.filter(language__in=languages)
 
     if request.method == "POST":
         data = json.loads(request.body)
         assignment = Assignment.objects.create(
             title=data["title"],
             description=data["description"],
-            skill_id=data["skill"],
+            language_id=data["language"],
             type=data["type"],
             due_date=data["due_date"],
         )
@@ -846,7 +796,7 @@ def teacher_assignments(request):
         "user": user,
         "username": user.username,
         "assignments": assignments,
-        "skills": skills,
+        "languages": languages,
         "segment": "assignments",
     }
     return render(request, "dashboard/teacher/home/assignments.html", context)
@@ -970,11 +920,7 @@ def teacher_student_detail(request, student_id):
         student=student, status="completed"
     ).count()
 
-    # Calcul du taux de présence
-    if total_sessions > 0:
-        attendance_rate = (completed_sessions / total_sessions) * 100
-    else:
-        attendance_rate = 0
+ 
 
     context = {
         "profile": profile,
@@ -984,7 +930,6 @@ def teacher_student_detail(request, student_id):
         "recent_sessions": recent_sessions,
         "total_sessions": total_sessions,
         "completed_sessions": completed_sessions,
-        "attendance_rate": round(attendance_rate, 1),
         "segment": "students",
     }
 
@@ -1134,122 +1079,13 @@ def export_students_csv(request):
 
     return response
 
-def teacher_attendance(request):
-    user = request.user
-
-    # Vérifier si l'utilisateur est bien un enseignant
-    if not hasattr(user, "teacher"):
-        messages.error(request, "Page réservée aux enseignants.")
-        return redirect("dashboard_home")
-
-    profile = get_object_or_404(Profile, user=user)
-    teacher = get_object_or_404(Teacher, user=user)
-    today = timezone.now().date()
-
-    # Récupérer les compétences de l'enseignant
-    skills = Skill.objects.filter(teachers=teacher)
-
-    # Si l'enseignant enregistre des présences
-    if request.method == "POST":
-        data = json.loads(request.body)
-        skill_id = data["skill"]
-        date = data["date"]
-        attendances = data["attendances"]
-
-        for student_id, attendance_data in attendances.items():
-            Attendance.objects.update_or_create(
-                skill_id=skill_id,
-                student_id=student_id,
-                date=date,
-                defaults={
-                    "status": attendance_data["status"],
-                    "arrival_time": attendance_data.get("arrival_time"),
-                    "note": attendance_data.get("note"),
-                },
-            )
-        return JsonResponse({"status": "success"})
-
-    # Correction ici : utiliser current_teacher au lieu de languages
-    students = Student.objects.filter(current_teachers=teacher).distinct()
-
-    # Statistiques globales de présence
-    attendance_stats = (
-        Attendance.objects.filter(skill__in=skills)
-        .values("status")
-        .annotate(count=Count("id"))
-    )
-
-    # Statistiques par jour sur la semaine
-    week_stats = []
-    for i in range(7):
-        date = today - timedelta(days=i)
-        presence = Attendance.objects.filter(
-            skill__in=skills, date=date, status="present"
-        ).count()
-        total = Attendance.objects.filter(skill__in=skills, date=date).count()
-
-        percentage = (presence / total) * 100 if total > 0 else 0
-
-        week_stats.append({"date": date.strftime("%a"), "percentage": percentage})
-
-    context = {
-        "profile": profile,
-        "teacher": teacher,
-        "user": user,
-        "username": user.username,
-        "skills": skills,
-        "students": students,
-        "attendance_stats": attendance_stats,
-        "week_stats": week_stats,
-        "segment": "attendance",
-    }
-
-    return render(request, "dashboard/teacher/home/attendance.html", context)
 
 
-def teacher_marks(request):
+def teacher_languages(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
     teacher = get_object_or_404(Teacher, user=user)
-    skills = Skill.objects.filter(teachers=teacher)
-
-    if request.method == "POST":
-        data = json.loads(request.body)
-        mark = Mark.objects.create(
-            student_id=data["student"], skill_id=data["skill"], mark=data["value"]
-        )
-
-        # Si la note est liée à un devoir
-        if "assignment" in data:
-            submission = Submission.objects.get(
-                assignment_id=data["assignment"], student_id=data["student"]
-            )
-            submission.mark = mark
-            submission.save()
-
-        return JsonResponse({"status": "success", "id": mark.id})
-
-    marks = Mark.objects.filter(skill__in=skills)
-    assignments = Assignment.objects.filter(skill__in=skills)
-
-    context = {
-        "profile": profile,
-        "teacher": teacher,
-        "user": user,
-        "username": user.username,
-        "marks": marks,
-        "skills": skills,
-        "assignments": assignments,
-        "segment": "marks",
-    }
-    return render(request, "dashboard/teacher/home/marks.html", context)
-
-
-def teacher_skills(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=user)
-    teacher = get_object_or_404(Teacher, user=user)
-    skills = Skill.objects.filter(teachers=teacher)
+    languages = Language.objects.filter(teachers=teacher)
 
     # Récupérer les étudiants qui ont cet enseignant comme current_teacher
     students = Student.objects.filter(current_teacher=teacher).distinct()
@@ -1259,11 +1095,11 @@ def teacher_skills(request):
         "teacher": teacher,
         "user": user,
         "username": user.username,
-        "skills": skills,
+        "languages": languages,
         "students": students,
-        "segment": "skills",
+        "segment": "languages",
     }
-    return render(request, "dashboard/teacher/home/skills.html", context)
+    return render(request, "dashboard/teacher/home/languages.html", context)
 
 
 # API endpoints pour les actions AJAX
@@ -1301,17 +1137,17 @@ def api_filter_assignments(request):
     user = request.user
     profile = get_object_or_404(Profile, user=user)
     teacher = get_object_or_404(Teacher, user=user)
-    skills = Skill.objects.filter(teachers=teacher)
+    languages = Language.objects.filter(teachers=teacher)
     type_filter = request.GET.get("type")
-    skill_id = request.GET.get("skill")
+    language_id = request.GET.get("language")
     status = request.GET.get("status")
 
-    assignments = Assignment.objects.filter(skill__in=skills)
+    assignments = Assignment.objects.filter(language__in=languages)
 
     if type_filter:
         assignments = assignments.filter(type=type_filter)
-    if skill_id:
-        assignments = assignments.filter(skill_id=skill_id)
+    if language_id:
+        assignments = assignments.filter(language_id=language_id)
     if status:
         assignments = assignments.filter(status=status)
 
@@ -1404,95 +1240,6 @@ def session_status_update(request, session_id):
 
 
 @login_required
-def teacher_schedule_manage(request):
-    """Vue pour gérer l'emploi du temps de l'enseignant"""
-    if request.user.role != "teacher":
-        raise Http404("Cette page est réservée aux enseignants")
-
-    teacher = get_object_or_404(Teacher, user=request.user)
-    profile = get_object_or_404(Profile, user=request.user)
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        if action == "add":
-            # Ajouter un nouveau cours
-            day = request.POST.get("day")
-            skill_id = request.POST.get("skill")
-            student_id = request.POST.get("student")
-            start_time = request.POST.get("start_time")
-            end_time = request.POST.get("end_time")
-            classroom = request.POST.get("classroom")
-
-            try:
-                skill = get_object_or_404(Skill, id=skill_id)
-                student = (
-                    get_object_or_404(Student, id=student_id) if student_id else None
-                )
-
-                Schedule.objects.create(
-                    day=day,
-                    skill=skill,
-                    student=student,
-                    teacher=teacher,
-                    classroom=classroom,
-                    start_time=start_time,
-                    end_time=end_time,
-                )
-                messages.success(request, "Cours ajouté avec succès")
-            except Exception as e:
-                messages.error(request, f"Erreur lors de l'ajout: {str(e)}")
-
-        elif action == "edit":
-            # Modifier un cours existant
-            schedule_id = request.POST.get("schedule_id")
-            try:
-                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
-                schedule.day = request.POST.get("day")
-                schedule.skill = get_object_or_404(Skill, id=request.POST.get("skill"))
-                schedule.student = (
-                    get_object_or_404(Student, id=request.POST.get("student"))
-                    if request.POST.get("student")
-                    else None
-                )
-                schedule.start_time = request.POST.get("start_time")
-                schedule.end_time = request.POST.get("end_time")
-                schedule.classroom = request.POST.get("classroom")
-                schedule.save()
-                messages.success(request, "Cours modifié avec succès")
-            except Exception as e:
-                messages.error(request, f"Erreur lors de la modification: {str(e)}")
-
-        elif action == "delete":
-            # Supprimer un cours
-            schedule_id = request.POST.get("schedule_id")
-            try:
-                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
-                schedule.delete()
-                messages.success(request, "Cours supprimé avec succès")
-            except Exception as e:
-                messages.error(request, f"Erreur lors de la suppression: {str(e)}")
-
-        schedules = Schedule.objects.filter(teacher=teacher).order_by(
-            "day", "start_time"
-        )
-    skills = Skill.objects.filter(teachers=teacher)
-    students = Student.objects.filter(current_teacher=teacher)
-
-    context = {
-        "schedules": schedules,
-        "skills": skills,
-        "students": students,
-        "teacher": teacher,
-        "profile": profile,
-        "user": request.user,
-        "day_choices": Schedule.DAY_CHOICES,
-    }
-
-    return render(request, "dashboard/teacher/home/schedule_manage.html", context)
-
-
-@login_required
 def teacher_evaluations_add(request):
     """Vue pour ajouter une nouvelle évaluation"""
     if request.user.role != "teacher":
@@ -1575,90 +1322,6 @@ def evaluation_edit(request, evaluation_id):
     return render(request, "dashboard/teacher/home/evaluation_edit.html", context)
 
 
-@login_required
-def teacher_attendance_manage(request):
-    """Vue pour gérer les présences des étudiants"""
-    if request.user.role != "teacher":
-        raise Http404("Cette page est réservée aux enseignants")
-
-    teacher = get_object_or_404(Teacher, user=request.user)
-    profile = get_object_or_404(Profile, user=request.user)
-
-    if request.method == "POST":
-        try:
-            date = request.POST.get("date")
-            skill_id = request.POST.get("skill")
-            attendance_data = request.POST.getlist("attendance")
-            student_ids = request.POST.getlist("student_id")
-            statuses = request.POST.getlist("status")
-            arrival_times = request.POST.getlist("arrival_time")
-            notes = request.POST.getlist("note")
-
-            skill = get_object_or_404(Skill, id=skill_id)
-
-            # Mettre à jour ou créer les présences
-            for i, student_id in enumerate(student_ids):
-                if student_id:
-                    student = get_object_or_404(Student, id=student_id)
-                    status = statuses[i] if i < len(statuses) else "present"
-                    arrival_time = (
-                        arrival_times[i]
-                        if i < len(arrival_times) and arrival_times[i]
-                        else None
-                    )
-                    note = notes[i] if i < len(notes) else ""
-
-                    attendance, created = Attendance.objects.get_or_create(
-                        student=student,
-                        skill=skill,
-                        date=date,
-                        defaults={
-                            "status": status,
-                            "arrival_time": arrival_time,
-                            "note": note,
-                        },
-                    )
-
-                    if not created:
-                        attendance.status = status
-                        attendance.arrival_time = arrival_time
-                        attendance.note = note
-                        attendance.save()
-
-            messages.success(request, "Présences enregistrées avec succès")
-
-        except Exception as e:
-            messages.error(request, f"Erreur lors de l'enregistrement: {str(e)}")
-
-    # Récupérer les données pour le formulaire
-    selected_date = request.GET.get("date", timezone.now().date())
-    selected_skill = request.GET.get("skill")
-
-    skills = Skill.objects.filter(teachers=teacher)
-    students = Student.objects.filter(current_teacher=teacher)
-
-    # Récupérer les présences existantes pour la date et la matière sélectionnées
-    existing_attendance = {}
-    if selected_date and selected_skill:
-        skill = get_object_or_404(Skill, id=selected_skill)
-        attendance_records = Attendance.objects.filter(skill=skill, date=selected_date)
-        for record in attendance_records:
-            existing_attendance[record.student.id] = record
-
-    context = {
-        "skills": skills,
-        "students": students,
-        "selected_date": selected_date,
-        "selected_skill": selected_skill,
-        "existing_attendance": existing_attendance,
-        "attendance_statuses": Attendance.STATUS,
-        "teacher": teacher,
-        "profile": profile,
-        "user": request.user,
-    }
-
-    return render(request, "dashboard/teacher/home/attendance_manage.html", context)
-
 
 @login_required
 def teacher_resources_add_student(request):
@@ -1676,7 +1339,7 @@ def teacher_resources_add_student(request):
             resource_type = request.POST.get("resource_type")
             student_id = request.POST.get("student")
             language_id = request.POST.get("language")
-            skill_id = request.POST.get("skill")
+            language_id = request.POST.get("language")
 
             # Gérer le fichier ou l'URL
             file = request.FILES.get("file")
@@ -1684,7 +1347,7 @@ def teacher_resources_add_student(request):
 
             student = get_object_or_404(Student, id=student_id)
             language = get_object_or_404(Language, id=language_id)
-            skill = get_object_or_404(Skill, id=skill_id) if skill_id else None
+            language = get_object_or_404(Language, id=language_id) if language_id else None
 
             resource = Resource.objects.create(
                 title=title,
@@ -1697,8 +1360,8 @@ def teacher_resources_add_student(request):
 
             # Ajouter les relations
             resource.languages.add(language)
-            if skill:
-                resource.skills.add(skill)
+            if language:
+                resource.languages.add(language)
 
             # Créer une notification pour l'étudiant
             Notification.objects.create(
@@ -1716,13 +1379,13 @@ def teacher_resources_add_student(request):
 
     students = Student.objects.filter(current_teacher=teacher)
     languages = teacher.languages.all()
-    skills = Skill.objects.filter(teachers=teacher)
+    languages = Language.objects.filter(teachers=teacher)
     resource_types = Resource.RESOURCE_TYPES
 
     context = {
         "students": students,
         "languages": languages,
-        "skills": skills,
+        "languages": languages,
         "resource_types": resource_types,
         "teacher": teacher,
         "profile": profile,
@@ -1972,6 +1635,142 @@ def test_template_tags(request):
     return render(request, "dashboard/teacher/home/test_template_tags.html", {})
 
 
+
+
+##Schedule views
+
+#for student
+@login_required
+def schedule_view(request):
+    user = request.user
+    profile = get_object_or_404(Profile, user=user)
+    context = {
+        "profile": profile,
+        "user": user,
+        "username": user.username
+    }
+
+    if user.role == "student":
+        student = get_object_or_404(Student, user=user)
+        # Récupérer les schedules liés aux compétences de l'étudiant
+        schedule = Schedule.objects.filter(student=student ).order_by(
+            "day", "start_time"
+        )
+        context["schedule"] = schedule
+        return render(request, "dashboard/student/home/schedule.html", context)
+    else:
+        return render(request, "404.html", context)
+
+
+
+
+#for teacher
+
+def teacher_schedule(request):
+    user = request.user
+    profile = get_object_or_404(Profile, user=user)
+    teacher = get_object_or_404(Teacher, user=user)
+    schedule = Schedule.objects.filter(teacher=teacher)
+    language_teached = Language.objects.filter(teachers = teacher)
+    context = {
+        "profile": profile,
+        "teacher": teacher,
+        "user": user,
+        "username": user.username,
+        "schedule": schedule,
+        "segment": "schedule",
+        "language_teached": language_teached
+    }
+    return render(request, "dashboard/teacher/home/schedule.html", context)
+
+@login_required
+def teacher_schedule_manage(request):
+    """Vue pour gérer l'emploi du temps de l'enseignant"""
+    if request.user.role != "teacher":
+        raise Http404("Cette page est réservée aux enseignants")
+
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "add":
+            # Ajouter un nouveau cours
+            day = request.POST.get("day")
+            language_id = request.POST.get("language")
+            student_id = request.POST.get("student")
+            start_time = request.POST.get("start_time")
+            end_time = request.POST.get("end_time")
+            classroom = request.POST.get("classroom")
+
+            try:
+                language = get_object_or_404(Language, id=language_id)
+                student = (
+                    get_object_or_404(Student, id=student_id) if student_id else None
+                )
+
+                Schedule.objects.create(
+                    day=day,
+                    language=language,
+                    student=student,
+                    teacher=teacher,
+                    classroom=classroom,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+                messages.success(request, "Cours ajouté avec succès")
+            except Exception as e:
+                messages.error(request, f"Erreur lors de l'ajout: {str(e)}")
+
+        elif action == "edit":
+            # Modifier un cours existant
+            schedule_id = request.POST.get("schedule_id")
+            try:
+                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
+                schedule.day = request.POST.get("day")
+                schedule.language = get_object_or_404(Language, id=request.POST.get("language"))
+                schedule.student = (
+                    get_object_or_404(Student, id=request.POST.get("student"))
+                    if request.POST.get("student")
+                    else None
+                )
+                schedule.start_time = request.POST.get("start_time")
+                schedule.end_time = request.POST.get("end_time")
+                schedule.classroom = request.POST.get("classroom")
+                schedule.save()
+                messages.success(request, "Cours modifié avec succès")
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la modification: {str(e)}")
+
+        elif action == "delete":
+            # Supprimer un cours
+            schedule_id = request.POST.get("schedule_id")
+            try:
+                schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
+                schedule.delete()
+                messages.success(request, "Cours supprimé avec succès")
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la suppression: {str(e)}")
+
+        schedules = Schedule.objects.filter(teacher=teacher).order_by(
+            "day", "start_time"
+        )
+    languages = Language.objects.filter(teachers=teacher)
+    students = Student.objects.filter(current_teacher=teacher)
+
+    context = {
+        "schedules": schedules,
+        "languages": languages,
+        "students": students,
+        "teacher": teacher,
+        "profile": profile,
+        "user": request.user,
+        "day_choices": Schedule.DAY_CHOICES,
+    }
+
+    return render(request, "dashboard/teacher/home/schedule_manage.html", context)
+
 @login_required
 def teacher_schedule_enhanced(request):
     """Vue améliorée pour l'emploi du temps avec affichage Google Calendar-like"""
@@ -1998,7 +1797,7 @@ def teacher_schedule_enhanced(request):
     # Récupérer l'emploi du temps de la semaine
     weekly_schedule = (
         Schedule.objects.filter(teacher=teacher, is_active=True)
-        .select_related("skill", "language", "student")
+        .select_related("language", "language", "student")
         .order_by("day", "start_time")
     )
 
@@ -2025,20 +1824,9 @@ def teacher_schedule_enhanced(request):
     )
 
     # Créer un dictionnaire des présences par étudiant et matière
-    attendance_dict = {}
-    attendances = Attendance.objects.filter(teacher=teacher, date=today).select_related(
-        "student", "skill", "session"
-    )
+    
 
-    for attendance in attendances:
-        key = (attendance.student.id, attendance.skill.id)
-        attendance_dict[key] = attendance
-
-    today_attendance = {
-        "sessions": today_sessions_for_attendance,
-        "attendances": attendance_dict,
-        "date": today,
-    }
+  
 
     # Statistiques par langue pour la semaine
     language_stats = {}
@@ -2067,152 +1855,12 @@ def teacher_schedule_enhanced(request):
         "end_of_week": end_of_week,
         "schedule_by_day": schedule_by_day,
         "today_sessions": today_sessions,
-        "today_attendance": today_attendance,
         "language_stats": language_stats,
         "day_choices": Schedule.DAY_CHOICES,
         "segment": "schedule_enhanced",
     }
 
     return render(request, "dashboard/teacher/home/schedule_enhanced.html", context)
-
-
-@login_required
-def teacher_attendance_dynamic(request):
-    """Vue pour la gestion dynamique des présences basée sur les séances du jour"""
-    if request.user.role != "teacher":
-        raise Http404("Cette page est réservée aux enseignants")
-
-    teacher = get_object_or_404(Teacher, user=request.user)
-    profile = get_object_or_404(Profile, user=request.user)
-
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            date = data.get("date")
-            session_id = data.get("session_id")
-            attendance_data = data.get("attendance_data", {})
-
-            if not date or not session_id:
-                return JsonResponse(
-                    {"status": "error", "message": "Date et session requises"}
-                )
-
-            # Convertir la date
-            try:
-                date = datetime.strptime(date, "%Y-%m-%d").date()
-            except ValueError:
-                return JsonResponse(
-                    {"status": "error", "message": "Format de date invalide"}
-                )
-
-            # Récupérer la session
-            session = get_object_or_404(Session, id=session_id, teacher=teacher)
-
-            # Mettre à jour ou créer les présences
-            for student_id, attendance_info in attendance_data.items():
-                student = get_object_or_404(Student, id=student_id)
-                status = attendance_info.get("status", "present")
-                arrival_time = attendance_info.get("arrival_time")
-                note = attendance_info.get("note", "")
-
-                # Convertir l'heure d'arrivée si fournie
-                if arrival_time:
-                    try:
-                        arrival_time = datetime.strptime(arrival_time, "%H:%M").time()
-                    except ValueError:
-                        arrival_time = None
-
-                # Trouver la compétence correspondant à la langue de la session
-                skill = Skill.objects.filter(
-                    name__icontains=session.language.name, teachers=teacher
-                ).first()
-
-                if not skill:
-                    # Créer une compétence par défaut si elle n'existe pas
-                    skill = Skill.objects.create(
-                        name=f"{session.language.name} - Cours",
-                        description=f"Cours de {session.language.name}",
-                    )
-                    skill.teachers.add(teacher)
-
-                # Mettre à jour ou créer la présence
-                attendance, created = Attendance.objects.update_or_create(
-                    student=student,
-                    skill=skill,
-                    teacher=teacher,
-                    date=date,
-                    session=session,
-                    defaults={
-                        "status": status,
-                        "arrival_time": arrival_time,
-                        "note": note,
-                    },
-                )
-
-                if not created:
-                    attendance.status = status
-                    attendance.arrival_time = arrival_time
-                    attendance.note = note
-                    attendance.save()
-
-            return JsonResponse(
-                {"status": "success", "message": "Présences mises à jour"}
-            )
-
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)})
-
-    # Récupérer la date sélectionnée
-    selected_date = request.GET.get("date")
-    if selected_date:
-        try:
-            selected_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-        except ValueError:
-            selected_date = timezone.now().date()
-    else:
-        selected_date = timezone.now().date()
-
-    # Récupérer les séances du jour pour cet enseignant
-    today_sessions = (
-        Session.objects.filter(teacher=teacher, date=selected_date, status="scheduled")
-        .select_related("student", "language")
-        .order_by("start_time")
-    )
-
-    # Récupérer les présences existantes
-    existing_attendance = {}
-    for session in today_sessions:
-        attendances = Attendance.objects.filter(
-            session=session, date=selected_date
-        ).select_related("student")
-
-        for attendance in attendances:
-            if attendance.student.id not in existing_attendance:
-                existing_attendance[attendance.student.id] = {}
-            existing_attendance[attendance.student.id][session.id] = attendance
-
-    # Récupérer tous les étudiants de cet enseignant
-    teacher_students = (
-        Student.objects.filter(current_teacher=teacher)
-        .select_related("user")
-        .order_by("user__first_name")
-    )
-
-    context = {
-        "teacher": teacher,
-        "profile": profile,
-        "user": request.user,
-        "username": request.user.username,
-        "selected_date": selected_date,
-        "today_sessions": today_sessions,
-        "existing_attendance": existing_attendance,
-        "teacher_students": teacher_students,
-        "attendance_statuses": Attendance.STATUS,
-        "segment": "attendance_dynamic",
-    }
-
-    return render(request, "dashboard/teacher/home/attendance_dynamic.html", context)
-
 
 @login_required
 def teacher_schedule_api(request):
@@ -2237,7 +1885,7 @@ def teacher_schedule_api(request):
 
     # Récupérer l'emploi du temps pour la période
     schedules = Schedule.objects.filter(teacher=teacher, is_active=True).select_related(
-        "skill", "language", "student"
+        "language", "language", "student"
     )
 
     # Convertir en format FullCalendar
@@ -2256,13 +1904,13 @@ def teacher_schedule_api(request):
                 # Créer l'événement
                 event = {
                     "id": f"schedule_{schedule.id}_{current_date}",
-                    "title": f"{schedule.skill.name} - {schedule.language_name if schedule.language else 'N/A'}",
+                    "title": f"{schedule.language.name} - {schedule.language_name if schedule.language else 'N/A'}",
                     "start": f"{current_date}T{schedule.start_time}",
                     "end": f"{current_date}T{schedule.end_time}",
                     "className": schedule.color_class,
                     "extendedProps": {
                         "schedule_id": schedule.id,
-                        "skill_name": schedule.skill.name,
+                        "language_name": schedule.language.name,
                         "language_name": schedule.language_name,
                         "classroom": schedule.classroom or "",
                         "student_name": (

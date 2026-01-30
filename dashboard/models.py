@@ -257,85 +257,6 @@ class Teacher(models.Model):
         return self.user.get_full_name()
 
 
-# Compétences/Skills
-class Skill(models.Model):
-    name = models.CharField(
-        max_length=100,
-        verbose_name="nom"
-    )
-    description = models.TextField(
-        blank=True,
-        verbose_name="description"
-    )
-    teachers = models.ManyToManyField(
-        Teacher,
-        verbose_name="enseignants"
-    )
-    students = models.ManyToManyField(
-        Student,
-        verbose_name="étudiants"
-    )
-    created_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="date de création"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="date de mise à jour"
-    )
-    
-    class Meta:
-        verbose_name = "compétence"
-        verbose_name_plural = "compétences"
-
-    @property
-    def average_mark(self):
-        marks = Mark.objects.filter(skill=self)
-        if marks.exists():
-            avg = marks.aggregate(Avg('mark'))['mark__avg']
-            return round(avg, 2) if avg else 0
-        return 0
-    
-    def __str__(self):
-        return self.name
-
-# Notes
-class Mark(models.Model):
-    student = models.ForeignKey(
-        Student, 
-        on_delete=models.CASCADE,
-        verbose_name="étudiant"
-    )
-    skill = models.ForeignKey(
-        Skill, 
-        on_delete=models.CASCADE,
-        verbose_name="compétence"
-    )
-    mark = models.DecimalField(
-        max_digits=4, 
-        decimal_places=2,
-        verbose_name="note"
-    )
-    comment = models.TextField(
-        blank=True,
-        verbose_name="commentaire"
-    )
-    created_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="date de création"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="date de mise à jour"
-    )
-    
-    class Meta:
-        verbose_name = "note"
-        verbose_name_plural = "notes"
-
-    def __str__(self):
-        return f"{self.student} - {self.skill}: {self.mark}"
-
 # Emploi du temps
 class Schedule(models.Model): 
     DAY_CHOICES = [
@@ -407,121 +328,7 @@ class Schedule(models.Model):
     def __str__(self):
         return f"{self.language.name} - {self.day} ({self.start_time} - {self.end_time})"
     
-    
-# Présence
-class Attendance(models.Model):
-    STATUS = (
-        ('present', 'Présent'),
-        ('absent', 'Absent'),
-        ('late', 'En retard'),
-        ('excused', 'Justifié'),
-    )
-    
-    student = models.ForeignKey(
-        Student, 
-        on_delete=models.CASCADE,
-        verbose_name="étudiant"
-    )
-    skill = models.ForeignKey(
-        Skill, 
-        on_delete=models.CASCADE,
-        verbose_name="compétence"
-    )
-    teacher = models.ForeignKey(
-        Teacher, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        verbose_name="enseignant"
-    )
-    date = models.DateField(verbose_name="date")
-    status = models.CharField(
-        max_length=20, 
-        choices=STATUS,
-        verbose_name="statut"
-    )
-    arrival_time = models.TimeField(
-        null=True, 
-        blank=True,
-        verbose_name="heure d'arrivée"
-    )
-    note = models.TextField(
-        blank=True,
-        verbose_name="note"
-    )
-    session = models.ForeignKey(
-        'Session', 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        related_name='attendances',
-        verbose_name="séance"
-    )
-    created_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="date de création"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="date de mise à jour"
-    )
-    
-    class Meta:
-        unique_together = ('student', 'skill', 'date')
-        ordering = ['-date', 'student__user__first_name']
-        verbose_name = "présence"
-        verbose_name_plural = "présences"
-    
-    def __str__(self):
-        return f"{self.student} - {self.skill} - {self.date}: {self.status}"
-    
-    @property
-    def is_late(self):
-        """Vérifie si l'étudiant est en retard"""
-        if self.arrival_time and self.session:
-            return self.arrival_time > self.session.start_time
-        return False
-    
-    @property
-    def late_minutes(self):
-        """Retourne le nombre de minutes de retard"""
-        if self.is_late and self.session:
-            start = datetime.combine(datetime.min.date(), self.session.start_time)
-            arrival = datetime.combine(datetime.min.date(), self.arrival_time)
-            delay = arrival - start
-            return int(delay.total_seconds() / 60)
-        return 0
-    
-    @classmethod
-    def get_today_attendance_for_teacher(cls, teacher, date=None):
-        """Récupère les présences du jour pour un enseignant"""
-        if date is None:
-            date = timezone.now().date()
-        
-        # Récupérer les séances du jour pour cet enseignant
-        today_sessions = Session.objects.filter(
-            teacher=teacher,
-            date=date,
-            status='scheduled'
-        )
-        
-        # Récupérer les présences existantes
-        attendances = cls.objects.filter(
-            teacher=teacher,
-            date=date
-        ).select_related('student', 'skill', 'session')
-        
-        # Créer un dictionnaire des présences par étudiant et matière
-        attendance_dict = {}
-        for attendance in attendances:
-            key = (attendance.student.id, attendance.skill.id)
-            attendance_dict[key] = attendance
-        
-        return {
-            'sessions': today_sessions,
-            'attendances': attendance_dict,
-            'date': date
-        }
+  
 
 # Devoirs
 class Assignment(models.Model):
@@ -542,10 +349,10 @@ class Assignment(models.Model):
         verbose_name="titre"
     )
     description = models.TextField(verbose_name="description")
-    skill = models.ForeignKey(
-        Skill, 
+    language = models.ForeignKey(
+        Language, 
         on_delete=models.CASCADE,
-        verbose_name="compétence"
+        verbose_name="langue"
     )
     type = models.CharField(
         max_length=20, 
@@ -578,7 +385,7 @@ class Assignment(models.Model):
     
     @property
     def submission_rate(self):
-        total_students = self.skill.students.count()
+        total_students = self.language.students.count()
         if total_students > 0:
             submissions = self.submissions.count()
             return round((submissions / total_students) * 100, 2)
@@ -607,13 +414,7 @@ class Submission(models.Model):
         auto_now_add=True,
         verbose_name="date de soumission"
     )
-    mark = models.ForeignKey(
-        Mark, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        verbose_name="note"
-    )
+   
     feedback = models.TextField(
         null=True, 
         blank=True,
@@ -910,10 +711,10 @@ class Resource(models.Model):
         auto_now=True,
         verbose_name="date de mise à jour"
     )
-    skills = models.ManyToManyField(
-        Skill, 
+    language = models.ManyToManyField(
+        Language, 
         blank=True,
-        verbose_name="compétences"
+        verbose_name="langue"
     )
 
     class Meta:
