@@ -352,10 +352,11 @@ class Schedule(models.Model):
         choices=DAY_CHOICES,
         verbose_name="jour"
     )
-    skill = models.ForeignKey(
-        Skill, 
+   
+    language = models.ForeignKey(
+        Language, 
         on_delete=models.CASCADE,
-        verbose_name="compétence"
+        verbose_name="languages"
     )
     student = models.ForeignKey(
         Student, 
@@ -375,7 +376,7 @@ class Schedule(models.Model):
         max_length=30, 
         blank=True, 
         null=True,
-        verbose_name="salle de classe"
+        verbose_name="salle de cours"
     )
     start_time = models.TimeField(
         verbose_name="heure de début"
@@ -383,13 +384,7 @@ class Schedule(models.Model):
     end_time = models.TimeField(
         verbose_name="heure de fin"
     )
-    language = models.ForeignKey(
-        Language, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        verbose_name="langue"
-    )
+   
     is_active = models.BooleanField(
         default=True,
         verbose_name="actif"
@@ -405,46 +400,13 @@ class Schedule(models.Model):
 
     class Meta:
         ordering = ['day', 'start_time']
-        unique_together = ['day', 'skill', 'teacher', 'start_time']
+        unique_together = ['day', 'language', 'teacher', 'student' ,'start_time']
         verbose_name = "emploi du temps"
         verbose_name_plural = "emplois du temps"
 
     def __str__(self):
-        return f"{self.skill.name} - {self.day} ({self.start_time} - {self.end_time})"
+        return f"{self.language.name} - {self.day} ({self.start_time} - {self.end_time})"
     
-    @property
-    def duration_minutes(self):
-        """Retourne la durée du cours en minutes"""
-        start = datetime.combine(datetime.min.date(), self.start_time)
-        end = datetime.combine(datetime.min.date(), self.end_time)
-        duration = end - start
-        return int(duration.total_seconds() / 60)
-    
-    @property
-    def language_name(self):
-        """Retourne le nom de la langue associée au skill"""
-        if self.language:
-            return self.language.name
-        elif self.skill and hasattr(self.skill, 'languages'):
-            return self.skill.languages.first().name if self.skill.languages.exists() else "N/A"
-        return "N/A"
-    
-    @property
-    def color_class(self):
-        """Retourne une classe CSS pour la couleur basée sur la langue"""
-        if self.language:
-            language_colors = {
-                'Français': 'course-french',
-                'Anglais': 'course-english',
-                'Espagnol': 'course-spanish',
-                'Allemand': 'course-german',
-                'Italien': 'course-italian',
-                'Chinois': 'course-chinese',
-                'Japonais': 'course-japanese',
-                'Arabe': 'course-arabic',
-            }
-            return language_colors.get(self.language.name, 'course-default')
-        return 'course-default'
     
 # Présence
 class Attendance(models.Model):
