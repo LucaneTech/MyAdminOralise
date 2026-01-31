@@ -1,0 +1,274 @@
+<!-- Modal Ajout Rapide -->
+<div class="modal fade futuristic-modal" id="quickAddModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="ni ni-fat-add mr-2"></i>Ajout Rapide</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'quick_add_schedule' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="text-white opacity-75">Jour</label>
+                                <select name="day" class="form-control bg-dark border-dark text-white" required>
+                                    {% for day in day_choices %}
+                                    <option value="{{ day.0 }}">{{ day.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="text-white opacity-75">Langue</label>
+                                <select name="language" class="form-control bg-dark border-dark text-white" required>
+                                    {% for lang in languages %}
+                                    <option value="{{ lang.id }}">{{ lang.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="text-white opacity-75">Heure début</label>
+                                <input type="time" name="start_time" class="form-control bg-dark border-dark text-white" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="text-white opacity-75">Heure fin</label>
+                                <input type="time" name="end_time" class="form-control bg-dark border-dark text-white" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="text-white opacity-75">Étudiant (optionnel)</label>
+                        <select name="student" class="form-control bg-dark border-dark text-white">
+                            <option value="">Sélectionner un étudiant</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-neon">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Édition Complète -->
+<div class="modal fade futuristic-modal" id="editCourseModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="ni ni-settings mr-2"></i>Éditer le Cours</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form method="post" action="" id="editCourseForm">
+                {% csrf_token %}
+                <input type="hidden" name="schedule_id" id="editScheduleId">
+                <div class="modal-body">
+                    <!-- Ce contenu sera chargé dynamiquement via AJAX -->
+                    <div id="editFormContent" class="text-center py-5">
+                        <div class="spinner-border text-neon" role="status">
+                            <span class="sr-only">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="deleteCourseBtn">
+                        <i class="ni ni-fat-remove mr-1"></i>Supprimer
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-neon">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Détails Cours -->
+{% for schedule in schedules %}
+<div class="modal fade futuristic-modal" id="courseModal{{ schedule.id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-left: 5px solid {{ schedule.language.color }};">
+                <h5 class="modal-title text-white">{{ schedule.language.name }}</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <span class="badge badge-{{ schedule.is_active|yesno:'success,danger' }} mr-2">
+                            {{ schedule.is_active|yesno:"Actif,Inactif" }}
+                        </span>
+                        <span class="badge badge-info">{{ schedule.get_day_display }}</span>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-white opacity-75">Horaires</h6>
+                        <p class="text-white">
+                            <i class="ni ni-time-alarm mr-2"></i>
+                            {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                        </p>
+                    </div>
+                    
+                    {% if schedule.student %}
+                    <div class="col-md-6">
+                        <h6 class="text-white opacity-75">Étudiant</h6>
+                        <p class="text-white">
+                            <i class="ni ni-single-02 mr-2"></i>
+                            {{ schedule.student.user.get_full_name }}
+                            <br>
+                            <small class="text-muted">{{ schedule.student.matricule }}</small>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if schedule.classroom %}
+                    <div class="col-md-6">
+                        <h6 class="text-white opacity-75">Salle</h6>
+                        <p class="text-white">
+                            <i class="ni ni-square-pin mr-2"></i>
+                            {{ schedule.classroom }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-white opacity-75">Durée</h6>
+                        <p class="text-white">
+                            <i class="ni ni-watch-time mr-2"></i>
+                            {{ schedule.duration_hours }}h
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-outline-neon" onclick="editSchedule({{ schedule.id }})">
+                    <i class="ni ni-settings mr-1"></i>Éditer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modal Confirmation Suppression -->
+<div class="modal fade futuristic-modal" id="confirmDeleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white"><i class="ni ni-fat-remove mr-2"></i>Confirmation</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="ni ni-basket fa-3x text-danger mb-3"></i>
+                <h6 class="text-white">Êtes-vous sûr de vouloir supprimer ce cours ?</h6>
+                <p class="text-muted">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import/Export -->
+<div class="modal fade futuristic-modal" id="importExportModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white"><i class="ni ni-cloud-upload-95 mr-2"></i>Import/Export</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="nav-wrapper">
+                    <ul class="nav nav-pills nav-fill flex-column flex-md-row" id="importExportTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link mb-sm-3 mb-md-0 active" id="export-tab" data-toggle="tab" href="#export" role="tab">
+                                <i class="ni ni-cloud-download-95 mr-2"></i>Exporter
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link mb-sm-3 mb-md-0" id="import-tab" data-toggle="tab" href="#import" role="tab">
+                                <i class="ni ni-cloud-upload-95 mr-2"></i>Importer
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="tab-content mt-4" id="importExportContent">
+                    <!-- Export Tab -->
+                    <div class="tab-pane fade show active" id="export" role="tabpanel">
+                        <div class="form-group">
+                            <label class="text-white opacity-75">Format</label>
+                            <select class="form-control bg-dark border-dark text-white" id="exportFormat">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                                <option value="ical">Calendrier (iCal)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-white opacity-75">Période</label>
+                            <select class="form-control bg-dark border-dark text-white" id="exportPeriod">
+                                <option value="week">Cette semaine</option>
+                                <option value="month">Ce mois</option>
+                                <option value="all">Tout</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-neon btn-block" id="exportDataBtn">
+                            <i class="ni ni-cloud-download-95 mr-2"></i>Exporter
+                        </button>
+                    </div>
+                    
+                    <!-- Import Tab -->
+                    <div class="tab-pane fade" id="import" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="ni ni-info text-info mr-2"></i>
+                            Formats supportés: CSV, Excel
+                        </div>
+                        <div class="form-group">
+                            <label class="text-white opacity-75">Fichier</label>
+                            <input type="file" class="form-control-file text-white" id="importFile" accept=".csv,.xlsx,.xls">
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input class="custom-control-input" type="checkbox" id="overwriteData">
+                                <label class="custom-control-label text-white opacity-75" for="overwriteData">
+                                    Écraser les données existantes
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-neon btn-block" id="importDataBtn">
+                            <i class="ni ni-cloud-upload-95 mr-2"></i>Importer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

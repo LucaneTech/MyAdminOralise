@@ -1,14 +1,407 @@
-{% extends "dashboard/teacher/layouts/base.html" %}
-
-{% block title %} Emploi du temps {% endblock %}
+{% extends 'dashboard/teacher/layouts/base.html' %}
 
 {% block stylesheets %}
+<style>
+    :root {
+        --primary-color: #215E61;
+        --primary-light: #1a8d95;
+        --secondary-color: #233D4D;
+        --accent-color: #F5FBE6;
+        --light-bg: #f8fafc;
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+        --text-primary: #2d3748;
+        --text-secondary: #718096;
+        --success-color: #48bb78;
+        --warning-color: #ed8936;
+        --danger-color: #f56565;
+        --info-color: #4299e1;
+    }
 
-{% endblock stylesheets %}
+    /* Design moderne et épuré */
+    .modern-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .modern-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .modern-card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Emploi du temps moderne */
+    .schedule-container {
+        background: var(--light-bg);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: 80px repeat(6, 1fr);
+        grid-template-rows: 70px repeat(36, 30px); /* 7h-22h toutes les 30min */
+        gap: 1px;
+        background: var(--border-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .time-header {
+        background: var(--card-bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .time-header.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-light);
+    }
+
+    .time-header .day-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .time-header .date {
+        font-size: 12px;
+        color: var(--text-secondary);
+        opacity: 0.8;
+    }
+
+    .time-header.active .date {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .time-slot {
+        background: var(--card-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .course-event {
+        position: relative;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 2px;
+        cursor: pointer;
+        overflow: hidden;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .course-event:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+        border-color: var(--primary-color);
+    }
+
+    .course-event .event-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .course-event .event-details {
+        font-size: 11px;
+        color: var(--text-secondary);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .event-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        background: var(--light-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Ligne d'heure actuelle */
+    .current-time-line {
+        position: absolute;
+        left: 80px;
+        right: 0;
+        height: 2px;
+        background: var(--danger-color);
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .current-time-line::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        width: 8px;
+        height: 8px;
+        background: var(--danger-color);
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px white;
+    }
+
+    /* Bouton flottant moderne */
+    .fab-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(20, 122, 129, 0.3);
+        cursor: pointer;
+        z-index: 1000;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .fab-btn:hover {
+        background: var(--primary-light);
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(20, 122, 129, 0.4);
+    }
+
+    /* Cartes de statistiques modernes */
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: var(--secondary-color);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* Badges colorés pour les langues */
+    .lang-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        color: white;
+        margin-right: 6px;
+        margin-bottom: 6px;
+    }
+
+    /* Boutons modernes */
+    .btn-modern {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-primary);
+        transition: all 0.2s;
+    }
+
+    .btn-modern:hover {
+        background: var(--light-bg);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .btn-modern-primary {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .btn-modern-primary:hover {
+        background: var(--primary-light);
+        border-color: var(--primary-light);
+        color: white;
+    }
+
+    /* Dropdown moderne */
+    .modern-dropdown .dropdown-menu {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 8px 0;
+    }
+
+    .modern-dropdown .dropdown-item {
+        padding: 8px 16px;
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .modern-dropdown .dropdown-item:hover {
+        background: var(--light-bg);
+        color: var(--primary-color);
+    }
+
+    /* Timeline moderne */
+    .modern-timeline {
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .modern-timeline::before {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px var(--border-color);
+    }
+
+    /* Formulaires modernes */
+    .modern-form .form-control {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .modern-form .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(20, 122, 129, 0.1);
+    }
+
+    /* Animation subtile */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+        .time-grid {
+            grid-template-columns: 70px repeat(6, 1fr);
+            grid-template-rows: 60px repeat(36, 28px);
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .time-grid {
+            grid-template-columns: 60px repeat(6, 1fr);
+            grid-template-rows: 50px repeat(36, 26px);
+        }
+        
+        .course-event {
+            padding: 8px;
+        }
+        
+        .course-event .event-title {
+            font-size: 12px;
+        }
+        
+        .course-event .event-details {
+            font-size: 10px;
+        }
+    }
+
+    /* Scrollbar personnalisée */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--light-bg);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="header bg-primary pb-6">
+<!-- Header moderne -->
+<div class="header pb-6" style="background: var(--primary-color);">
     <div class="container-fluid">
         <div class="header-body">
             <div class="row align-items-center py-4">
@@ -16,132 +409,345 @@
                     <h6 class="h2 text-white d-inline-block mb-0">Emploi du temps</h6>
                     <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                         <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Emploi du temps</li>
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'teacher_view' username=request.user.username %}">
+                                    <i class="fas fa-home"></i>
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active text-dark" aria-current="page">Planning</li>
                         </ol>
                     </nav>
                 </div>
-                <div class="col-lg-6 col-5 text-right">
-                    <div class="btn-group" role="group">
-                        <a href="{% url 'teacher_schedule_manage' %}" class="btn btn-sm btn-success">
-                            <i class="fas fa-cog"></i> Gérer l'emploi du temps
-                        </a>
+                
+            </div>
+            
+            <!-- Statistiques modernes -->
+            <div class="row mt-4">
+                <div class="col-xl-3 col-md-6 mb-4 fade-in">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_courses }}</div>
+                        <div class="stat-label">Total des cours</div>
                     </div>
-                    
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4 fade-in" style="animation-delay: 0.1s;">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ this_week_courses }}</div>
+                        <div class="stat-label">Cette semaine</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4 fade-in" style="animation-delay: 0.2s;">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ today_courses }}</div>
+                        <div class="stat-label">Aujourd'hui</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4 fade-in" style="animation-delay: 0.3s;">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ languages_count }}</div>
+                        <div class="stat-label">Langues enseignées</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Page content -->
+<!-- Contenu principal -->
 <div class="container-fluid mt--6">
     <div class="row">
-        <div class="col-xl-3">
-            <!-- Légende des cours -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Langues enseignées</h5>
+        <!-- Sidebar -->
+        <div class="col-xl-3 mb-5">
+            <!-- Filtres -->
+            <div class="modern-card mb-4">
+                <div class="modern-card-header">
+                    <h3 class=" mb-0 text-white"><i class="ni ni-filter mr-2"></i>Filtres</h3>
                 </div>
                 <div class="card-body">
-                    {% for lang in language_teached %}
-                   
-                    <div class="mb-3">
-                        <span class="badge badge-pill badge-primary mr-2">&nbsp;</span>
-                        <span>{{lang.name}}</span>
+                    <form class="modern-form" id="scheduleFilters">
+                        <div class="form-group mb-3">
+                            <label class="form-control-label">Langue</label>
+                            <select class="form-control" id="languageFilter">
+                                <option value="">Toutes les langues</option>
+                                {% for lang in languages %}
+                                <option value="{{ lang.id }}">{{ lang.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-control-label">Étudiant</label>
+                            <select class="form-control" id="studentFilter">
+                                <option value="">Tous les étudiants</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="form-control-label">Statut</label>
+                            <select class="form-control" id="statusFilter">
+                                <option value="">Tous</option>
+                                <option value="active">Actif</option>
+                                <option value="inactive">Inactif</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-modern btn-modern-primary btn-block" id="applyFilters">
+                            <i class="ni ni-zoom-split-in mr-2"></i>Appliquer
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Prochains cours -->
+            <div class="modern-card">
+                <div class="modern-card-header">
+                    <h3 class=" mb-0 text-white"><i class="ni ni-time-alarm mr-2"></i>À venir</h3>
+                </div>
+                <div class="card-body">
+                    <div class="modern-timeline">
+                        {% for course in upcoming_courses %}
+                        <div class="timeline-item">
+                            <h6 class="text-sm mb-0">{{ course.language.name }}</h6>
+                            <p class="text-xs text-muted mb-1">
+                                {{ course.day }} • {{ course.start_time|time:"H:i" }}h à {{ course.end_time|time:"H:i" }}h
+                            </p>
+                            {% if course.student %}
+                            <span class="text-xs">{{ course.student.user.get_full_name }}</span>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center mb-0">Aucun cours à venir</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Légende -->
+            <div class="modern-card mt-4">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="ni ni-tag mr-2"></i>Légende</h6>
+                    <div class="mb-2">
+                        {% for lang in languages|slice:":4" %}
+                        <span class="lang-badge" style="background: {{ lang.color|default:'var(--primary-color)' }};">
+                            {{ lang.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex align-items-center mt-3">
+                        <div class="mr-3">
+                            <div style="width: 12px; height: 12px; background: var(--success-color); border-radius: 2px;"></div>
+                        </div>
+                        <span class="text-xs">Cours actif</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emploi du temps principal -->
+        <div class="col-xl-9">
+            <!-- Contrôles de navigation -->
+            <div class="modern-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-modern" id="prevWeek">
+                                    <i class="ni ni-bold-left"></i>
+                                </button>
+                                <button class="btn btn-modern" id="todayBtn">Aujourd'hui</button>
+                                <button class="btn btn-modern" id="nextWeek">
+                                    <i class="ni ni-bold-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h5 class="mb-0" id="currentWeek">Semaine {{ current_week_number }}</h5>
+                            <small class="text-muted" id="weekDates">
+                                {{ week_start|date:"d M" }} - {{ week_end|date:"d M Y" }}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <button class="btn btn-modern btn-modern-primary" data-toggle="modal" data-target="#addCourseModal">
+                                <i class="ni ni-fat-add mr-2"></i>Nouveau cours
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grille d'emploi du temps -->
+            <div class="modern-card">
+                <div class="card-body p-3">
+                    <div class="time-grid" id="timetableGrid">
+                        <!-- En-tête des heures -->
+                        <div class="time-slot" style="grid-row: 1; grid-column: 1;"></div>
+                        
+                        {% for hour in hours %}
+                        <div class="time-slot" style="grid-row: {{ hour.grid_row }}; grid-column: 1;">
+                            {{ hour.display }}
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- En-tête des jours -->
+                        {% for day in week_days %}
+                        <div class="time-header {% if day.is_today %}active{% endif %}" 
+                             style="grid-row: 1; grid-column: {{ forloop.counter|add:1 }};">
+                            <div class="day-name">{{ day.name }}</div>
+                            <div class="date">{{ day.date|date:"d/m" }}</div>
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Cours -->
+                        {% for schedule in schedules %}
+                        <div class="course-event"
+                             data-schedule-id="{{ schedule.id }}"
+                             style="grid-row: {{ schedule.grid_row_start }} / span {{ schedule.duration_rows }};
+                                    grid-column: {{ schedule.day_column }};
+                                    border-left: 3px solid {{ schedule.language.color|default:'var(--primary-color)' }};
+                                    background: {{ schedule.language.color|default:'var(--primary-color)' }}10;"
+                             data-toggle="modal" 
+                             data-target="#courseModal{{ schedule.id }}">
+                            <div class="event-title">
+                                <span>{{ schedule.language.name }}</span>
+                                <span class="event-badge">{{ schedule.start_time|time:"H:i" }}</span>
+                            </div>
+                            <div class="event-details">
+                                {% if schedule.student %}
+                                <div><i class="ni ni-single-02 mr-1"></i>{{ schedule.student.user.get_full_name|truncatechars:15 }}</div>
+                                {% endif %}
+                                {% if schedule.classroom %}
+                                <div><i class="ni ni-pin-3 mr-1"></i>{{ schedule.classroom }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                     
-                    
-                    {% endfor %}
-
-                   
-                    
-                    
+                    <!-- Ligne d'heure actuelle -->
+                    <div class="current-time-line" id="currentTimeLine"></div>
                 </div>
             </div>
 
-        
-           
-
-            <!-- Actions rapides -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Actions rapides</h5>
-                </div>
-                <div class="card-body">
-                    <a href="#" class="btn btn-primary btn-block mb-2">
-                        <i class="fas fa-edit"></i> Modifier
-                    </a>
-                    <a href="#" class="btn btn-info btn-block mb-2">
-                        <i class="fas fa-calendar-check"></i> Voir les séances
-                    </a>
-                    
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-9">
-            <!-- Calendrier -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Calendrier</h5>
-                </div>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                        <th>Lundi</th>
-                        <th>Mardi</th>
-                        <th>Mercredi</th>
-                        <th>Jeudi</th>
-                        <th>Vendredi</th>
-                        <th>Samedi</th>
-                        <th>Dimanche</th>
-                    </thead>
-
-                    <tbody>
-                        <td>Salut</td>
-                        
-                    </tbody>
-                    </table>
-                </div>
-            </div>
+            <
+            
         </div>
     </div>
 </div>
 
-<!-- Modal Ajouter un cours -->
-<div class="modal fade" id="addEventModal" tabindex="-1" role="dialog" aria-labelledby="addEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addEventModalLabel">Ajouter un nouveau cours</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Note :</strong> Pour une gestion complète de votre emploi du temps, utilisez la fonction 
-                    <a href="#" class="alert-link">"Gérer l'emploi du temps"</a> 
-                    qui vous permettra d'ajouter, modifier et supprimer des cours de manière permanente.
-                </div>
-                <p class="text-muted">
-                    Cette fonctionnalité est en cours de développement. Utilisez le bouton "Gérer l'emploi du temps" 
-                    pour une gestion complète de votre planning.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-                <a href="#" class="btn btn-primary">
-                    <i class="fas fa-cog"></i> Aller à la gestion
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock content %}
+<!-- Bouton flottant -->
+<button class="fab-btn" id="fabButton" data-toggle="modal" data-target="#quickAddModal">
+    <i class="ni ni-fat-add"></i>
+</button>
+
+<!-- Inclure les modals -->
+{% include 'dashboard/teacher/includes/schedule_modals.html' %}
+
+{% endblock %}
 
 {% block javascripts %}
-
-{% endblock javascripts %} 
+<script>
+$(document).ready(function() {
+    // Variables
+    let currentWeek = {{ current_week_number }};
+    
+    // Initialiser la ligne d'heure actuelle
+    function updateCurrentTimeLine() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Calculer la position dans la grille (7h = ligne 2)
+        const gridRow = ((currentHour - 7) * 2) + Math.floor(currentMinute / 30) + 2;
+        
+        if (gridRow >= 2 && gridRow <= 74) { // 7h-22h
+            $('#currentTimeLine').css({
+                'grid-row': gridRow,
+                'display': 'block'
+            });
+        } else {
+            $('#currentTimeLine').hide();
+        }
+    }
+    
+    // Mettre à jour toutes les minutes
+    updateCurrentTimeLine();
+    setInterval(updateCurrentTimeLine, 60000);
+    
+    // Navigation par semaine
+    function updateWeek(offset) {
+        currentWeek += offset;
+        loadWeek(currentWeek);
+    }
+    
+    $('#prevWeek').click(() => updateWeek(-1));
+    $('#nextWeek').click(() => updateWeek(1));
+    $('#todayBtn').click(() => {
+        currentWeek = 0;
+        loadWeek(currentWeek);
+    });
+    
+    function loadWeek(weekNumber) {
+        $.ajax({
+            url: '{% url "load_schedule_week" %}',
+            method: 'GET',
+            data: { week: weekNumber },
+            beforeSend: () => $('#timetableGrid').addClass('pulse'),
+            success: (response) => {
+                if (response.success) {
+                    $('#currentWeek').text(`Semaine ${response.week_number}`);
+                    $('#weekDates').text(`${response.week_start} - ${response.week_end}`);
+                    $('#timetableGrid').html(response.html);
+                    initCourseEvents();
+                }
+            },
+            complete: () => $('#timetableGrid').removeClass('pulse')
+        });
+    }
+    
+    // Appliquer les filtres
+    $('#applyFilters').click(applyFilters);
+    
+    function applyFilters() {
+        const filters = {
+            language: $('#languageFilter').val(),
+            student: $('#studentFilter').val(),
+            status: $('#statusFilter').val()
+        };
+        
+        $.ajax({
+            url: '{% url "filter_schedule" %}',
+            method: 'POST',
+            data: { ...filters, csrfmiddlewaretoken: '{{ csrf_token }}' },
+            beforeSend: () => $('#timetableGrid').addClass('pulse'),
+            success: (response) => {
+                if (response.success) {
+                    $('#timetableGrid').html(response.html);
+                    initCourseEvents();
+                }
+            },
+            complete: () => $('#timetableGrid').removeClass('pulse')
+        });
+    }
+    
+    // Initialiser les événements sur les cours
+    function initCourseEvents() {
+        $('.course-event').hover(
+            function() {
+                $(this).css('z-index', '100');
+            },
+            function() {
+                $(this).css('z-index', '');
+            }
+        );
+        
+        // Double-clic pour éditer
+        $('.course-event').dblclick(function() {
+            const scheduleId = $(this).data('schedule-id');
+            window.location.href = `/teacher/schedule/edit/${scheduleId}/`;
+        });
+    }
+    
+    // Initialiser
+    initCourseEvents();
+});
+</script>
+{% endblock %}
