@@ -266,6 +266,7 @@ class Schedule(models.Model):
         ('Jeudi', 'Jeudi'),
         ('Vendredi', 'Vendredi'),
         ('Samedi', 'Samedi'),
+         ('Dimanche', 'Dimanche'),
     ]
 
     day = models.CharField(
@@ -669,6 +670,12 @@ class Resource(models.Model):
         ('other', 'Autre')
     ]
     
+    ACCESS_TYPES = [
+        ('all_students', 'Tous les étudiants'),
+        ('specific_students', 'Étudiants spécifiques'),
+        ('course_students', 'Étudiants d\'un cours spécifique'),
+    ]
+    
     title = models.CharField(
         max_length=200,
         verbose_name="titre"
@@ -678,7 +685,7 @@ class Resource(models.Model):
         verbose_name="description"
     )
     file = models.FileField(
-        upload_to='resources/', 
+        upload_to='resources/%Y/%m/%d/', 
         null=True, 
         blank=True,
         verbose_name="fichier"
@@ -693,16 +700,50 @@ class Resource(models.Model):
         choices=RESOURCE_TYPES,
         verbose_name="type de ressource"
     )
-    languages = models.ManyToManyField(
-        Language, 
+    
+    # Nouvelles relations pour cibler les étudiants
+    access_type = models.CharField(
+        max_length=20,
+        choices=ACCESS_TYPES,
+        default='all_students',
+        verbose_name="type d'accès"
+    )
+    
+    # Relation ManyToMany avec les étudiants
+    students = models.ManyToManyField(
+        'Student',
+        blank=True,
         related_name='resources',
-        verbose_name="langues"
+        verbose_name="étudiants ciblés"
     )
-    uploaded_by = models.ForeignKey(
-        CustomUser, 
+    
+    # Langues (garder une seule relation ManyToMany)
+    languages = models.ManyToManyField(
+        'Language',
+        blank=True,
+        related_name='resources',
+        verbose_name="langues concernées"
+    )
+    
+    teachers = models.ForeignKey(
+        Teacher,
         on_delete=models.CASCADE,
-        verbose_name="téléchargé par"
+        related_name='teachers_resources',
+        verbose_name="enseignant responsable"
     )
+    
+    # Métadonnées
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name="visible"
+    )
+   
+    valid_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="disponible jusqu'au"
+    )
+    
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="date de création"
@@ -711,20 +752,21 @@ class Resource(models.Model):
         auto_now=True,
         verbose_name="date de mise à jour"
     )
-    language = models.ManyToManyField(
-        Language, 
-        blank=True,
-        verbose_name="langue"
-    )
 
     class Meta:
         ordering = ['-created_at']
         verbose_name = "ressource pédagogique"
         verbose_name_plural = "ressources pédagogiques"
+        permissions = [
+            ('assign_resource', 'Peut assigner des ressources aux étudiants'),
+            ('manage_resource', 'Peut gérer toutes les ressources'),
+        ]
 
     def __str__(self):
-        return f"{self.uploaded_by.username} - {self.title}"
-
+        return f"{self.teachers.user.get_full_name()} - {self.title}"
+    
+    
+    
 # Demandes/Réquêtes
 class Request(models.Model):
     REQUEST_TYPES = [

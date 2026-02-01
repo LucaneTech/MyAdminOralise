@@ -1,0 +1,346 @@
+<!-- dashboard/teacher/resources/includes/modals.html -->
+
+<!-- Modal pour créer/éditer une ressource -->
+<div class="modal fade" id="resourceFormModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resourceModalTitle">
+                    <i class="ni ni-collection mr-2"></i>
+                    <span id="modalActionText">Nouvelle ressource</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="resourceForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="resource_id" id="resourceId">
+                
+                <div class="modal-body" id="resourceFormBody">
+                    <!-- Le contenu du formulaire sera chargé dynamiquement ici -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="ni ni-fat-remove"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitResourceForm">
+                        <i class="ni ni-check-bold"></i>
+                        <span id="submitButtonText">Créer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour assigner une ressource à des étudiants -->
+<div class="modal fade" id="assignResourceModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ni ni-single-02 mr-2"></i>
+                    Assigner la ressource
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="assignResourceForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="assign">
+                <input type="hidden" name="resource_id" id="assignResourceId">
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="assignStudents">Sélectionnez les étudiants</label>
+                        <select name="students" id="assignStudents" class="form-control select2-multiple" multiple>
+                            {% for student in teacher.student_set.all %}
+                            <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="changeAccessType" name="change_access_type" checked>
+                        <label class="form-check-label" for="changeAccessType">
+                            Changer le type d'accès à "Étudiants spécifiques"
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Assigner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour assigner en masse -->
+<div class="modal fade" id="bulkAssignModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ni ni-vector mr-2"></i>
+                    Assigner en masse
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="bulkAssignForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="bulk_assign">
+                
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="bulkResources">Ressources à assigner</label>
+                                <select name="resources" id="bulkResources" class="form-control select2-multiple" multiple>
+                                    {% for resource in resources %}
+                                    <option value="{{ resource.id }}">{{ resource.title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="bulkStudents">Étudiants</label>
+                                <select name="students" id="bulkStudents" class="form-control select2-multiple" multiple>
+                                    {% for student in teacher.student_set.all %}
+                                    <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Assigner en masse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="ni ni-fat-remove mr-2"></i>
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="deleteResourceForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="resource_id" id="deleteResourceId">
+                
+                <div class="modal-body text-center">
+                    <div class="mb-4">
+                        <i class="ni ni-basket fa-3x text-danger"></i>
+                    </div>
+                    <h6 class="mb-3">Êtes-vous sûr de vouloir supprimer cette ressource ?</h6>
+                    <p class="text-muted mb-0" id="resourceToDeleteTitle"></p>
+                    <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                </div>
+                
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les détails d'une ressource -->
+<div class="modal fade" id="resourceDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ni ni-collection mr-2"></i>
+                    Détails de la ressource
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="resourceDetailsContent">
+                <!-- Les détails seront chargés dynamiquement ici -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" id="editFromDetailsBtn">
+                    <i class="ni ni-settings"></i> Modifier
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour choisir un étudiant -->
+<div class="modal fade" id="chooseStudentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ni ni-single-02 mr-2"></i>
+                    Créer pour un étudiant
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group list-group-flush">
+                    {% for student in students %}
+                    <a href="#" class="list-group-item list-group-item-action choose-student-btn" data-student-id="{{ student.id }}">
+                        <div class="d-flex align-items-center">
+                            {% if student.user.profile_picture %}
+                            <img src="{{ student.user.profile_picture.url }}" class="rounded-circle mr-3" width="40" height="40" alt="{{ student.user.get_full_name }}">
+                            {% else %}
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-3" style="width: 40px; height: 40px;">
+                                {{ student.user.get_full_name|first|upper }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">{{ student.user.get_full_name }}</h6>
+                                <small class="text-muted">{{ student.matricule }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les filtres avancés -->
+<div class="modal fade" id="advancedFiltersModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ni ni-filter mr-2"></i>
+                    Filtres avancés
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="advancedFiltersForm" method="get" action="{% url 'teacher_resources_dashboard' %}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterResourceType">Type de ressource</label>
+                                <select name="resource_type" id="filterResourceType" class="form-control">
+                                    <option value="">Tous les types</option>
+                                    {% for type_val, type_name in resource_types %}
+                                    <option value="{{ type_val }}" {% if request.GET.resource_type == type_val %}selected{% endif %}>
+                                        {{ type_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterLanguage">Langue</label>
+                                <select name="language" id="filterLanguage" class="form-control">
+                                    <option value="">Toutes</option>
+                                    {% for language in languages %}
+                                    <option value="{{ language.id }}" {% if request.GET.language == language.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ language.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterStudent">Étudiant</label>
+                                <select name="student" id="filterStudent" class="form-control">
+                                    <option value="">Tous</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}" {% if request.GET.student == student.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ student.user.get_full_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterAccessType">Type d'accès</label>
+                                <select name="access_type" id="filterAccessType" class="form-control">
+                                    <option value="">Tous</option>
+                                    {% for access_val, access_name in access_types %}
+                                    <option value="{{ access_val }}" {% if request.GET.access_type == access_val %}selected{% endif %}>
+                                        {{ access_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterDateFrom">Date de début</label>
+                                <input type="date" name="date_from" id="filterDateFrom" class="form-control" value="{{ request.GET.date_from }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="filterDateTo">Date de fin</label>
+                                <input type="date" name="date_to" id="filterDateTo" class="form-control" value="{{ request.GET.date_to }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterSearch">Recherche</label>
+                        <input type="text" name="search" id="filterSearch" class="form-control" placeholder="Rechercher par titre ou description..." value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <a href="{% url 'teacher_resources_dashboard' %}" class="btn btn-outline-danger">Réinitialiser</a>
+                    <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

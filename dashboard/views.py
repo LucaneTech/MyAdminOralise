@@ -1,4 +1,5 @@
 import csv
+from multiprocessing import context
 from urllib import request
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -13,7 +14,9 @@ from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
+from django.template.loader import render_to_string
+
 
 
 from dashboard.models import (
@@ -34,7 +37,8 @@ from dashboard.models import (
     Notification,
     Comment,
 )
-from .forms import ProfileUpdateForm, ResourceForm, SessionForm
+from .forms import ProfileUpdateForm, SessionForm, ResourceForm, ResourceFilterForm, BulkAssignForm
+ 
 import json
 
 
@@ -376,19 +380,409 @@ def resources_view(request):
         "username": request.user.username,
     }
 
+    # Version corrigée
     if user.role == "student":
         student = get_object_or_404(Student, user=user)
-        # Récupérer les ressources liées aux langues de l'étudiant
-        student_languages = student.languages.all()
-        resources = Resource.objects.filter(languages__in=student_languages).distinct()
-        context.update({"resources": resources, "student": student})
+        teachers = student.current_teachers.all()
+        
+        # Obtenir les langues de l'étudiant
+        student_languages = student.languages.all()  # Supposons que Student a un champ languages
+        
+        now = timezone.now()
+        
+        resources = Resource.objects.filter(
+            is_visible=True,
+        ).filter(
+            Q(valid_until__isnull=True) | Q(valid_until__gte=now)
+        ).filter(
+            # Logique d'accès basée sur le type d'accès
+            Q(
+                # Cas 1: Ressources accessibles à tous les étudiants
+                Q(access_type='all_students') & 
+                Q(teachers__in=teachers) &
+                Q(languages__in=student_languages)  # Filtre par les langues de l'étudiant
+            ) |
+            # Cas 2: Ressources spécifiques à certains étudiants
+            Q(
+                Q(access_type='specific_students') &
+                Q(students=student) &  # L'étudiant est dans la liste
+                Q(teachers__in=teachers) &
+                Q(languages__in=student_languages)
+            ) 
+         
+        ).distinct()
+        
+        # Comptage pour statistiques
+        total_resources = resources.count()
+        recent_resources = resources.filter(created_at__gte=now - timezone.timedelta(days=7)).count()
+        
+        # Regrouper par type de ressource pour faciliter l'affichage
+        resources_by_type = {}
+        for resource in resources:
+            resource_type = resource.resource_type
+            if resource_type not in resources_by_type:
+                resources_by_type[resource_type] = []
+            resources_by_type[resource_type].append(resource)
+        
+        context.update({
+            "resources": resources,
+            "student": student,
+            "total_resources": total_resources,
+            "recent_resources": recent_resources,
+            "resources_by_type": resources_by_type,
+            "teachers": teachers,  # Pour afficher les enseignants si besoin
+            "now": now,  # Pour vérifier les dates d'expiration dans le template
+        })
+    
         return render(request, "dashboard/student/home/resources.html", context)
 
-    elif user.role == "teacher":
-        teacher = get_object_or_404(Teacher, user=user)
-        resources = Resource.objects.filter(uploaded_by=user)
-        context.update({"resources": resources, "teacher": teacher})
-        return render(request, "dashboard/teacher/home/resources.html", context)
+
+@login_required
+def teacher_resources_dashboard(request):
+    """
+    Vue unique qui gère l'affichage et le CRUD des ressources
+    avec des modals pour toutes les actions
+    """
+    user = request.user
+    if user.role != "teacher":
+        return redirect('dashboard')
+    
+    teacher = get_object_or_404(Teacher, user=user)
+    
+    # Variables d'action
+    action = request.GET.get('action', 'list')
+    resource_id = request.GET.get('id')
+    student_id = request.GET.get('student_id')
+    
+    # Récupérer les données nécessaires
+    students = Student.objects.filter(current_teachers=teacher)
+    languages = Language.objects.all()
+    
+    # Base queryset
+    resources = Resource.objects.filter(teachers=teacher)
+    
+    # Gestion des actions
+    if request.method == 'POST':
+        return handle_post_actions(request, teacher, action, resource_id)
+    
+    # Filtrage GET
+    resources = apply_filters(request, resources)
+    
+    # Préparer le contexte
+    context = {
+        'teacher': teacher,
+        'students': students,
+        'languages': languages,
+        'resources': resources.order_by('-created_at'),
+        'current_action': action,
+        'resource_types': Resource.RESOURCE_TYPES,
+        'access_types': Resource.ACCESS_TYPES,
+        'now': timezone.now(),
+        
+        # Données pour les modals
+        'selected_resource': None,
+        'selected_student': None,
+        'form': None,
+        'bulk_form': None,
+    }
+    
+    # Préparer les données selon l'action
+    if action == 'create':
+        context['form'] = ResourceForm(teacher=teacher)
+    elif action == 'edit' and resource_id:
+        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+        context['selected_resource'] = resource
+        context['form'] = ResourceForm(instance=resource, teacher=teacher)
+    elif action == 'assign' and resource_id:
+        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+        context['selected_resource'] = resource
+        context['bulk_form'] = BulkAssignForm(teacher=teacher, initial={'students': resource.students.all()})
+    elif action == 'create_for_student' and student_id:
+        student = get_object_or_404(Student, id=student_id, current_teachers=teacher)
+        context['selected_student'] = student
+        initial = {
+            'access_type': 'specific_students',
+            'students': [student]
+        }
+        context['form'] = ResourceForm(teacher=teacher, initial=initial)
+    
+    return render(request, 'dashboard/teacher/home/resources.html', context)
+
+
+def handle_post_actions(request, teacher, action, resource_id):
+    """Gère toutes les actions POST"""
+    if action == 'create':
+        return create_resource(request, teacher)
+    elif action == 'edit' and resource_id:
+        return edit_resource(request, teacher, resource_id)
+    elif action == 'delete' and resource_id:
+        return delete_resource(request, teacher, resource_id)
+    elif action == 'assign' and resource_id:
+        return assign_resource(request, teacher, resource_id)
+    elif action == 'toggle_visibility' and resource_id:
+        return toggle_visibility(request, teacher, resource_id)
+    elif action == 'bulk_assign':
+        return bulk_assign_resources(request, teacher)
+    
+    return redirect('teacher_resources_dashboard')
+
+
+def create_resource(request, teacher):
+    """Créer une nouvelle ressource"""
+    form = ResourceForm(request.POST, request.FILES, teacher=teacher)
+    
+    if form.is_valid():
+        resource = form.save(commit=False)
+        resource.teachers = teacher
+        resource.save()
+        form.save_m2m()  # Pour les relations ManyToMany
+        
+        messages.success(request, 'Ressource créée avec succès!')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Ressource créée avec succès!'})
+        return redirect('teacher_resources_dashboard')
+    
+    # Si erreur et requête AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'errors': form.errors})
+    
+    messages.error(request, 'Erreur lors de la création de la ressource')
+    return redirect('teacher_resources_dashboard?action=create')
+
+
+def edit_resource(request, teacher, resource_id):
+    """Modifier une ressource existante"""
+    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+    form = ResourceForm(request.POST, request.FILES, instance=resource, teacher=teacher)
+    
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Ressource modifiée avec succès!')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Ressource modifiée avec succès!'})
+        return redirect('teacher_resources_dashboard')
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'errors': form.errors})
+    
+    messages.error(request, 'Erreur lors de la modification de la ressource')
+    return redirect(f'teacher_resources_dashboard?action=edit&id={resource_id}')
+
+
+def delete_resource(request, teacher, resource_id):
+    """Supprimer une ressource"""
+    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+    
+    if request.method == 'POST':
+        resource.delete()
+        messages.success(request, 'Ressource supprimée avec succès!')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Ressource supprimée avec succès!'})
+    
+    return redirect('teacher_resources_dashboard')
+
+
+def assign_resource(request, teacher, resource_id):
+    """Assigner une ressource à des étudiants"""
+    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+    
+    if request.method == 'POST':
+        student_ids = request.POST.getlist('students')
+        students = Student.objects.filter(id__in=student_ids, current_teachers=teacher)
+        
+        resource.students.clear()
+        resource.students.add(*students)
+        
+        # Si on assigne des étudiants spécifiques, changer le type d'accès
+        if students.exists():
+            resource.access_type = 'specific_students'
+        else:
+            resource.access_type = 'all_students'
+        
+        resource.save()
+        
+        messages.success(request, f'Ressource assignée à {students.count()} étudiant(s)')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': f'Assignation réussie à {students.count()} étudiant(s)'})
+    
+    return redirect('teacher_resources_dashboard')
+
+
+def toggle_visibility(request, teacher, resource_id):
+    """Activer/désactiver la visibilité d'une ressource"""
+    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+    
+    if request.method == 'POST':
+        resource.is_visible = not resource.is_visible
+        resource.save()
+        
+        status = "visible" if resource.is_visible else "masquée"
+        messages.success(request, f'Ressource {status} avec succès!')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True, 
+                'message': f'Ressource {status}',
+                'is_visible': resource.is_visible
+            })
+    
+    return redirect('teacher_resources_dashboard')
+
+
+def bulk_assign_resources(request, teacher):
+    """Assigner plusieurs ressources à plusieurs étudiants"""
+    if request.method == 'POST':
+        resource_ids = request.POST.getlist('resources')
+        student_ids = request.POST.getlist('students')
+        
+        resources = Resource.objects.filter(id__in=resource_ids, teachers=teacher)
+        students = Student.objects.filter(id__in=student_ids, current_teachers=teacher)
+        
+        for resource in resources:
+            resource.students.add(*students)
+            if students.exists():
+                resource.access_type = 'specific_students'
+                resource.save()
+        
+        messages.success(request, f'{resources.count()} ressource(s) assignée(s) à {students.count()} étudiant(s)')
+    
+    return redirect('teacher_resources_dashboard')
+
+
+def apply_filters(request, queryset):
+    """Appliquer les filtres sur le queryset"""
+    filters = {}
+    
+    # Filtre par type de ressource
+    resource_type = request.GET.get('resource_type')
+    if resource_type:
+        queryset = queryset.filter(resource_type=resource_type)
+        filters['resource_type'] = resource_type
+    
+    # Filtre par langue
+    language_id = request.GET.get('language')
+    if language_id:
+        queryset = queryset.filter(languages__id=language_id)
+        filters['language'] = language_id
+    
+    # Filtre par étudiant
+    student_id = request.GET.get('student')
+    if student_id:
+        queryset = queryset.filter(students__id=student_id)
+        filters['student'] = student_id
+    
+    # Filtre par type d'accès
+    access_type = request.GET.get('access_type')
+    if access_type:
+        queryset = queryset.filter(access_type=access_type)
+        filters['access_type'] = access_type
+    
+    # Filtre par visibilité
+    is_visible = request.GET.get('is_visible')
+    if is_visible in ['true', 'false']:
+        queryset = queryset.filter(is_visible=(is_visible == 'true'))
+        filters['is_visible'] = is_visible
+    
+    # Filtre par date
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    if date_from:
+        queryset = queryset.filter(created_at__gte=date_from)
+        filters['date_from'] = date_from
+    
+    if date_to:
+        queryset = queryset.filter(created_at__lte=date_to)
+        filters['date_to'] = date_to
+    
+    # Recherche texte
+    search = request.GET.get('search')
+    if search:
+        queryset = queryset.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
+        )
+        filters['search'] = search
+    
+    return queryset.distinct()
+
+
+# API pour charger les détails d'une ressource (pour AJAX)
+@login_required
+@require_GET
+def get_resource_details(request, resource_id):
+    """API pour récupérer les détails d'une ressource en JSON (pour AJAX)"""
+    user = request.user
+    if user.role != "teacher":
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    teacher = get_object_or_404(Teacher, user=user)
+    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+    
+    data = {
+        'id': resource.id,
+        'title': resource.title,
+        'description': resource.description,
+        'resource_type': resource.resource_type,
+        'resource_type_display': resource.get_resource_type_display(),
+        'access_type': resource.access_type,
+        'access_type_display': resource.get_access_type_display(),
+        'file_url': resource.file.url if resource.file else None,
+        'url': resource.url,
+        'is_visible': resource.is_visible,
+        'valid_until': resource.valid_until.strftime('%Y-%m-%d %H:%M') if resource.valid_until else None,
+        'created_at': resource.created_at.strftime('%d/%m/%Y %H:%M'),
+        'languages': [{'id': lang.id, 'name': lang.name} for lang in resource.languages.all()],
+        'students': [{'id': stu.id, 'name': stu.user.get_full_name()} for stu in resource.students.all()],
+    }
+    
+    return JsonResponse(data)
+
+
+# API pour charger le formulaire (pour AJAX)
+@login_required
+@require_GET
+def get_resource_form(request):
+    """API pour récupérer le formulaire en HTML (pour AJAX)"""
+    user = request.user
+    if user.role != "teacher":
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    teacher = get_object_or_404(Teacher, user=user)
+    resource_id = request.GET.get('resource_id')
+    student_id = request.GET.get('student_id')
+    
+    if resource_id:
+        # Édition
+        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
+        form = ResourceForm(instance=resource, teacher=teacher)
+        action = 'edit'
+    elif student_id:
+        # Création pour un étudiant spécifique
+        student = get_object_or_404(Student, id=student_id, current_teachers=teacher)
+        initial = {
+            'access_type': 'specific_students',
+            'students': [student]
+        }
+        form = ResourceForm(teacher=teacher, initial=initial)
+        action = 'create_for_student'
+    else:
+        # Création normale
+        form = ResourceForm(teacher=teacher)
+        action = 'create'
+    
+    from django.template.loader import render_to_string
+    html = render_to_string('dashboard/teacher/resources/includes/resource_form_modal.html', {
+        'form': form,
+        'action': action,
+        'teacher': teacher,
+    })
+    
+    return JsonResponse({'html': html})
 
 
 @login_required
@@ -403,7 +797,7 @@ def resources_add(request):
         form = ResourceForm(request.POST, request.FILES)
         if form.is_valid():
             resource = form.save(commit=False)
-            resource.uploaded_by = user
+            resource.teachers = user
             resource.save()
             # Ajoute les languages sélectionnés (liés à la branch)
             form.save_m2m()
@@ -726,7 +1120,7 @@ def settings_view(request):
 
 #         # Ressources récentes
 #         recent_resources = Resource.objects.filter(
-#             uploaded_by=requested_user
+#             teachers=requested_user
 #         ).order_by('-created_at')[:5]
 
 #         context = {
@@ -1339,7 +1733,6 @@ def teacher_resources_add_student(request):
             resource_type = request.POST.get("resource_type")
             student_id = request.POST.get("student")
             language_id = request.POST.get("language")
-            language_id = request.POST.get("language")
 
             # Gérer le fichier ou l'URL
             file = request.FILES.get("file")
@@ -1355,7 +1748,7 @@ def teacher_resources_add_student(request):
                 resource_type=resource_type,
                 file=file,
                 url=url,
-                uploaded_by=request.user,
+                teachers=request.user,
             )
 
             # Ajouter les relations
@@ -1665,7 +2058,6 @@ def schedule_view(request):
 
 
 #for teacher
-
 @login_required
 def teacher_schedule_view(request):
     """Vue principale de l'emploi du temps"""
@@ -1683,26 +2075,25 @@ def teacher_schedule_view(request):
     
     # Jours de la semaine
     week_days = []
-    for i in range(6):  # Lundi à Samedi
+    for i in range(7):  # Lundi à Dimanche
         day_date = week_start + timedelta(days=i)
         week_days.append({
             'name': Schedule.DAY_CHOICES[i][0],
             'date': day_date,
             'is_today': day_date == today,
-            'column': i + 2  # +2 car colonne 1 = heures
+            'column': i + 2
         })
     
-    # Heures de la journée (8h à 20h)
+   
     hours = []
-    for hour in range(8, 21):  # 8h à 20h
-        for minute in [0, 30]:  # Toutes les 30 minutes
-            hours.append({
-                'value': f"{hour:02d}:{minute:02d}",
-                'display': f"{hour}h{minute:02d}",
-                'grid_row': ((hour - 8) * 2) + (minute // 30) + 2
-            })
+    for hour in range(0, 24):  #
+        hours.append({
+            'value': f"{hour:02d}:00",
+            'display': f"{hour:02d}:00",
+            'grid_row': hour - 7  # Commence à 1 pour 8h
+        })
     
-    # Récupérer les emplois du temps
+    # Récupérer les emplois du temps 
     schedules = Schedule.objects.filter(
         teacher=teacher,
         is_active=True
@@ -1717,24 +2108,32 @@ def teacher_schedule_view(request):
         end_hour = schedule.end_time.hour
         end_minute = schedule.end_time.minute
         
-        grid_row_start = ((start_hour - 8) * 2) + (start_minute // 30) + 2
-        duration_rows = ((end_hour - start_hour) * 2) + ((end_minute - start_minute) // 30)
+        # Calcul des positions en pixels (chaque heure = 60px)
+        # Position top: (heure - 8) * 60 + minutes
+        top_position = ((start_hour) * 60) + start_minute
+        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
+        
+        # Ajustements pour les limites
+        if top_position < 0:
+            height_position += top_position
+            top_position = 0
+        
+        # Limite maximum (8h-20h = 12h * 60px = 720px)
+        max_position = 720
+        if top_position + height_position > max_position:
+            height_position = max_position - top_position
         
         # Trouver la colonne du jour
         day_column = next((day['column'] for day in week_days if day['name'] == schedule.day), 2)
         
         # Couleur unique pour chaque langue
         language_colors = {
-            'Anglais': '#667eea',
-            'Français': '#764ba2',
-            'Espagnol': '#f093fb',
-            'Allemand': '#f5576c',
-            'Chinois': '#4facfe',
-            'Arabe': '#00f2fe',
+            'Anglais': '#4285f4',
+            'Français': '#ea4335',
+            
         }
         
-        color = language_colors.get(schedule.language.name, '#667eea')
-        color_gradient = f"linear-gradient(135deg, {color}20, {color}40)"
+        color = language_colors.get(schedule.language.name, '#008080')
         
         processed_schedules.append({
             'id': schedule.id,
@@ -1745,12 +2144,11 @@ def teacher_schedule_view(request):
             'day': schedule.day,
             'classroom': schedule.classroom,
             'is_active': schedule.is_active,
-            'grid_row_start': grid_row_start,
-            'duration_rows': duration_rows,
+            'top_position': top_position,
+            'height_position': height_position,
             'day_column': day_column,
             'language_color': color,
-            'language_color_gradient': color_gradient,
-            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}"
+            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
         })
     
     # Statistiques
@@ -1792,9 +2190,12 @@ def teacher_schedule_view(request):
         'languages_count': teacher.languages.count(),
         'students': Student.objects.filter(current_teachers=teacher).select_related('user'),
         'day_choices': Schedule.DAY_CHOICES,
+        'grid_start_hour': 8,
+        'grid_end_hour': 20,
     }
     
     return render(request, 'dashboard/teacher/home/schedule.html', context)
+
 
 @login_required
 def add_schedule(request):
@@ -1827,7 +2228,7 @@ def add_schedule(request):
 
 @login_required
 def edit_schedule(request, schedule_id):
-    """Éditer un emploi du temps"""
+  
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
@@ -1868,7 +2269,7 @@ def edit_schedule(request, schedule_id):
 
 @login_required
 def delete_schedule(request, schedule_id):
-    """Supprimer un emploi du temps"""
+    
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
@@ -1891,16 +2292,109 @@ def load_schedule_week(request):
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
+    teacher = get_object_or_404(Teacher, user=request.user)
     week_number = int(request.GET.get('week', 0))
-    # ... logique similaire à schedule_view ...
+    
+    # Calcul de la semaine
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday()) + timedelta(weeks=week_number)
+    week_end = week_start + timedelta(days=6)
+    
+    # Jours de la semaine
+    week_days = []
+    for i in range(7):
+        day_date = week_start + timedelta(days=i)
+        week_days.append({
+            'name': Schedule.DAY_CHOICES[i][0],
+            'date': day_date,
+            'is_today': day_date == today,
+            'column': i + 2
+        })
+    
+    # Heures (8h à 20h)
+    hours = []
+    for hour in range(8, 21):
+        hours.append({
+            'value': f"{hour:02d}:00",
+            'display': f"{hour:02d}:00",
+            'grid_row': hour - 7
+        })
+    
+    # Récupérer les emplois du temps de cette semaine
+    schedules = Schedule.objects.filter(
+        teacher=teacher,
+        is_active=True,
+        day__in=[day['name'] for day in week_days]
+    ).select_related('language', 'student', 'student__user')
+    
+    # Préparer les données
+    processed_schedules = []
+    for schedule in schedules:
+        start_hour = schedule.start_time.hour
+        start_minute = schedule.start_time.minute
+        end_hour = schedule.end_time.hour
+        end_minute = schedule.end_time.minute
+        
+        # Calcul des positions en pixels
+        top_position = ((start_hour - 8) * 60) + start_minute
+        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
+        
+        # Ajustements pour les limites
+        if top_position < 0:
+            height_position += top_position
+            top_position = 0
+        
+        max_position = 720
+        if top_position + height_position > max_position:
+            height_position = max_position - top_position
+        
+        # Couleurs
+        language_colors = {
+            'Anglais': '#4285f4',
+            'Français': '#ea4335',
+            'Espagnol': '#fbbc04',
+            'Allemand': '#34a853',
+            'Chinois': '#673ab7',
+            'Arabe': '#ff6d00',
+        }
+        
+        color = language_colors.get(schedule.language.name, '#4285f4')
+        
+        processed_schedules.append({
+            'id': schedule.id,
+            'language': schedule.language,
+            'student': schedule.student,
+            'start_time': schedule.start_time,
+            'end_time': schedule.end_time,
+            'day': schedule.day,
+            'classroom': schedule.classroom,
+            'is_active': schedule.is_active,
+            'top_position': top_position,
+            'height_position': height_position,
+            'language_color': color,
+            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
+        })
+    
+    # Générer le HTML
+    context = {
+        'week_days': week_days,
+        'hours': hours,
+        'schedules': processed_schedules,
+        'grid_start_hour': 8,
+        'grid_end_hour': 20,
+    }
+    
+    # Rendre seulement la partie du calendrier
+    rendered_html = render_to_string('dashboard/teacher/home/schedule.html', context)
     
     return JsonResponse({
         'success': True,
         'week_number': week_number,
-        'html': rendered_html,  # HTML généré
+        'html': rendered_html,
         'week_start': week_start.strftime('%d %b'),
         'week_end': week_end.strftime('%d %b %Y'),
     })
+
 
 @login_required
 def filter_schedule(request):
@@ -1908,47 +2402,132 @@ def filter_schedule(request):
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
-    filters = Q(teacher__user=request.user)
+    teacher = get_object_or_404(Teacher, user=request.user)
     
-    if request.POST.get('language'):
-        filters &= Q(language_id=request.POST['language'])
+    # Construire les filtres
+    filters = Q(teacher=teacher, is_active=True)
     
-    if request.POST.get('student'):
-        filters &= Q(student_id=request.POST['student'])
+    language_id = request.POST.get('language')
+    student_id = request.POST.get('student')
+    status = request.POST.get('status')
     
-    if request.POST.get('status') == 'active':
+    if language_id:
+        filters &= Q(language_id=language_id)
+    
+    if student_id:
+        filters &= Q(student_id=student_id)
+    
+    if status == 'active':
         filters &= Q(is_active=True)
-    elif request.POST.get('status') == 'inactive':
+    elif status == 'inactive':
         filters &= Q(is_active=False)
     
-    schedules = Schedule.objects.filter(filters)
+    # Récupérer les emplois du temps filtrés
+    schedules = Schedule.objects.filter(filters).select_related(
+        'language', 'student', 'student__user'
+    )
     
-    # Générer le HTML filtré
-    # ... logique de génération HTML ...
+    # Calcul de la semaine actuelle pour le contexte
+    today = date.today()
+    week_number = 0  # Semaine courante
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    
+    # Jours de la semaine
+    week_days = []
+    for i in range(7):
+        day_date = week_start + timedelta(days=i)
+        week_days.append({
+            'name': Schedule.DAY_CHOICES[i][0],
+            'date': day_date,
+            'is_today': day_date == today,
+            'column': i + 2
+        })
+    
+    # Heures
+    hours = []
+    for hour in range(8, 21):
+        hours.append({
+            'value': f"{hour:02d}:00",
+            'display': f"{hour:02d}:00",
+            'grid_row': hour - 7
+        })
+    
+    # Préparer les données
+    processed_schedules = []
+    for schedule in schedules:
+        start_hour = schedule.start_time.hour
+        start_minute = schedule.start_time.minute
+        end_hour = schedule.end_time.hour
+        end_minute = schedule.end_time.minute
+        
+        # Calcul des positions
+        top_position = ((start_hour - 8) * 60) + start_minute
+        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
+        
+        # Ajustements
+        if top_position < 0:
+            height_position += top_position
+            top_position = 0
+        
+        max_position = 720
+        if top_position + height_position > max_position:
+            height_position = max_position - top_position
+        
+        # Couleurs
+        language_colors = {
+            'Anglais': '#4285f4',
+            'Français': '#ea4335',
+            'Espagnol': '#fbbc04',
+            'Allemand': '#34a853',
+            'Chinois': '#673ab7',
+            'Arabe': '#ff6d00',
+        }
+        
+        color = language_colors.get(schedule.language.name, '#4285f4')
+        
+        processed_schedules.append({
+            'id': schedule.id,
+            'language': schedule.language,
+            'student': schedule.student,
+            'start_time': schedule.start_time,
+            'end_time': schedule.end_time,
+            'day': schedule.day,
+            'classroom': schedule.classroom,
+            'is_active': schedule.is_active,
+            'top_position': top_position,
+            'height_position': height_position,
+            'language_color': color,
+            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
+        })
+    
+    # Générer le HTML
+    context = {
+        'week_days': week_days,
+        'hours': hours,
+        'schedules': processed_schedules,
+        'grid_start_hour': 8,
+        'grid_end_hour': 20,
+    }
+    
+    rendered_html = render_to_string('dashboard/teacher/includes/calendar_grid.html', context)
     
     return JsonResponse({
         'success': True,
         'html': rendered_html
     })
 
-@login_required
-def export_schedule_pdf(request):
-    """Exporter en PDF"""
-    # Utiliser ReportLab ou WeasyPrint pour générer PDF
-    # Retourner le fichier PDF
-    pass
 
 @login_required
 def quick_add_schedule(request):
-    """Ajout rapide via modal"""
+ 
     if request.user.role != "teacher":
         messages.error(request, "Accès non autorisé.")
-        return redirect('schedule')
+        return redirect('teacher_schedule')
     
     if request.method == 'POST':
         try:
             teacher = get_object_or_404(Teacher, user=request.user)
-            
             Schedule.objects.create(
                 teacher=teacher,
                 day=request.POST['day'],
@@ -1963,4 +2542,4 @@ def quick_add_schedule(request):
         except Exception as e:
             messages.error(request, f"Erreur: {str(e)}")
     
-    return redirect('schedule')
+    return redirect('teacher_schedule')

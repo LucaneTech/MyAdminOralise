@@ -1,4 +1,5 @@
 {% extends 'dashboard/student/layouts/base.html' %}
+{% load resource_tags %}
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -17,6 +18,21 @@
             </ol>
           </nav>
         </div>
+        {% if resources %}
+        <div class="col-lg-6 col-5 text-right">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-white dropdown-toggle" type="button" id="filterDropdown" data-toggle="dropdown">
+              <i class="ni ni-filter"></i> Filtrer
+            </button>
+            <div class="dropdown-menu dropdown-menu-right">
+              <a class="dropdown-item" href="?type=all">Tous</a>
+              <a class="dropdown-item" href="?type=document">Documents</a>
+              <a class="dropdown-item" href="?type=video">Vidéos</a>
+              <a class="dropdown-item" href="?type=link">Liens</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -26,49 +42,100 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Ressources et Documents</h3>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Ressources et Documents</h3>
+                    {% if resources %}
+                    <span class="badge badge-pill badge-primary">
+                        {{ resources|length }} ressource{{ resources|pluralize:"s" }}
+                    </span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     {% if resources %}
+                        <!-- Filtres rapides -->
+                        <div class="mb-4">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="?type=all" class="btn btn-outline-primary {% if not request.GET.type or request.GET.type == 'all' %}active{% endif %}">
+                                    Tous
+                                </a>
+                                <a href="?type=document" class="btn btn-outline-primary {% if request.GET.type == 'document' %}active{% endif %}">
+                                    Documents
+                                </a>
+                                <a href="?type=video" class="btn btn-outline-primary {% if request.GET.type == 'video' %}active{% endif %}">
+                                    Vidéos
+                                </a>
+                                <a href="?type=link" class="btn btn-outline-primary {% if request.GET.type == 'link' %}active{% endif %}">
+                                    Liens
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Tableau optimisé -->
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead class="thead-light">
                                     <tr>
-                                        <th>Titre</th>
-                                        <th>Type</th>
-                                        <th>Description</th>
-                                        <th>Langues</th>
-                                        <th>Date d'ajout</th>
-                                        <th>Actions</th>
+                                        <th width="25%">Titre</th>
+                                        <th width="15%">Type</th>
+                                        <th width="30%">Description</th>
+                                        <th width="15%">Langues</th>
+                                        <th width="15%">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for resource in resources %}
-                                    <tr>
-                                        <td>{{ resource.title }}</td>
+                                    <tr class="{% if resource.created_at|is_new %}table-info{% endif %}">
                                         <td>
-                                            <span class="badge badge-primary">
-                                                {{ resource.get_resource_type_display }}
-                                            </span>
+                                            <div class="d-flex align-items-center">
+                                                <i class="{% resource_icon resource.resource_type %} mr-2 text-primary"></i>
+                                                <div>
+                                                    <strong>{{ resource.title }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Ajouté le {{ resource.created_at|date:"d/m/Y" }}
+                                                        {% if resource.created_at|is_new %}
+                                                        <span class="badge badge-pill badge-success ml-1">Nouveau</span>
+                                                        {% endif %}
+                                                    </small>
+                                                    {% if resource.valid_until %}
+                                                    <br>
+                                                    <small class="text-warning">
+                                                        <i class="ni ni-time-alarm"></i>
+                                                        Expire le {{ resource.valid_until|date:"d/m/Y" }}
+                                                    </small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td>{{ resource.description|truncatewords:20 }}</td>
                                         <td>
-                                            {% for language in resource.languages.all %}
-                                                <span class="badge badge-info">{{ language.name }}</span>
-                                            {% endfor %}
-                                        </td>
-                                        <td>{{ resource.created_at|date:"d/m/Y" }}</td>
-                                        <td>
-                                            {% if resource.file %}
-                                                <a href="{{ resource.file.url }}" class="btn btn-sm btn-primary" target="_blank" download>
-                                                    <i class="ni ni-cloud-download-95"></i> Télécharger
-                                                </a>
+                                            {{ resource.resource_type|resource_badge }}
+                                            {% if resource.access_type == 'specific_students' %}
+                                            <br>
+                                            <small class="text-success">
+                                                <i class="ni ni-single-02"></i> Pour vous
+                                            </small>
                                             {% endif %}
-                                            {% if resource.url %}
-                                                <a href="{{ resource.url }}" class="btn btn-sm btn-info" target="_blank">
-                                                    <i class="ni ni-world-2"></i> Accéder
+                                        </td>
+                                        <td>
+                                            <div class="resource-description">
+                                                {{ resource.description|truncatewords:15 }}
+                                                {% if resource.description|wordcount > 15 %}
+                                                <a href="#" class="text-primary show-more" data-id="{{ resource.id }}">
+                                                    <small>Voir plus</small>
                                                 </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ resource.languages.all|language_badges }}
+                                        </td>
+                                        <td>
+                                            {{ resource|resource_actions }}
+                                            {% if resource.uploaded_by.teacher %}
+                                            <br>
+                                            <small class="text-muted">
+                                                Par {{ resource.uploaded_by.teacher.user.get_full_name }}
+                                            </small>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -76,10 +143,50 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                                        <i class="ni ni-bold-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                                        <i class="ni ni-bold-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
                     {% else %}
-                        <div class="alert alert-info">
-                            <i class="ni ni-info-2"></i>
-                            Aucune ressource disponible pour le moment.
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="ni ni-collection text-muted" style="font-size: 4rem;"></i>
+                            </div>
+                            <h4 class="text-muted">Aucune ressource disponible</h4>
+                            <p class="text-muted">
+                                Votre enseignant n'a pas encore partagé de ressources pédagogiques.
+                            </p>
                         </div>
                     {% endif %}
                 </div>
@@ -92,4 +199,95 @@
 {% block javascripts %}
 <script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
 <script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
-{% endblock javascripts %} 
+
+<script>
+$(document).ready(function() {
+    // Affichage complet de la description
+    $('.show-more').click(function(e) {
+        e.preventDefault();
+        var resourceId = $(this).data('id');
+        var $descriptionDiv = $(this).closest('.resource-description');
+        
+        $.ajax({
+            url: '/api/resource/' + resourceId + '/description/',
+            type: 'GET',
+            success: function(data) {
+                if (data.description) {
+                    $descriptionDiv.html(data.description);
+                }
+            }
+        });
+    });
+    
+    // Filtrage en temps réel (optionnel)
+    $('#filterType').change(function() {
+        var type = $(this).val();
+        if (type) {
+            window.location.href = '?type=' + type;
+        }
+    });
+    
+    // Tri des colonnes
+    $('th[data-sort]').click(function() {
+        var sort = $(this).data('sort');
+        var order = $(this).data('order') || 'asc';
+        var newOrder = order === 'asc' ? 'desc' : 'asc';
+        
+        // Mettre à jour l'icône
+        $(this).find('.sort-icon').remove();
+        $(this).append('<i class="ni ni-bold-' + (newOrder === 'asc' ? 'down' : 'up') + ' sort-icon ml-1"></i>');
+        $(this).data('order', newOrder);
+        
+        // Rediriger avec les paramètres de tri
+        var url = new URL(window.location.href);
+        url.searchParams.set('sort', sort);
+        url.searchParams.set('order', newOrder);
+        window.location.href = url.toString();
+    });
+    
+    // Animation pour les nouvelles ressources
+    $('.table-info').each(function(index) {
+        $(this).delay(100 * index).fadeTo(300, 0.7).fadeTo(300, 1);
+    });
+});
+</script>
+
+<style>
+/* Styles additionnels pour améliorer l'UX sans changer le style existant */
+.table-hover tbody tr:hover {
+    background-color: rgba(20, 122, 129, 0.05);
+    transition: background-color 0.2s;
+}
+
+.resource-description {
+    max-height: 60px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.resource-description.expanded {
+    max-height: none;
+}
+
+.sort-icon {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,.05);
+}
+
+.table thead th {
+    border-top: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+</style>
+{% endblock javascripts %}

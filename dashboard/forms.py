@@ -1,5 +1,6 @@
+from time import timezone
 from django import forms
-from dashboard.models import Profile, CustomUser, Resource, Session
+from dashboard.models import Profile, CustomUser, Resource, Session, Student
 from django import forms
 from allauth.account.forms import LoginForm, SignupForm,ResetPasswordForm
 from django.contrib.auth import authenticate
@@ -84,18 +85,213 @@ class CustomResetPasswordForm(ResetPasswordForm):
         super(CustomResetPasswordForm, self).__init__(*args, **kwargs)
         self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email', 'class': 'custom-input'})
         
+  
+  
+  
+from django import forms
+from django.utils import timezone
+from django.utils.html import format_html
 
-    
+from .models import Resource, Student, Language
+
 class ResourceForm(forms.ModelForm):
+    """Formulaire pour créer/modifier des ressources"""
+    
     class Meta:
         model = Resource
-        fields = ['title', 'description', 'file', 'url', 'resource_type', 'languages']
+        fields = [
+            'title', 'description', 'resource_type', 'file', 'url',
+            'access_type', 'students', 'languages', 'valid_until', 'is_visible'
+        ]
         widgets = {
-            'languages': forms.CheckboxSelectMultiple,
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Titre de la ressource'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Description détaillée de la ressource...'
+            }),
+            'resource_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'file': forms.ClearableFileInput(attrs={
+                'class': 'form-control-file'
+            }),
+            'url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://exemple.com'
+            }),
+            'access_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'students': forms.SelectMultiple(attrs={
+                'class': 'form-control select2-multiple',
+                'data-placeholder': 'Sélectionnez des étudiants...'
+            }),
+            'languages': forms.SelectMultiple(attrs={
+                'class': 'form-control select2-multiple',
+                'data-placeholder': 'Sélectionnez des langues...'
+            }),
+            'valid_until': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'is_visible': forms.CheckboxInput(attrs={
+                'class': 'custom-control-input'
+            }),
         }
+    
+    def __init__(self, *args, **kwargs):
+        self.teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        
+        # Personnaliser les querysets
+        if self.teacher:
+            self.fields['students'].queryset = Student.objects.filter(
+                current_teachers=self.teacher
+            )
+            # Limiter les langues aux langues de l'enseignant si nécessaire
+            if hasattr(self.teacher, 'languages'):
+                self.fields['languages'].queryset = self.teacher.languages.all()
+        
+        # Rendre file et url optionnels
+        self.fields['file'].required = False
+        self.fields['url'].required = False
+        
+        # Ajouter des classes CSS supplémentaires
+        for field_name, field in self.fields.items():
+            if 'class' not in field.widget.attrs:
+                field.widget.attrs['class'] = 'form-control'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        file = cleaned_data.get('file')
+        url = cleaned_data.get('url')
+        access_type = cleaned_data.get('access_type')
+        students = cleaned_data.get('students')
+        
+        # Validation fichier/URL
+        if not file and not url:
+            raise forms.ValidationError(
+                "Vous devez fournir soit un fichier, soit une URL."
+            )
+        
+        if file and url:
+            raise forms.ValidationError(
+                "Veuillez fournir soit un fichier, soit une URL, pas les deux."
+            )
+        
+        # Validation du type d'accès
+        if access_type == 'specific_students' and not students:
+            raise forms.ValidationError(
+                "Pour le type d'accès 'Étudiants spécifiques', "
+                "vous devez sélectionner au moins un étudiant."
+            )
+        
+        # Validation de la date d'expiration
+        valid_until = cleaned_data.get('valid_until')
+        if valid_until and valid_until < timezone.now():
+            raise forms.ValidationError(
+                "La date d'expiration ne peut pas être dans le passé."
+            )
+        
+        return cleaned_data
 
 
+class ResourceFilterForm(forms.Form):
+    """Formulaire de filtrage des ressources"""
+    resource_type = forms.ChoiceField(
+        choices=[('', 'Tous les types')] + Resource.RESOURCE_TYPES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    language = forms.ModelChoiceField(
+        queryset=Language.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    student = forms.ModelChoiceField(
+        queryset=Student.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    access_type = forms.ChoiceField(
+        choices=[('', 'Tous les types')] + Resource.ACCESS_TYPES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    is_visible = forms.ChoiceField(
+        choices=[('', 'Tous'), ('true', 'Visible'), ('false', 'Masqué')],
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Rechercher...'
+        })
+    )
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        
+        if teacher:
+            self.fields['student'].queryset = Student.objects.filter(
+                current_teachers=teacher
+            )
 
+
+class BulkAssignForm(forms.Form):
+    """Formulaire pour assigner plusieurs ressources à plusieurs étudiants"""
+    resources = forms.ModelMultipleChoiceField(
+        queryset=Resource.objects.none(),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control select2-multiple',
+            'data-placeholder': 'Sélectionnez des ressources...'
+        })
+    )
+    students = forms.ModelMultipleChoiceField(
+        queryset=Student.objects.none(),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control select2-multiple',
+            'data-placeholder': 'Sélectionnez des étudiants...'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        
+        if teacher:
+            self.fields['resources'].queryset = Resource.objects.filter(
+                teachers=teacher,
+                access_type='all_students'  # Seulement les ressources générales
+            )
+            self.fields['students'].queryset = Student.objects.filter(
+                current_teachers=teacher
+            ) 
+
+
+      
+    
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session

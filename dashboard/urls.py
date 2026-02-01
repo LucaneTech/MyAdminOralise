@@ -1,15 +1,18 @@
 from django import views
 from django.urls import path
 from .views import (
-    # update_profile_picture,
+   
     add_request_response,
     add_schedule,
     delete_notification,
     delete_schedule,
     delete_student_session_by_id,
     edit_schedule,
-    export_schedule_pdf,
+    
     filter_schedule,
+    get_resource_details,
+    get_resource_form,
+  
     load_schedule_week,
     notifications_mark_all_read,
     profile_view, 
@@ -18,9 +21,10 @@ from .views import (
     resources_view,resources_add, requests_view, 
 
     settings_view,
+
+    teacher_resources_dashboard,
     teacher_schedule_view, teacher_view, teacher_courses, 
     teacher_assignments, teacher_students,
-    # teacher_skills, 
     api_filter_students, api_filter_assignments,
     session_detail_view, session_status_update, certificates_view,
     evaluations_view, notifications_view, payments_view,
@@ -30,7 +34,7 @@ from .views import (
     export_students_csv, teacher_student_detail,
     update_request_status,
     update_request_status, 
-    #edit_session_view  
+
  
 
 )
@@ -46,18 +50,19 @@ urlpatterns = [
     path('teacher/schedule/delete/<int:schedule_id>/',delete_schedule, name='delete_schedule'),
     path('teacher/schedule/load-week/',load_schedule_week, name='load_schedule_week'),
     path('teacher/schedule/filter/',filter_schedule, name='filter_schedule'),
-    path('teacher/schedule/export-pdf/',export_schedule_pdf, name='export_schedule_pdf'),
     path('teacher/schedule/quick-add/',quick_add_schedule, name='quick_add_schedule'),
+    
     
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
     path('teacher/students/', teacher_students, name='teacher_students'),
     path('teacher/students/<int:student_id>/', teacher_student_detail, name='student_detail'),
     path('teacher/export-students/', export_students_csv, name='export_students'),
     
-    # path('teacher/skills/', teacher_skills, name='teacher_skills'),
-    path('teacher/resources/', resources_view, name='teacher_resources'),
-    path('teacher/resources_add/',resources_add, name= 'teacher_resources_add'),
-    path('teacher/resources/add/student/', teacher_resources_add_student, name='teacher_resources_add_student'),
+    path('teacher/resources/',teacher_resources_dashboard, name='teacher_resources_dashboard'),
+    path('teacher/resources/api/details/<int:resource_id>/', get_resource_details, name='get_resource_details'),
+    path('teacher/resources/api/form/', get_resource_form, name='get_resource_form'),
+    
+    
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),
     path('teacher/sessions/delete/<int:session_id>/', delete_student_session_by_id, name='delete_student_session_by_id'),
     # path('teacher/sessions/update/<int:session_id>/', edit_session_view, name='edit_session'),
