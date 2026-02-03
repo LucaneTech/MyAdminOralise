@@ -439,10 +439,7 @@ def resources_view(request):
 
 @login_required
 def teacher_resources_dashboard(request):
-    """
-    Vue unique qui gère l'affichage et le CRUD des ressources
-    avec des modals pour toutes les actions
-    """
+   
     user = request.user
     if user.role != "teacher":
         return redirect('dashboard')
@@ -456,7 +453,7 @@ def teacher_resources_dashboard(request):
     
     # Récupérer les données nécessaires
     students = Student.objects.filter(current_teachers=teacher)
-    languages = Language.objects.all()
+    languages = Language.objects.filter(teachers=teacher)
     
     # Base queryset
     resources = Resource.objects.filter(teachers=teacher)

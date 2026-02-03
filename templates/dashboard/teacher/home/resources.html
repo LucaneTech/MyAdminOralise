@@ -54,10 +54,7 @@
         <div class="header-body">
             <div class="row align-items-center py-4">
                 <div class="col-lg-6 col-7">
-                    <h6 class="h2 text-white d-inline-block mb-0">
-                        <i class="ni ni-collection mr-2"></i>
-                        Ressources pédagogiques
-                    </h6>
+                
                     <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                         <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
                             <li class="breadcrumb-item"><a href="{% url 'dashboard_home' %}"><i class="fas fa-home"></i></a></li>
@@ -88,7 +85,7 @@
                             <div class="row">
                                 <div class="col">
                                     <h5 class="card-title text-uppercase text-muted mb-0">Total</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ resources.count }}</span>
+                                    <span class=" font-weight-bold mb-0">{{ resources.count|default:"0" }}</span>
                                 </div>
                                 <div class="col-auto">
                                     <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
@@ -105,7 +102,7 @@
                             <div class="row">
                                 <div class="col">
                                     <h5 class="card-title text-uppercase text-muted mb-0">Documents</h5>
-                                    {% comment %} <span class="h2 font-weight-bold mb-0">{{ resources|resource_type:"document" }}</span> {% endcomment %}
+                                    <span class="h2 font-weight-bold mb-0">  </span>
                                 </div>
                                 <div class="col-auto">
                                     <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
@@ -162,38 +159,141 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <input type="text" id="globalSearch" class="form-control" placeholder="Rechercher une ressource..." value="{{ request.GET.search }}">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-primary" type="button" id="searchBtn">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary" type="button" data-toggle="modal" data-target="#advancedFiltersModal">
-                                        <i class="fas fa-filter"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-right">
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="toggleViewBtn">
-                                    <i class="fas fa-th-large"></i>
-                                </button>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fas fa-sort-amount-down"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-right">
-                                        <a class="dropdown-item" href="?sort=date_desc">Plus récent</a>
-                                        <a class="dropdown-item" href="?sort=date_asc">Plus ancien</a>
-                                        <a class="dropdown-item" href="?sort=title_asc">A-Z</a>
-                                        <a class="dropdown-item" href="?sort=title_desc">Z-A</a>
+                    <div class="row" id="resourcesContainer">
+                        {% if resources %}
+                            {% for resource in resources %}
+                            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                                <div class="card resource-card h-100">
+                                    <!-- Thumbnail -->
+                                    <div class="resource-thumbnail position-relative">
+                                        {% if resource.resource_type == 'document' %}
+                                        <i class="fas fa-file-pdf text-primary"></i>
+                                        {% elif resource.resource_type == 'video' %}
+                                        <i class="fas fa-video text-danger"></i>
+                                        {% elif resource.resource_type == 'link' %}
+                                        <i class="fas fa-link text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-archive text-warning"></i>
+                                        {% endif %}
+                                        
+                                        <!-- Badge d'accès -->
+                                        <span class="badge-access">
+                                            {% if resource.access_type == 'all_students' %}
+                                            <span class="badge badge-success" data-toggle="tooltip" title="Tous les étudiants">
+                                                <i class="fas fa-users"></i>
+                                            </span>
+                                            {% elif resource.access_type == 'specific_students' %}
+                                            <span class="badge badge-info" data-toggle="tooltip" title="{{ resource.students.count }} étudiant(s)">
+                                                <i class="fas fa-user-check"></i>
+                                            </span>
+                                            {% else %}
+                                            <span class="badge badge-warning" data-toggle="tooltip" title="Cours spécifique">
+                                                <i class="fas fa-chalkboard-teacher"></i>
+                                            </span>
+                                            {% endif %}
+                                        </span>
                                     </div>
+                                    
+                                    <div class="card-body">
+                                        <!-- Titre -->
+                                        <h6 class="card-title mb-2">
+                                            <a href="#" class="text-dark view-resource-details" data-id="{{ resource.id }}" style="font-size: 1rem;">
+                                                {{ resource.title|truncatechars:40 }}
+                                            </a>
+                                        </h6>
+                                        
+                                        <!-- Description -->
+                                        <p class="card-text text-sm text-muted mb-3">
+                                            {{ resource.description|truncatewords:15 }}
+                                        </p>
+                                        
+                                        <!-- Métadonnées -->
+                                        <div class="mb-3">
+                                            <div class="d-flex flex-wrap gap-1 mb-2">
+                                                {% for language in resource.languages.all|slice:":2" %}
+                                                <span class="badge badge-light">{{ language.name }}</span>
+                                                {% endfor %}
+                                                {% if resource.languages.count > 2 %}
+                                                <span class="badge badge-light">+{{ resource.languages.count|add:"-2" }}</span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-calendar-alt mr-1"></i>
+                                                {{ resource.created_at|date:"d/m/Y" }}
+                                            </small>
+                                            
+                                            {% if resource.valid_until %}
+                                            <small class="{% if resource.valid_until < now %}text-danger{% else %}text-warning{% endif %} d-block">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                Expire le {{ resource.valid_until|date:"d/m/Y" }}
+                                            </small>
+                                            {% endif %}
+                                            
+                                            {% if not resource.is_visible %}
+                                            <small class="text-danger d-block">
+                                                <i class="fas fa-eye-slash mr-1"></i> Masqué
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Actions (apparaissent au survol) -->
+                                        <div class="resource-actions">
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                {% if resource.file %}
+                                                <a href="{{ resource.file.url }}" class="btn btn-primary" download data-toggle="tooltip" title="Télécharger">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if resource.url %}
+                                                <a href="{{ resource.url }}" class="btn btn-info" target="_blank" data-toggle="tooltip" title="Ouvrir le lien">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                                {% endif %}
+                                                <button type="button" class="btn btn-warning edit-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-success assign-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Assigner">
+                                                    <i class="fas fa-user-plus"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-danger delete-resource-btn" data-id="{{ resource.id }}" data-title="{{ resource.title }}" data-toggle="tooltip" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Étudiants assignés -->
+                                    {% if resource.students.exists %}
+                                    <div class="card-footer bg-light py-2">
+                                        <small class="text-dark">
+                                            <i class="fas fa-user-graduate mr-1"></i>
+                                            {% for student in resource.students.all|slice:":2" %}
+                                            {{ student.user.get_full_name|truncatechars:15 }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                            {% if resource.students.count > 2 %}
+                                            +{{ resource.students.count|add:"-2" }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body text-center py-5">
+                                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                                    <h4 class="text-muted">Aucune ressource trouvée</h4>
+                                    <p class="text-muted mb-4">Commencez par créer votre première ressource pédagogique.</p>
+                                    <button type="button" class="btn btn-success btn-lg" id="createFirstResourceBtn">
+                                        <i class="fas fa-plus mr-2"></i> Créer ma première ressource
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -201,142 +301,7 @@
     </div>
 
     <!-- Liste des ressources -->
-    <div class="row" id="resourcesContainer">
-        {% if resources %}
-            {% for resource in resources %}
-            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                <div class="card resource-card h-100">
-                    <!-- Thumbnail -->
-                    <div class="resource-thumbnail position-relative">
-                        {% if resource.resource_type == 'document' %}
-                        <i class="fas fa-file-pdf text-primary"></i>
-                        {% elif resource.resource_type == 'video' %}
-                        <i class="fas fa-video text-danger"></i>
-                        {% elif resource.resource_type == 'link' %}
-                        <i class="fas fa-link text-success"></i>
-                        {% else %}
-                        <i class="fas fa-archive text-warning"></i>
-                        {% endif %}
-                        
-                        <!-- Badge d'accès -->
-                        <span class="badge-access">
-                            {% if resource.access_type == 'all_students' %}
-                            <span class="badge badge-success" data-toggle="tooltip" title="Tous les étudiants">
-                                <i class="fas fa-users"></i>
-                            </span>
-                            {% elif resource.access_type == 'specific_students' %}
-                            <span class="badge badge-info" data-toggle="tooltip" title="{{ resource.students.count }} étudiant(s)">
-                                <i class="fas fa-user-check"></i>
-                            </span>
-                            {% else %}
-                            <span class="badge badge-warning" data-toggle="tooltip" title="Cours spécifique">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    
-                    <div class="card-body">
-                        <!-- Titre -->
-                        <h6 class="card-title mb-2">
-                            <a href="#" class="text-dark view-resource-details" data-id="{{ resource.id }}">
-                                {{ resource.title|truncatechars:40 }}
-                            </a>
-                        </h6>
-                        
-                        <!-- Description -->
-                        <p class="card-text text-sm text-muted mb-3">
-                            {{ resource.description|truncatewords:15 }}
-                        </p>
-                        
-                        <!-- Métadonnées -->
-                        <div class="mb-3">
-                            <div class="d-flex flex-wrap gap-1 mb-2">
-                                {% for language in resource.languages.all|slice:":2" %}
-                                <span class="badge badge-light">{{ language.name }}</span>
-                                {% endfor %}
-                                {% if resource.languages.count > 2 %}
-                                <span class="badge badge-light">+{{ resource.languages.count|add:"-2" }}</span>
-                                {% endif %}
-                            </div>
-                            
-                            <small class="text-muted d-block">
-                                <i class="fas fa-calendar-alt mr-1"></i>
-                                {{ resource.created_at|date:"d/m/Y" }}
-                            </small>
-                            
-                            {% if resource.valid_until %}
-                            <small class="{% if resource.valid_until < now %}text-danger{% else %}text-warning{% endif %} d-block">
-                                <i class="fas fa-clock mr-1"></i>
-                                Expire le {{ resource.valid_until|date:"d/m/Y" }}
-                            </small>
-                            {% endif %}
-                            
-                            {% if not resource.is_visible %}
-                            <small class="text-danger d-block">
-                                <i class="fas fa-eye-slash mr-1"></i> Masqué
-                            </small>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Actions (apparaissent au survol) -->
-                        <div class="resource-actions">
-                            <div class="btn-group btn-group-sm w-100" role="group">
-                                {% if resource.file %}
-                                <a href="{{ resource.file.url }}" class="btn btn-primary" download data-toggle="tooltip" title="Télécharger">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                                {% endif %}
-                                {% if resource.url %}
-                                <a href="{{ resource.url }}" class="btn btn-info" target="_blank" data-toggle="tooltip" title="Ouvrir le lien">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
-                                {% endif %}
-                                <button type="button" class="btn btn-warning edit-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Modifier">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-success assign-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Assigner">
-                                    <i class="fas fa-user-plus"></i>
-                                </button>
-                                <button type="button" class="btn btn-danger delete-resource-btn" data-id="{{ resource.id }}" data-title="{{ resource.title }}" data-toggle="tooltip" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Étudiants assignés -->
-                    {% if resource.students.exists %}
-                    <div class="card-footer bg-light py-2">
-                        <small class="text-info">
-                            <i class="fas fa-user-graduate mr-1"></i>
-                            {% for student in resource.students.all|slice:":2" %}
-                            {{ student.user.get_full_name|truncatechars:15 }}{% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-                            {% if resource.students.count > 2 %}
-                            +{{ resource.students.count|add:"-2" }}
-                            {% endif %}
-                        </small>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                    <h4 class="text-muted">Aucune ressource trouvée</h4>
-                    <p class="text-muted mb-4">Commencez par créer votre première ressource pédagogique.</p>
-                    <button type="button" class="btn btn-success btn-lg" id="createFirstResourceBtn">
-                        <i class="fas fa-plus mr-2"></i> Créer ma première ressource
-                    </button>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+    
     
     <!-- Pagination (si nécessaire) -->
     {% if is_paginated %}

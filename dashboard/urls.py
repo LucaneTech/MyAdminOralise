@@ -59,8 +59,8 @@ urlpatterns = [
     path('teacher/export-students/', export_students_csv, name='export_students'),
     
     path('teacher/resources/',teacher_resources_dashboard, name='teacher_resources_dashboard'),
-    path('teacher/resources/api/details/<int:resource_id>/', get_resource_details, name='get_resource_details'),
-    path('teacher/resources/api/form/', get_resource_form, name='get_resource_form'),
+    path('teacher/resources/details/<int:resource_id>/', get_resource_details, name='get_resource_details'),
+    path('teacher/resources/add/', get_resource_form, name='get_resource_form'),
     
     
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),
