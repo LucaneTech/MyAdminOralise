@@ -2199,7 +2199,7 @@ def teacher_schedule_view(request):
 
 @login_required
 def add_schedule(request):
-    """Ajouter un nouvel emploi du temps"""
+   
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
@@ -2226,9 +2226,11 @@ def add_schedule(request):
     
     return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
 
+
+
+#edit view schedule after creating
 @login_required
 def edit_schedule(request, schedule_id):
-  
     if request.user.role != "teacher":
         return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
     
@@ -2247,7 +2249,11 @@ def edit_schedule(request, schedule_id):
             schedule.save()
             
             messages.success(request, 'Cours modifié avec succès!')
-            return JsonResponse({'success': True})
+            return JsonResponse({
+                'success': True,
+                'message': 'Cours modifié avec succès!',
+                'schedule_id': schedule.id
+                                 })
             
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})

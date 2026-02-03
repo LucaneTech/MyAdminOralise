@@ -1036,29 +1036,7 @@ $(document).ready(function() {
         });
     }
     
-    // Gestion des modals
-    function openScheduleModal(scheduleId) {
-        $.ajax({
-            url: `/teacher/schedule/edit/${scheduleId}/`,
-            type: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    $('#editScheduleModal input[name="day"]').val(response.schedule.day);
-                    $('#editScheduleModal select[name="language"]').val(response.schedule.language_id);
-                    $('#editScheduleModal select[name="student"]').val(response.schedule.student_id);
-                    $('#editScheduleModal input[name="classroom"]').val(response.schedule.classroom);
-                    $('#editScheduleModal input[name="start_time"]').val(response.schedule.start_time);
-                    $('#editScheduleModal input[name="end_time"]').val(response.schedule.end_time);
-                    $('#editScheduleModal input[name="is_active"]').prop('checked', response.schedule.is_active);
-                    $('#editScheduleModal form').attr('action', `/teacher/schedule/edit/${scheduleId}/`);
-                    
-                    // Afficher le modal
-                    $('#editScheduleModal').modal('show');
-                }
-            }
-        });
-    }
-    
+  
     // Mettre à jour la ligne d'heure actuelle style Google
     function updateCurrentTimeLine() {
         const now = new Date();
@@ -1299,9 +1277,9 @@ $(document).ready(function() {
             draggedEvent = null;
         }
     });
-});
 
-// Optimisation pour les performances
+
+    // Optimisation pour les performances
 let resizeTimer;
 window.addEventListener('resize', function() {
     clearTimeout(resizeTimer);
@@ -1317,10 +1295,8 @@ window.addEventListener('resize', function() {
 
 
 
-
-$(document).ready(function() {
     // ============================================
-    // GESTION CENTRALISÉE DES MODALS
+    // GESTION CENTRALISÉE DES MODALS EDIT
     // ============================================
 
     // 1. Gestionnaire unique pour les modals de détails
@@ -1353,56 +1329,432 @@ $(document).ready(function() {
     let currentEditScheduleId = null;
     let editModalLoaded = false;
 
+
+
+
     function openEditModal(scheduleId) {
-        currentEditScheduleId = scheduleId;
+    // Validation de l'ID
+    if (!scheduleId || isNaN(scheduleId)) {
+        console.error('ID de cours invalide:', scheduleId);
+        showToast('Erreur', 'Identifiant de cours invalide', 'danger');
+        return;
+    }
         
-        // Cache d'abord tous les modals ouverts
-        $('.modal').modal('hide');
-        
-        // Afficher un indicateur de chargement
-        $('#editFormContent').html(`
-            <div class="spinner-border text-neon" role="status">
+    console.log('Chargement du cours ID:', scheduleId);
+    
+    // 1. FERMER LES MODALS OUVERTS
+    $('.modal').modal('hide');
+    
+    // 2. PRÉPARER LE MODAL AVEC INDICATEUR DE CHARGEMENT
+    $('#editFormContent').html(`
+        <div class="text-center py-5" id="loadingIndicator">
+            <div class="spinner-border text-neon" style="width: 3rem; height: 3rem;" role="status">
                 <span class="sr-only">Chargement...</span>
             </div>
-        `);
-        
-        // Chargement asynchrone du formulaire d'édition
-        $.ajax({
-            url: `/teacher/schedule/edit/${scheduleId}/`,
-            type: 'GET',
-            cache: true, // Activation du cache
-            timeout: 5000, // Timeout de 5 secondes
-            success: function(response) {
-                if (response.success) {
-                    $('#editScheduleId').val(scheduleId);
-                    $('#editCourseForm').attr('action', `/teacher/schedule/edit/${scheduleId}/`);
-                    
-                    // Injecter le contenu du formulaire
-                    $('#editFormContent').html(response.form_html || '');
-                    editModalLoaded = true;
-                    
-                    // Afficher le modal
-                    $('#editCourseModal').modal('show');
-                    
-                    // Initialiser la suppression
-                    initDeleteButton(scheduleId);
-                } else {
-                    showToast('Erreur', 'Impossible de charger les données', 'danger');
-                }
-            },
-            error: function(xhr, status, error) {
-                $('#editFormContent').html(`
-                    <div class="alert alert-danger">
-                        <i class="ni ni-fat-remove mr-2"></i>
-                        Erreur lors du chargement: ${error}
-                        <button class="btn btn-sm btn-outline-danger mt-2" onclick="openEditModal(${scheduleId})">
-                            <i class="ni ni-refresh"></i> Réessayer
-                        </button>
-                    </div>
-                `);
+            <p class="mt-3 text-muted">Préparation du formulaire d'édition...</p>
+            <small class="text-muted d-block">ID du cours: ${scheduleId}</small>
+        </div>
+    `);
+    
+    // 3. PRÉPARER LE FORMULAIRE (champ caché et action)
+    $('#editScheduleId').val(scheduleId);
+    const formAction = `/teacher/schedule/edit/${scheduleId}/`;
+    $('#editCourseForm').attr('action', formAction);
+    
+    console.log('URL de la requête:', formAction);
+    
+    // 4. REQUÊTE AJAX UNIQUE
+    $.ajax({
+        url: formAction,
+        type: 'GET',
+        cache: false, // Désactiver le cache pour les données fraîches
+        timeout: 5000, // 8 secondes de timeout
+        beforeSend: function() {
+            console.log('Début du chargement des données...');
+        },
+        success: function(response) {
+            console.log('Réponse reçue:', response);
+            
+            // OPTION 1: Format moderne avec form_html (préféré)
+            if (response && response.success && response.form_html) {
+                console.log('✓ Format form_html détecté');
+                
+                // Injecter le HTML du formulaire
+                $('#editFormContent').html(response.form_html);
+                
+                // Afficher le modal
+                $('#editCourseModal').modal({
+                    show: true,
+                    backdrop: 'static'
+                });
+                
+                // Initialiser les interactions
+                initEditModalInteractions(scheduleId);
+                
+            } 
+            // OPTION 2: Format ancien avec données schedule
+            else if (response && response.success && response.schedule) {
+                console.log('✓ Format schedule détecté');
+                
+                const schedule = response.schedule;
+                
+                // Remplir les champs du formulaire
+                fillFormWithScheduleData(schedule
+                
+                );
+                
+                // Afficher le modal
+                $('#editCourseModal').modal({
+                    show: true,
+                    backdrop: 'static'
+                });
+                
+                // Initialiser les interactions
+                initEditModalInteractions(scheduleId);
+                
+            } 
+            // OPTION 3: Réponse directe HTML
+            else if (response && typeof response === 'string' && response.includes('<form')) {
+                console.log('✓ HTML brut détecté');
+                
+                $('#editFormContent').html(response);
+                $('#editCourseModal').modal('show');
+                initEditModalInteractions(scheduleId);
+                
+            } 
+            // OPTION 4: Réponse non standard mais avec données
+            else if (response && response.success && response.data) {
+                console.log('✓ Format data détecté');
+                
+                // Générer un formulaire depuis les données
+                const formHtml = generateDynamicForm(response.data);
+                $('#editFormContent').html(formHtml);
+                $('#editCourseModal').modal('show');
+                initEditModalInteractions(scheduleId);
+                
+            } 
+            // OPTION 5: Échec - format inconnu
+            else {
+                console.error('✗ Format de réponse inconnu:', response);
+                
+                // Afficher un formulaire de secours avec les données disponibles
+                showFallbackForm(scheduleId, response);
             }
-        });
+        },
+        error: function(xhr, status, error) {
+            console.error('❌ Erreur AJAX:', {
+                status: status,
+                error: error,
+                statusCode: xhr.status,
+                responseText: xhr.responseText ? xhr.responseText.substring(0, 200) + '...' : 'Aucune réponse'
+            });
+            
+            handleAjaxError(scheduleId, xhr, status, error);
+        },
+        complete: function() {
+            console.log('Requête AJAX terminée');
+        }
+    });
+}
+
+// ============================================
+// FONCTIONS UTILITAIRES
+// ============================================
+
+function fillFormWithScheduleData(schedule) {
+    console.log('Remplissage du formulaire avec:', schedule);
+    
+    // Utiliser les sélecteurs corrects pour votre modal
+    $('input[name="day"]').val(schedule.day);
+    $('select[name="language"]').val(schedule.language_id);
+    $('select[name="student"]').val(schedule.student_id);
+    $('input[name="classroom"]').val(schedule.classroom || '');
+    $('input[name="start_time"]').val(formatTimeForInput(schedule.start_time));
+    $('input[name="end_time"]').val(formatTimeForInput(schedule.end_time));
+    $('input[name="is_active"]').prop('checked', schedule.is_active !== false);
+    
+    // Ajouter un message d'information
+    $('#editFormContent').html(`
+        
+        <form id="scheduleEditForm">
+            <!-- Les champs seront remplis par fillFormWithScheduleData -->
+            <div class="form-group ">
+                <div class="form-group">
+                    <label>Etudiant</label>
+                    <select class="form-control" name="student">
+                        {% for student in students %}
+                        <option value="{{ student.id }}" >{{ student.user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                </div>
+                
+                <div class="form-group">
+                    <label>Langue</label>
+                    <select class="form-control" name="language">
+                        {% for lang in languages %}
+                        <option value="{{ lang.id }}" >{{ lang.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Jour</label>
+                <select class="form-control" name="day">
+                    <option value="Lundi" ${schedule.day === 'Lundi' ? 'selected' : ''}>Lundi</option>
+                    <option value="Mardi" ${schedule.day === 'Mardi' ? 'selected' : ''}>Mardi</option>
+                    <option value="Mercredi" ${schedule.day === 'Mercredi' ? 'selected' : ''}>Mercredi</option>
+                    <option value="Jeudi" ${schedule.day === 'Jeudi' ? 'selected' : ''}>Jeudi</option>
+                    <option value="Vendredi" ${schedule.day === 'Vendredi' ? 'selected' : ''}>Vendredi</option>
+                    <option value="Samedi" ${schedule.day === 'Samedi' ? 'selected' : ''}>Samedi</option>
+                    <option value="Dimanche" ${schedule.day === 'Dimanche' ? 'selected' : ''}>Dimanche</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Heure de début</label>
+                <input type="time" class="form-control" name="start_time" value="${formatTimeForInput(schedule.start_time)}">
+            </div>
+            <div class="form-group">
+                <label>Heure de fin</label>
+                <input type="time" class="form-control" name="end_time" value="${formatTimeForInput(schedule.end_time)}">
+            </div>
+
+            <div class="form-group">
+                <label>Classe</label>
+                <input type="text" class="form-control" name="classroom" value="${schedule.classroom || ''}">
+            </div>
+         
+        </form>
+    `);
+}
+
+function formatTimeForInput(timeString) {
+    // Convertir "14:30:00" en "14:30" pour les inputs time
+    if (!timeString) return '09:00';
+    return timeString.substring(0, 5);
+}
+
+function initEditModalInteractions(scheduleId) {
+    console.log('Initialisation des interactions pour:', scheduleId);
+    
+    // 1. Gestionnaire de soumission
+    $('#editCourseForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        submitScheduleForm(scheduleId);
+    });
+    
+    // 2. Bouton de suppression
+    $('#deleteCourseBtn').off('click').on('click', function() {
+        confirmDeleteSchedule(scheduleId);
+    });
+    
+    // 3. Validation en temps réel
+    $('input[type="time"]').on('change', function() {
+        validateTimeInputs();
+    });
+    
+    // 4. Prévenir la fermeture accidentelle
+    $('#editCourseModal').on('hide.bs.modal', function(e) {
+        if ($('#editCourseForm').hasClass('form-modified')) {
+            if (!confirm('Vous avez des modifications non enregistrées. Quitter sans sauvegarder ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+    // 5. Marquer comme modifié
+    $('#editCourseForm').on('input change', function() {
+        $(this).addClass('form-modified');
+    });
+    
+    // 6. Focus sur le premier champ
+    setTimeout(() => {
+        $('#editCourseForm input:visible:first').focus();
+    }, 300);
+}
+
+function showFallbackForm(scheduleId, response) {
+    console.log('Affichage du formulaire de secours');
+    
+    let errorDetails = '';
+    if (response) {
+        errorDetails = `<small class="text-muted d-block mt-2">Réponse serveur: ${JSON.stringify(response).substring(0, 100)}...</small>`;
     }
+    
+    $('#editFormContent').html(`
+        <div class="alert alert-warning">
+            <div class="d-flex align-items-center">
+                <i class="ni ni-alert mr-3" style="font-size: 2rem;"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Format de données inattendu</h5>
+                    <p class="mb-0">Utilisation du formulaire par défaut</p>
+                    ${errorDetails}
+                </div>
+            </div>
+        </div>
+        
+        <form id="fallbackForm">
+            <input type="hidden" name="schedule_id" value="${scheduleId}">
+            
+            <div class="form-group">
+                <label for="fallback_day">Jour</label>
+                <select class="form-control" id="fallback_day" name="day" required>
+                    <option value="">Sélectionner un jour</option>
+                    <option value="Lundi">Lundi</option>
+                    <option value="Mardi">Mardi</option>
+                    <option value="Mercredi">Mercredi</option>
+                    <option value="Jeudi">Jeudi</option>
+                    <option value="Vendredi">Vendredi</option>
+                    <option value="Samedi">Samedi</option>
+                    <option value="Dimanche">Dimanche</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="fallback_start">Heure de début</label>
+                <input type="time" class="form-control" id="fallback_start" name="start_time" value="09:00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="fallback_end">Heure de fin</label>
+                <input type="time" class="form-control" id="fallback_end" name="end_time" value="10:00" required>
+            </div>
+            
+            <div class="alert alert-info">
+                <small>
+                    <i class="ni ni-info mr-1"></i>
+                    Ce formulaire est une version simplifiée. Contactez l'administrateur pour un affichage complet.
+                </small>
+            </div>
+        </form>
+    `);
+    
+    $('#editCourseModal').modal('show');
+    initEditModalInteractions(scheduleId);
+}
+
+function handleAjaxError(scheduleId, xhr, status, error) {
+    let errorTitle = 'Erreur de chargement';
+    let errorMessage = 'Impossible de charger les données du cours';
+    let errorDetails = '';
+    
+    if (xhr.status === 404) {
+        errorTitle = 'Cours non trouvé';
+        errorMessage = 'Le cours demandé n\'existe pas ou a été supprimé.';
+    } else if (xhr.status === 403) {
+        errorTitle = 'Accès refusé';
+        errorMessage = 'Vous n\'avez pas la permission de modifier ce cours.';
+    } else if (xhr.status === 500) {
+        errorTitle = 'Erreur serveur';
+        errorMessage = 'Le serveur a rencontré une erreur interne.';
+        errorDetails = `<small class="text-muted d-block mt-2">Détails: ${xhr.statusText}</small>`;
+    } else if (status === 'timeout') {
+        errorTitle = 'Délai dépassé';
+        errorMessage = 'La connexion est trop lente. Vérifiez votre réseau.';
+    } else if (status === 'parsererror') {
+        errorTitle = 'Erreur de format';
+        errorMessage = 'Le serveur a retourné un format de données invalide.';
+    }
+    
+    $('#editFormContent').html(`
+        <div class="alert alert-danger">
+            <div class="d-flex align-items-center">
+                <i class="ni ni-fat-remove mr-3" style="font-size: 2rem;"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">${errorTitle}</h5>
+                    <p class="mb-0">${errorMessage}</p>
+                    ${errorDetails}
+                    <small class="text-muted d-block mt-2">Code: ${xhr.status} - Erreur: ${error}</small>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-danger" onclick="openEditModal(${scheduleId})">
+                    <i class="ni ni-refresh mr-1"></i> Réessayer le chargement
+                </button>
+                <button class="btn btn-sm btn-outline-secondary ml-2" onclick="testEndpoint(${scheduleId})">
+                    <i class="ni ni-settings mr-1"></i> Tester l'endpoint
+                </button>
+                <button class="btn btn-sm btn-secondary ml-2" data-dismiss="modal">
+                    <i class="ni ni-shutdown mr-1"></i> Fermer
+                </button>
+            </div>
+        </div>
+    `);
+    
+    $('#editCourseModal').modal('show');
+}
+
+// Fonction de débogage
+function testEndpoint(scheduleId) {
+    const url = `/teacher/schedule/edit/${scheduleId}/`;
+    console.log('Test de l\'endpoint:', url);
+    
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(response) {
+            console.log('✅ Réponse du test:', response);
+            alert('Test réussi! Voir la console pour les détails.');
+        },
+        error: function(xhr) {
+            console.error('❌ Échec du test:', xhr);
+            alert('Échec du test. Voir la console.');
+        }
+    });
+}
+
+// Fonction de soumission
+function submitScheduleForm(scheduleId) {
+    const formData = $('#editCourseForm').serialize();
+    console.log('Soumission du formulaire pour ID:', scheduleId, 'Données:', formData);
+    
+    const $submitBtn = $('#editCourseForm button[type="submit"]');
+    const originalBtnText = $submitBtn.html();
+    
+    $submitBtn.html('<i class="ni ni-spinner ni-spin"></i> Enregistrement...').prop('disabled', true);
+    
+    $.ajax({
+        url: `/teacher/schedule/edit/${scheduleId}/`,
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                $('#editCourseModal').modal('hide');
+                showToast('Succès', 'Cours mis à jour avec succès', 'success');
+                
+                // Recharger le planning
+                loadWeek(currentWeek);
+            } else {
+                showToast('Erreur', response.message || 'Erreur lors de la mise à jour', 'danger');
+            }
+        },
+        error: function() {
+            showToast('Erreur', 'Erreur réseau lors de la mise à jour', 'danger');
+        },
+        complete: function() {
+            $submitBtn.html(originalBtnText).prop('disabled', false);
+        }
+    });
+}
+
+// Fonction de suppression
+function confirmDeleteSchedule(scheduleId) {
+   
+    $('#confirmDeleteModal').data('schedule-id', scheduleId);
+    $('#editCourseModal').modal('hide');
+    setTimeout(() => {
+        $('#confirmDeleteModal').modal('show');
+    }, 300);
+    
+
+}
+
+
+
+
+
 
     // 3. Gestion du bouton de suppression
     function initDeleteButton(scheduleId) {
@@ -1695,4 +2047,5 @@ if (!$('#contextMenuStyles').length) {
     $('head').append(`<style id="contextMenuStyles">${contextMenuStyles}</style>`);
 }
 </script>
+
 {% endblock %}
