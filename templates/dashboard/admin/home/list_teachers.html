@@ -1,0 +1,240 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% load static %}
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid mt-6">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="h3 mb-0">Gestion des enseignants</h5>
+                            <p class="text-sm mb-0 text-muted">
+                                {{ total_teachers }} enseignants enregistrés
+                            </p>
+                        </div>
+                        <div class="col text-right">
+                            <button class="btn btn-sm btn-primary">
+                                <i class="ni ni-fat-add"></i> Ajouter un enseignant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row mt-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Enseignants actifs</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ total_teachers }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                                <i class="ni ni-circle-08"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Étudiants assignés</h5>
+                            <span class="h2 font-weight-bold mb-0">
+                                {% with total=teachers|slice:":5" %}
+                                {{ total|length }}
+                                {% endwith %}
+                            </span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                                <i class="ni ni-single-02"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des enseignants -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Liste des enseignants</h3>
+                        </div>
+                        <div class="col text-right">
+                            <div class="input-group input-group-sm" style="max-width: 300px;">
+                                <input type="text" class="form-control" placeholder="Rechercher un enseignant...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button">
+                                        <i class="ni ni-zoom-split-in"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Enseignant</th>
+                                <th scope="col">Langues</th>
+                                <th scope="col">Étudiants</th>
+                                <th scope="col">Séances</th>
+                                <th scope="col">Statut</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for teacher in teachers %}
+                            <tr>
+                                <th scope="row">
+                                    <div class="media align-items-center">
+                                        <a href="#" class="avatar rounded-circle mr-3">
+                                            <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
+                                        </a>
+                                        <div class="media-body">
+                                            <span class="name mb-0 text-sm">{{ teacher.user.full_name }}</span>
+                                            <br>
+                                            <small class="text-muted">{{ teacher.user.email }}</small>
+                                        </div>
+                                    </div>
+                                </th>
+                                <td>
+                                    <div class="d-flex flex-wrap">
+                                        {% for language in teacher.languages.all|slice:":3" %}
+                                        <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
+                                        {% endfor %}
+                                        {% if teacher.languages.count > 3 %}
+                                        <span class="badge badge-secondary">+{{ teacher.languages.count|add:"-3" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-2">{{ teacher.total_students_count }}</span>
+                                        <div>
+                                            <i class="ni ni-single-02 text-primary"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <small class="text-success">
+                                            <i class="ni ni-check-bold"></i> {{ teacher.completed_sessions_count }} terminées
+                                        </small>
+                                        <small class="text-warning">
+                                            <i class="ni ni-calendar-grid-58"></i> {{ teacher.active_sessions_count }} à venir
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if teacher.is_available %}
+                                    <span class="badge badge-success">
+                                        <i class="ni ni-check-bold"></i> Disponible
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-danger">
+                                        <i class="ni ni-fat-remove"></i> Indisponible
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-neutral dropdown-toggle" type="button" 
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item" href="{% url 'teacher_detail' teacher.id %}">
+                                                <i class="ni ni-zoom-split-in text-info"></i> Voir détails
+                                            </a>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="ni ni-single-02 text-success"></i> Voir étudiants
+                                            </a>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="ni ni-calendar-grid-58 text-warning"></i> Voir séances
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="ni ni-send text-primary"></i> Contacter
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="ni ni-single-02 display-4"></i>
+                                        <p class="mt-2">Aucun enseignant enregistré</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer py-4">
+                    <nav aria-label="Page navigation">
+                        {% if page_obj.has_other_pages %}
+                        <ul class="pagination justify-content-end mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="ni ni-bold-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="ni ni-bold-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

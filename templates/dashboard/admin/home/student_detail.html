@@ -1,0 +1,272 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% load static %}
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+<div class="container-fluid mt-6">
+    <!-- En-tête avec infos étudiant -->
+    <div class="row">
+        <div class="col-xl-4">
+            <div class="card card-profile">
+                <div class="card-header bg-gradient-primary text-center py-5">
+                    <div class="avatar avatar-xl rounded-circle border-0">
+                        <img src="{{ student.user.profile_picture_url }}" alt="{{ student.user.full_name }}">
+                    </div>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="text-center mt-4">
+                        <h5 class="h3">{{ student.user.full_name }}</h5>
+                        <div class="h5 font-weight-300">
+                            <i class="ni ni-email-83 mr-2"></i>{{ student.user.email }}
+                        </div>
+                        <div class="mt-2">
+                            <i class="ni ni-mobile-button mr-1"></i>{{ student.user.user_profile.number|default:"Non renseigné" }}
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge badge-pill badge-primary">
+                                <i class="ni ni-badge"></i> {{ student.matricule }}
+                            </span>
+                            {% if student.hours_remaining > 0 %}
+                            <span class="badge badge-pill badge-success">
+                                <i class="ni ni-check-bold"></i> Actif
+                            </span>
+                            {% else %}
+                            <span class="badge badge-pill badge-danger">
+                                <i class="ni ni-fat-remove"></i> Inactif
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="row">
+                            <div class="col">
+                                <div class="text-center">
+                                    <h5 class="h1">{{ student.hours_remaining }}</h5>
+                                    <span class="text-sm text-muted">Heures restantes</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="text-center">
+                                    <h5 class="h1">{{ total_paid }}MAD</h5>
+                                    <span class="text-sm text-muted">Total payé</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="text-center">
+                                    <h5 class="h1">{{ teachers.count }}</h5>
+                                    <span class="text-sm text-muted">Enseignants</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations de contact -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Informations de contact</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-uppercase  text-black">Adresse</small>
+                        <p class="mb-0">
+                            {% if student.user.user_profile.address %}
+                            {{ student.user.user_profile.address }}<br>
+                            {{ student.user.user_profile.city }}, {{ student.user.user_profile.country }}
+                            {% else %}
+                            <span class="text-muted">Non renseignée</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-uppercase text-black">Date d'inscription</small>
+                        <p class="mb-0">{{ student.date_joined|date:"d/m/Y" }}</p>
+                    </div>
+                    <div>
+                        <small class="text-uppercase text-black">À propos</small>
+                        <p class="mb-0">
+                            {% if student.user.user_profile.about %}
+                            {{ student.user.user_profile.about|truncatechars:100 }}
+                            {% else %}
+                            <span class="text-muted">Non renseigné</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-8">
+            <!-- Langues apprises -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Langues apprises</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for language in student.languages.all %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border">
+                                <div class="card-body text-center">
+                                    <i class="ni ni-world text-primary display-4 mb-2"></i>
+                                    <h5 class="mb-0">{{ language.name }}</h5>
+                                    <small class="text-muted">{{ language.code }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-4">
+                            <i class="ni ni-world display-4 text-muted"></i>
+                            <p class="text-muted mt-2">Aucune langue assignée</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Enseignants assignés -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="h3 mb-0">Enseignants assignés</h5>
+                        </div>
+                        <div class="col text-right">
+                            <button class="btn btn-sm btn-primary">Assigner un enseignant</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for teacher in teachers %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto">
+                                            <img src="{{ teacher.user.profile_picture_url }}" 
+                                                 alt="{{ teacher.user.full_name }}" 
+                                                 class="avatar rounded-circle">
+                                        </div>
+                                        <div class="col">
+                                            <h6 class="mb-0">{{ teacher.user.full_name }}</h6>
+                                            <small class="text-muted">{{ teacher.speciality }}</small>
+                                            <div class="mt-2">
+                                                {% for lang in teacher.languages.all|slice:":2" %}
+                                                <span class="badge badge-sm badge-primary">{{ lang.name }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <span class="badge badge-success">
+                                                {{ teacher.hourly_rate }}MAD/h
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-4">
+                            <i class="ni ni-single-02 display-4 text-muted"></i>
+                            <p class="text-muted mt-2">Aucun enseignant assigné</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Paiements récents -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="h3 mb-0">Historique des paiements</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Montant</th>
+                                <th scope="col">Heures achetées</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Statut</th>
+                                <th scope="col">Facture</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_date|date:"d/m/Y H:i" }}</td>
+                                <td class="font-weight-bold">{{ payment.amount }}MAD</td>
+                                <td>
+                                    <span class="badge badge-primary">{{ payment.hours_purchased }}h</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-default">{{ payment.get_payment_type_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ payment.status_color }}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if payment.invoice_number %}
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="ni ni-cloud-download-95"></i> Télécharger
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="ni ni-money-coins display-4"></i>
+                                        <p class="mt-2">Aucun paiement enregistré</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+}
+.avatar-xl {
+    width: 100px;
+    height: 100px;
+}
+.timeline-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fe;
+    border: 2px solid #dee2e6;
+}
+.timeline-content {
+    margin-left: 60px;
+}
+.card.border {
+    border: 1px solid #e9ecef !important;
+}
+</style>
+{% endblock %}

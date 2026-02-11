@@ -4,6 +4,10 @@ from .views import (
    
     add_request_response,
     add_schedule,
+    admin_dashboard,
+    admin_student_view,
+    admin_teacher_view,
+    
     delete_notification,
     delete_schedule,
     delete_student_session_by_id,
@@ -21,6 +25,8 @@ from .views import (
     resources_view,resources_add, requests_view, 
 
     settings_view,
+    student_detail_view,
+    teacher_detail_view,
 
     teacher_resources_dashboard,
     teacher_schedule_view, teacher_view, teacher_courses, 
@@ -106,7 +112,11 @@ urlpatterns = [
     #redirection
     path('', dashboard_view, name='dashboard_home'),
  
-
+    path('administrateur/',admin_dashboard, name ="admin_dashboard"),
+    path('administrateur/teachers/', admin_teacher_view, name='admin_teachers'),
+    path('administrateur/teachers/<int:teacher_id>/', teacher_detail_view, name='teacher_detail'),
+    path('administrateur/students/', admin_student_view, name='admin_students'),
+    path('administrateur/students/<int:student_id>/', student_detail_view, name='student_detail'),
 ]
 
 

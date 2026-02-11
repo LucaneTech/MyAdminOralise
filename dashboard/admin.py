@@ -35,9 +35,9 @@ class CustomUserAdmin(UserAdmin):
 # Enregistrement des modèles dans Django Admin
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user__username','user__email', 'matricule', 'total_hours_used')
-    list_filter = ('matricule','user')
-    search_fields= ('user__first_name', 'user__last_name', 'matricule')
+    list_display = ('user__username','user__email', 'matricule', 'total_hours_used', 'statuts')
+    list_filter = ('matricule','user','statuts')
+    search_fields= ('user__first_name', 'user__last_name', 'matricule','statuts')
 
 
 @admin.register(Language)

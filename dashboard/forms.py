@@ -1,6 +1,6 @@
 from time import timezone
 from django import forms
-from dashboard.models import Profile, CustomUser, Resource, Session, Student
+from dashboard.models import Profile, CustomUser, Resource, Session, Student, Language
 from django import forms
 from allauth.account.forms import LoginForm, SignupForm,ResetPasswordForm
 from django.contrib.auth import authenticate
@@ -60,8 +60,6 @@ class CustomSignupForm(SignupForm):
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
         ('student', 'Student'),
-      
-       
     )
 
     def __init__(self, *args, **kwargs):
@@ -86,13 +84,6 @@ class CustomResetPasswordForm(ResetPasswordForm):
         self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email', 'class': 'custom-input'})
         
   
-  
-  
-from django import forms
-from django.utils import timezone
-from django.utils.html import format_html
-
-from .models import Resource, Student, Language
 
 class ResourceForm(forms.ModelForm):
     """Formulaire pour créer/modifier des ressources"""

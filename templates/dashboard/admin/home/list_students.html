@@ -1,0 +1,355 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% load static %}
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid mt-6">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="h3 mb-0">Gestion des étudiants</h5>
+                            <p class="text-sm mb-0 text-muted">
+                                {{ total_students }} étudiants enregistrés
+                            </p>
+                        </div>
+                        <div class="col text-right">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-primary">
+                                    <i class="ni ni-fat-add"></i> Ajouter un étudiant
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="ni ni-cloud-download-95"></i> Exporter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row mt-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Total étudiants</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
+                                <i class="ni ni-single-02"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Heures achetées</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ total_hours_purchased }}</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
+                                <i class="ni ni-time-alarm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h5 class="card-title text-uppercase text-muted mb-0">Revenu total</h5>
+                            <span class="h2 font-weight-bold mb-0">{{ total_revenue }}MAD</span>
+                        </div>
+                        <div class="col-auto">
+                            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
+                                <i class="ni ni-money-coins"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Statut</label>
+                                <select class="form-control" id="filterStatus">
+                                    <option value="all">Tous les étudiants</option>
+                                    <option value="active">Actifs seulement</option>
+                                    <option value="inactive">Inactifs seulement</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Langue</label>
+                                <select class="form-control">
+                                    <option>Toutes les langues</option>
+                                    <option>Anglais</option>
+                                    <option>Français</option>
+                                    <option>Espagnol</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-control-label">Recherche</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Nom, email ou matricule...">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="ni ni-zoom-split-in"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des étudiants -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Liste des étudiants</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-items-center table-flush">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Étudiant</th>
+                                <th scope="col">Matricule</th>
+                                <th scope="col">Langues</th>
+                                <th scope="col">Heures restantes</th>
+                                <th scope="col">Total payé</th>
+                                <th scope="col">Enseignants</th>
+                                <th scope="col">Statut</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <th scope="row">
+                                    <div class="media align-items-center">
+                                        <a href="#" class="avatar rounded-circle mr-3">
+                                            <img alt="Photo de {{ student.user.full_name }}" 
+                                                 src="{{ student.user.profile_picture_url }}">
+                                        </a>
+                                        <div class="media-body">
+                                            <span class="name mb-0 text-sm">{{ student.user.full_name }}</span>
+                                            <small class="text-muted">{{ student.user.email }}</small>
+                                            <br>
+                                            <small class="text-muted">
+                                                Inscrit le {{ student.date_joined|date:"d/m/Y" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </th>
+                                <td>
+                                    <span class="badge badge-default">{{ student.matricule }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap">
+                                        {% for language in student.languages.all|slice:":2" %}
+                                        <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
+                                        {% endfor %}
+                                        {% if student.languages.count > 2 %}
+                                        <span class="badge badge-secondary">+{{ student.languages.count|add:"-2" }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress-wrapper w-75 mr-3">
+                                            {% widthratio student.hours_remaining student.total_hours_purchased 100 as progress %}
+                                            <div class="progress">
+                                                <div class="progress-bar bg-{{ student.hours_color }}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ progress }}%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold">{{ student.hours_remaining }}</span>
+                                            <span class="text-muted">/{{ student.total_hours_purchased }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-weight-bold">{{ student.total_paid_sum|default:0 }}MAD</span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ student.payments.count }} paiement{{ student.payments.count|pluralize }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="avatar-group">
+                                        {% for teacher in student.current_teachers.all|slice:":3" %}
+                                        <a href="#" class="avatar avatar-sm" data-toggle="tooltip" 
+                                           title="{{ teacher.user.full_name }}">
+                                            <img alt="Photo de {{ teacher.user.full_name }}" 
+                                                 src="{{ teacher.user.profile_picture_url }}" 
+                                                 class="rounded-circle">
+                                        </a>
+                                        {% endfor %}
+                                        {% if student.active_teachers_count > 3 %}
+                                        <a href="#" class="avatar avatar-sm bg-primary rounded-circle" 
+                                           data-toggle="tooltip" 
+                                           title="{{ student.active_teachers_count }} enseignants">
+                                            <span class="text-white">+{{ student.active_teachers_count|add:"-3" }}</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                   
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-neutral dropdown-toggle" type="button" 
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item" href="{% url 'student_detail' student.id %}">
+                                                <i class="ni ni-zoom-split-in text-info"></i> Voir détails
+                                            </a>
+                                           
+                                            <a class="dropdown-item" href="#">
+                                                <i class="ni ni-calendar-grid-58 text-warning"></i> Voir séances
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="ni ni-send text-primary"></i> Contacter
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="ni ni-single-02 display-4"></i>
+                                        <p class="mt-2">Aucun étudiant enregistré</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer py-4">
+                    <nav aria-label="Page navigation">
+                        {% if page_obj.has_other_pages %}
+                        <ul class="pagination justify-content-end mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                    <i class="ni ni-bold-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                    <i class="ni ni-bold-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress-wrapper {
+    position: relative;
+}
+.progress {
+    height: 6px;
+    border-radius: 3px;
+}
+.avatar-group .avatar {
+    transition: transform 0.2s;
+}
+.avatar-group .avatar:hover {
+    transform: translateY(-2px);
+}
+.timeline-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fe;
+    border: 2px solid #dee2e6;
+}
+.timeline-content {
+    margin-left: 60px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtre par statut
+    const filterStatus = document.getElementById('filterStatus');
+    filterStatus.addEventListener('change', function() {
+        const status = this.value;
+        window.location.href = `?status=${status}`;
+    });
+    
+    // Tooltips pour les avatars
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

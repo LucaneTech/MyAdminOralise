@@ -117,6 +117,14 @@ class Language(models.Model):
 
 # Étudiant
 class Student(models.Model):
+    
+    STUDENT_STATUT= (
+        ('actif', 'Actif'),
+        ('abandon', 'Abandon'),
+        ('terminé', 'Terminé'),
+        ('attente', 'En attente'),
+    )
+    
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE,
@@ -127,6 +135,11 @@ class Student(models.Model):
         unique=True, 
         editable=False,
         verbose_name="matricule"
+    )
+    statuts = models.CharField(
+        max_length=20, 
+        choices=STUDENT_STATUT,
+        verbose_name="statut"
     )
     languages = models.ManyToManyField(
         Language, 

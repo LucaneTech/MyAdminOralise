@@ -19,6 +19,8 @@ from django.template.loader import render_to_string
 
 
 
+from dashboard import models
+from dashboard.decorators import admin_required
 from dashboard.models import (
     CustomUser,
     Student,
@@ -61,8 +63,8 @@ def dashboard_view(request, username=None):
         return redirect("teacher_view", username=username)
 
     # if user'role is preUser
-    if request.user.role == "preUser":
-        return redirect("dashboard_home")
+    if request.user.role == "admin":
+        return redirect("admin_dashboard")
 
     try:
         # Vérifier si l'utilisateur demandé existe
@@ -329,6 +331,7 @@ def profile_view(request):
             "total_sessions": total_sessions,
         }
         return render(request, "dashboard/teacher/home/profile.html", context)
+    
 
 
 @login_required
@@ -2546,3 +2549,211 @@ def quick_add_schedule(request):
             messages.error(request, f"Erreur: {str(e)}")
     
     return redirect('teacher_schedule')
+
+
+
+
+@admin_required
+def admin_dashboard(request):
+    # Statistiques principales
+    total_teachers = Teacher.objects.count()
+    total_students = Student.objects.count()
+    total_languages = Language.objects.filter(is_active=True).count()
+    
+    # Séances
+    today = timezone.now().date()
+    completed_sessions = Session.objects.filter(status='completed').count()
+    scheduled_sessions = Session.objects.filter(status='scheduled').count()
+    
+    # Calcul du taux de présence
+    total_sessions = Session.objects.filter(status__in=['completed', 'absent']).count()
+    if total_sessions > 0:
+        attendance_rate = round((Session.objects.filter(status='completed').count() / total_sessions) * 100, 1)
+    else:
+        attendance_rate = 0
+    
+    # Paiements
+    total_revenue = Payment.objects.filter(status='paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_payments = Payment.objects.filter(status='pending').count()
+    
+    # Demandes en attente
+    pending_requests = Request.objects.filter(status='pending').count()
+    
+    # Certificats récents (7 derniers jours)
+    recent_certificates = Certificate.objects.filter(
+        issued_date__gte=today - timedelta(days=7)
+    ).order_by('-issued_date')[:5]
+    
+    # Évaluations récentes
+    recent_evaluations = Evaluation.objects.order_by('-evaluation_date')[:5]
+    
+    # Notifications non lues
+    unread_notifications = Notification.objects.filter(is_read=False).order_by('-created_at')[:5]
+    
+    # Séances à venir (pour montrer l'agenda global)
+    upcoming_sessions = Session.objects.filter(
+        date__gte=today,
+        status='scheduled'
+    ).order_by('date', 'start_time')[:10]
+    
+    # Séances du jour
+    today_sessions = Session.objects.filter(
+        date=today,
+        status='scheduled'
+    ).order_by('start_time')
+    
+    # Nouveaux étudiants (inscrits ce mois-ci)
+    this_month_start = today.replace(day=1)
+    new_students_this_month = Student.objects.filter(
+        date_joined__gte=this_month_start
+    ).count()
+    
+    context = {
+        'total_teachers': total_teachers,
+        'total_students': total_students,
+        'total_languages': total_languages,
+        'completed_sessions': completed_sessions,
+        'scheduled_sessions': scheduled_sessions,
+        'attendance_rate': attendance_rate,
+        'total_revenue': total_revenue,
+        'pending_payments': pending_payments,
+        'pending_requests': pending_requests,
+        'recent_certificates': recent_certificates,
+        'recent_evaluations': recent_evaluations,
+        'unread_notifications': unread_notifications,
+        'upcoming_sessions': upcoming_sessions,
+        'today_sessions': today_sessions,
+        'new_students_this_month': new_students_this_month,
+    }
+    
+    return render(request, 'dashboard/admin/home/index.html', context)
+
+
+
+@admin_required
+def admin_teacher_view(request):
+    # Récupérer tous les enseignants avec leurs statistiques
+    teachers = Teacher.objects.select_related('user').prefetch_related(
+        'languages', 
+        'sessions',
+        'current_students'
+    ).annotate(
+        total_students_count=Count('current_students', distinct=True),
+        active_sessions_count=Count('sessions', filter=Q(sessions__status='scheduled')),
+        completed_sessions_count=Count('sessions', filter=Q(sessions__status='completed'))
+    ).all()
+    
+    # Pagination
+    paginator = Paginator(teachers, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        "teachers": page_obj,
+        "total_teachers": teachers.count(),
+        "page_obj": page_obj,
+    }
+    return render(request, 'dashboard/admin/home/list_teachers.html', context)
+
+@admin_required
+def teacher_detail_view(request, teacher_id):
+    # Détails d'un enseignant spécifique avec ses étudiants
+    teacher = get_object_or_404(Teacher.objects.select_related('user').prefetch_related(
+        'languages',
+        'current_students__user',
+        'current_students__payments',
+        'sessions'
+    ), id=teacher_id)
+    
+    # Statistiques de l'enseignant
+    students = teacher.current_students.all().annotate(
+        total_payments=Sum('payments__amount'),
+        total_hours_remaining=Sum('payments__hours_remaining')
+    )
+    
+    # Sessions récentes
+    recent_sessions = Session.objects.filter(teacher=teacher).order_by('-date')[:5]
+    
+    context = {
+        "teacher": teacher,
+        "students": students,
+        "recent_sessions": recent_sessions,
+        "total_students": students.count(),
+        "total_hours_taught": Session.objects.filter(teacher=teacher, status='completed').count(),
+    }
+    return render(request, 'dashboard/admin/home/teacher_detail.html', context)
+
+@admin_required
+def admin_student_view(request):
+    # Liste de tous les étudiants avec statistiques
+    students = Student.objects.select_related('user').prefetch_related(
+        'current_teachers__user',
+        'payments',
+        'sessions'
+    ).annotate(
+        total_paid_amount=Sum('payments__amount', filter=Q(payments__status='paid')),  # Renommé
+        paid_hours_purchased=Sum('payments__hours_purchased', filter=Q(payments__status='paid')),  # Renommé
+        active_teachers_count=Count('current_teachers', distinct=True),
+        completed_sessions_count=Count('sessions', filter=Q(sessions__status='completed'))
+    ).all()
+    
+    # Filtres
+    filter_status = request.GET.get('status', 'all')
+    
+    if filter_status == 'active':
+        # Utilisez le champ existant du modèle ou une logique personnalisée
+        students = students.filter(total_hours_purchased__gt=0)  # Champ existant
+    elif filter_status == 'inactive':
+        students = students.filter(total_hours_purchased=0)  # Champ existant
+    
+    # Calcul des totaux pour les statistiques
+    total_hours_purchased_sum = 0
+    total_paid_sum = 0
+    
+    for student in students:
+        total_hours_purchased_sum += student.total_hours_purchased 
+        total_paid_sum += student.total_paid_amount or 0  
+    
+    # Pagination
+    paginator = Paginator(students, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        "students": page_obj,
+        "total_students": students.count(),
+        "total_hours_purchased": total_hours_purchased_sum,
+        "total_paid_sum": total_paid_sum,
+        "page_obj": page_obj,
+    }
+    return render(request, 'dashboard/admin/home/list_students.html', context)
+
+@admin_required
+def student_detail_view(request, student_id):
+    # Détails d'un étudiant spécifique
+    student = get_object_or_404(Student.objects.select_related('user').prefetch_related(
+        'current_teachers__user',
+        'payments',
+        'sessions__teacher__user',
+        'sessions__language',
+        'languages'
+    ), id=student_id)
+    
+    # Statistiques financières
+    payments = student.payments.filter(status='paid').order_by('-payment_date')
+    total_paid = payments.aggregate(total=Sum('amount'))['total'] or 0
+    # Sessions
+    upcoming_sessions = Session.objects.filter(
+        student=student, 
+        status='scheduled',
+        date__gte=timezone.now().date()
+    ).order_by('date', 'start_time')[:5]
+    
+    context = {
+        "student": student,
+        "payments": payments,
+        "upcoming_sessions": upcoming_sessions,
+        "total_paid": total_paid,
+        "teachers": student.current_teachers.all(),
+    }
+    return render(request, 'dashboard/admin/home/student_detail.html', context)

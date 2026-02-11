@@ -7,13 +7,10 @@ from django.contrib.messages import constants as messages
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
 load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = os.environ.get("DEBUG")
-
 
 ALLOWED_HOSTS = [
     "oraliseadmin.up.railway.app",
@@ -27,225 +24,254 @@ CSRF_TRUSTED_ORIGINS = [
     "https://monespace.oralise.pro",
     "http://127.0.0.1:8000",
 ]
+# ============================================
+# CONFIGURATION BLACKBLAZE B2 - VERSION SIMPLIFIÉE
+# ============================================
 
+# Variables B2 depuis l'environnement
+B2_APPLICATION_KEY_ID = os.getenv('B2_APPLICATION_KEY_ID')
+B2_APPLICATION_KEY = os.getenv('B2_APPLICATION_KEY')
+B2_BUCKET_NAME = os.getenv('B2_BUCKET_NAME')
+B2_REGION = os.getenv('B2_REGION', 'eu-central-003')
 
+# Détection de l'environnement
+USE_B2 = all([B2_APPLICATION_KEY_ID, B2_APPLICATION_KEY, B2_BUCKET_NAME])
 
+# Configuration pour le développement
+if not DEBUG:
+    print("🖥️  Mode développement - stockage local")
+    
+    # Stockage local pour les médias
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    
+    # Configuration des storages
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
+    
+# Configuration pour la production (Railway + B2)
+elif USE_B2 and ( DEBUG ):
+    print("☁️  Configuration Blackblaze B2 activée")
+    
+    # Configuration AWS-compatible pour B2
+    AWS_ACCESS_KEY_ID = B2_APPLICATION_KEY_ID
+    AWS_SECRET_ACCESS_KEY = B2_APPLICATION_KEY
+    AWS_STORAGE_BUCKET_NAME = B2_BUCKET_NAME
+    AWS_S3_REGION_NAME = B2_REGION
+    
+    # ENDPOINT B2 - IMPORTANT !
+    AWS_S3_ENDPOINT_URL = f'https://s3.{B2_REGION}.backblazeb2.com'
+    
+    # Configuration B2 spécifique
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
+    AWS_DEFAULT_ACL = None  # B2 ne supporte pas les ACLs
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = True  # Pour les URLs signées
+    
+    # Custom domain
+    B2_CUSTOM_DOMAIN = os.getenv('B2_CUSTOM_DOMAIN', f'{B2_BUCKET_NAME}.s3.{B2_REGION}.backblazeb2.com')
+    AWS_S3_CUSTOM_DOMAIN = B2_CUSTOM_DOMAIN
+    
+    # Cache
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Configuration SIMPLIFIÉE - pas de classe custom
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "endpoint_url": AWS_S3_ENDPOINT_URL,
+                "file_overwrite": False,
+                "querystring_auth": True,
+                "default_acl": None,
+                "location": "media",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    
+    # URLs pour les médias
+    MEDIA_URL = f'https://{B2_CUSTOM_DOMAIN}/media/'
+    
 
-
-
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# AWS S3 / Railway Bucket
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
-
-AWS_QUERYSTRING_AUTH = os.environ.get("AWS_QUERYSTRING_AUTH")
-AWS_DEFAULT_ACL = os.environ.get("AWS_DEFAULT_ACL")
-
-# Utiliser S3 pour tous les fichiers médias
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-# MEDIA_URL n'est plus locale, elle pointe vers le bucket
-MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"
-
-
-# Application definition
+    
+    
 INSTALLED_APPS = [
-    #customise django-admin with django-jazzmin
-    'jazzmin',
+    # customise django-admin with django-jazzmin
+    "jazzmin",
     # Default django apps
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.humanize',
-    #extensions
-    'django_extensions', 
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.humanize",
+    # extensions
+    "django_extensions",
     # Dashboard app
-    'dashboard',
-    'widget_tweaks',
-
-    #for django-allauth
-    'django.contrib.sites',
-     'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    
-    #social account
-    'allauth.socialaccount.providers.github',
-    'allauth.socialaccount.providers.google',
-    
-    #django-compressor to compress css and js files
-    'compressor',
-
-    #bucket of railway
-    'storages',
-    
+    "dashboard",
+    "widget_tweaks",
+    # for django-allauth
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    # social account
+    "allauth.socialaccount.providers.github",
+    "allauth.socialaccount.providers.google",
+    # django-compressor to compress css and js files
+    "compressor",
+    # bucket of railway
+    "storages",
 ]
 
-#djang-compressor
+# djang-compressor
 STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 ]
 COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = False  
+COMPRESS_OFFLINE = False
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-    os.path.join(BASE_DIR, 'static/assets'),
+    os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "static/assets"),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')   
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 COMPRESS_ROOT = STATIC_ROOT
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
-
-
 AUTHENTICATION_BACKENDS = [
-   
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
-
 
 # SITE_ID = 1
 SITE_ID = 8
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # django-allauth middleware
-    'allauth.account.middleware.AccountMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 SOCIALACCOUNT_PROVIDERS = {}
 
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = False 
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'dashboard_home'
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = 'dashboard_home'
-SOCIAL_AUTH_LOGIN_ERROR_URL = 'dashboard_home'
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "dashboard_home"
+SOCIAL_AUTH_NEW_USER_REDIRECT_URL = "dashboard_home"
+SOCIAL_AUTH_LOGIN_ERROR_URL = "dashboard_home"
 
-
-SOCIALACCOUNT_LOGIN_ON_GET=True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_QUERY_EMAIL = True
 
-#redirection url after login
-LOGIN_REDIRECT_URL = '/'
+# redirection url after login
+LOGIN_REDIRECT_URL = "/"
 
-#redirection url after logout
-LOGOUT_REDIRECT_URL = 'account_login'
+# redirection url after logout
+LOGOUT_REDIRECT_URL = "account_login"
 
 # django-allauth settings
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_VERIFICATION = 'none' 
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
-ROOT_URLCONF = 'SchoolManagement.urls'
+ROOT_URLCONF = "SchoolManagement.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'SchoolManagement.settings.current_year', 
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "SchoolManagement.settings.current_year",
             ],
         },
     },
 ]
 
-
-
-
-WSGI_APPLICATION = 'SchoolManagement.wsgi.application'
-
-
-
+WSGI_APPLICATION = "SchoolManagement.wsgi.application"
 
 DATABASES = {
-       'default': {
-           'ENGINE': 'django.db.backends.sqlite3',
-           'NAME': BASE_DIR / 'db.sqlite3',
-       }
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
+}
 
 # DATABASES = {
-#             'default': dj_database_url.parse(
-#                 os.environ.get("DATABASE_URL"),
-#             )
-#         }
+#     'default': dj_database_url.parse(
+#         os.environ.get("DATABASE_URL"),
+#     )
+# }
 
-
-
-#delete admin django notifications
+# delete admin django notifications
 MESSAGE_LEVEL = messages.ERROR
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
-LANGUAGE_CODE = 'fr'
-TIME_ZONE = 'Europe/Paris'
+LANGUAGE_CODE = "fr"
+TIME_ZONE = "Europe/Paris"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
-
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # django allauth include customforms of form.py
 ACCOUNT_FORMS = {
-     'login': 'dashboard.forms.CustomLoginForm',
-     'signup': 'dashboard.forms.CustomSignupForm',
-     'password_reset': 'dashboard.forms.CustomResetPasswordForm',
+    "login": "dashboard.forms.CustomLoginForm",
+    "signup": "dashboard.forms.CustomSignupForm",
+    "password_reset": "dashboard.forms.CustomResetPasswordForm",
 }
-#Customise of user's role login
-AUTH_USER_MODEL = 'dashboard.CustomUser'
 
-#django-jazzmin settings for admin dashboard
+# Customise of user's role login
+AUTH_USER_MODEL = "dashboard.CustomUser"
+
+
+# django-jazzmin settings for admin dashboard
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
@@ -274,39 +300,32 @@ JAZZMIN_UI_TWEAKS = {
         "info": "btn-info",
         "warning": "btn-warning",
         "danger": "btn-danger",
-        "success": "btn-success"
+        "success": "btn-success",
     },
     "actions_sticky_top": True,
     "language_chooser": True,
     "custom_css": "assets/css/jazzmin.css",
-    "login_logo_classes": "custom-logo"
+    "login_logo_classes": "custom-logo",
 }
 
-#all about django-jazz for admin dashboard
+# all about django-jazz for admin dashboard
 JAZZMIN_SETTINGS = {
-    
-    #navbar admin-dashboard
-       "topmenu_links": [
+    # navbar admin-dashboard
+    "topmenu_links": [
         {"name": "Home", "url": "home", "permissions": ["auth.view_user"]},
     ],
-       
-    
     "site_title": "Oralise",
     "site_header": "Admin Oralise",
     "site_brand": "ORALISE",
-     "site_logo":None,
+    "site_logo": None,
     "login_logo": "",
-    
-
-    #favicon
-       "site_icon": "",
-       
+    # favicon
+    "site_icon": "",
     "icons": {
         # Authentification
         "auth": "fas fa-user-shield",
         "auth.group": "fas fa-users-cog",
         "auth.user": "fas fa-user",
-
         # by using django-allauth
         "account": "fas fa-user-circle",
         "account.emailaddress": "fas fa-envelope",
@@ -314,62 +333,49 @@ JAZZMIN_SETTINGS = {
         "socialaccount.socialapp": "fas fa-thumbs-up",
         "socialaccount.socialaccount": "fas fa-user-friends",
         "socialaccount.socialtoken": "fas fa-key",
-
         # Edusco app
         "edusco": "fas fa-school",
-
         # Modèles personnalisés
-        "dashboard.customuser": "fas fa-user-cog",         # CustomUser
-        "dashboard.student": "fas fa-user-graduate",       # Student
+        "dashboard.customuser": "fas fa-user-cog",  # CustomUser
+        "dashboard.student": "fas fa-user-graduate",  # Student
         "dashboard.teacher": "fas fa-chalkboard-teacher",  # Teacher
-        "dashboard.skill": "fas fa-lightbulb",             # Skill
-        "dashboard.schedule": "fas fa-calendar-alt",       # Schedule
-        "dashboard.mark": "fas fa-star",                   # Mark
-        "dashboard.language": "fas fa-language",           # Language
-        "dashboard.session": "fas fa-clock",               # Session
-        "dashboard.payment": "fas fa-money-bill",          # Payment
-        "dashboard.certificate": "fas fa-certificate",     # Certificate
-        "dashboard.evaluation": "fas fa-chart-line",       # Evaluation
-        "dashboard.notification": "fas fa-bell",           # Notification
-        "dashboard.ressource": "fas fa-inbox",              # Request
+        "dashboard.skill": "fas fa-lightbulb",  # Skill
+        "dashboard.schedule": "fas fa-calendar-alt",  # Schedule
+        "dashboard.mark": "fas fa-star",  # Mark
+        "dashboard.language": "fas fa-language",  # Language
+        "dashboard.session": "fas fa-clock",  # Session
+        "dashboard.payment": "fas fa-money-bill",  # Payment
+        "dashboard.certificate": "fas fa-certificate",  # Certificate
+        "dashboard.evaluation": "fas fa-chart-line",  # Evaluation
+        "dashboard.notification": "fas fa-bell",  # Notification
+        "dashboard.ressource": "fas fa-inbox",  # Request
         # Sites
         "sites": "fas fa-globe",
         "sites.site": "fas fa-map-marker-alt",
     },
-    
     "welcome_sign": "Bienvenue dans Oralise",
     "copyright": "Oralise",
     "user_avatar": None,
-    
-    #this concern models applying like popup
-     "related_modal_active":False,
-
-     #this code concern admin-dashboard style
-     "show_ui_builder": False,
-    
-
+    # this concern models applying like popup
+    "related_modal_active": False,
+    # this code concern admin-dashboard style
+    "show_ui_builder": False,
 }
 
 
-
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 465))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = 'Oralise <contact@oralise.pro>'
+DEFAULT_FROM_EMAIL = "Oralise <contact@oralise.pro>"
 
 
-
-
-
-#current year
+# current year
 from datetime import datetime
+
+
 def current_year(request):
-    return {'current_year': datetime.now().year}
-
-
-
+    return {"current_year": datetime.now().year}
