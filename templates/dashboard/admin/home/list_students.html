@@ -3,7 +3,20 @@
 {% block title %} Dashboard {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+    td .dropdown {
+    position: relative;
+}
+
+td .dropdown .dropdown-menu {
+    position: absolute;
+    transform: translateY(0) !important;
+    top: -30px !important;
+    margin-top: 0;
+}
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 <div class="container-fluid mt-6">
@@ -77,7 +90,7 @@
                     <div class="row">
                         <div class="col">
                             <h5 class="card-title text-uppercase text-muted mb-0">Revenu total</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_revenue }}MAD</span>
+                            <span class="h2 font-weight-bold mb-0">{{ total_revenue | default:0 }} MAD</span>
                         </div>
                         <div class="col-auto">
                             <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
@@ -163,12 +176,13 @@
                                 <th scope="row">
                                     <div class="media align-items-center">
                                         <a href="#" class="avatar rounded-circle mr-3">
-                                            <img alt="Photo de {{ student.user.full_name }}" 
-                                                 src="{{ student.user.profile_picture_url }}">
+                                             <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
                                         </a>
                                         <div class="media-body">
                                             <span class="name mb-0 text-sm">{{ student.user.full_name }}</span>
-                                            <small class="text-muted">{{ student.user.email }}</small>
+                                            {% comment %} <small class="text-muted">{{ student.user.email }}</small> {% endcomment %}
                                             <br>
                                             <small class="text-muted">
                                                 Inscrit le {{ student.date_joined|date:"d/m/Y" }}
@@ -207,33 +221,53 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="font-weight-bold">{{ student.total_paid_sum|default:0 }}MAD</span>
+                                    <span class="font-weight-bold">{{ total_paid_amount|default:0 }}MAD</span>
                                     <br>
                                     <small class="text-muted">
                                         {{ student.payments.count }} paiement{{ student.payments.count|pluralize }}
                                     </small>
                                 </td>
+                               <td>
+    <div class="d-flex flex-wrap">
+        {% for teacher in student.current_teachers.all|slice:":3" %}
+        <div class="text-center mr-3 mb-2" style="min-width: 60px;">
+            <a href="#" data-toggle="tooltip" title="{{ teacher.user.full_name }}">
+                <img src="{% static 'assets/img/profile.png' %}" alt="{{ teacher.user.full_name }}" 
+                     style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+            </a>
+            <small class="d-block text-muted mt-1">{{ teacher.user.full_name|truncatechars:13 }}</small>
+        </div>
+        {% endfor %}
+        
+        {% if student.active_teachers_count > 3 %}
+        <div class="text-center mr-3 mb-2" style="min-width: 40px;">
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                 data-toggle="tooltip" title="{{ student.active_teachers_count }} enseignants"
+                 style="width: 40px; height: 40px;">
+                <span class="text-white small font-weight-bold">+{{ student.active_teachers_count|add:"-3" }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</td>
                                 <td>
-                                    <div class="avatar-group">
-                                        {% for teacher in student.current_teachers.all|slice:":3" %}
-                                        <a href="#" class="avatar avatar-sm" data-toggle="tooltip" 
-                                           title="{{ teacher.user.full_name }}">
-                                            <img alt="Photo de {{ teacher.user.full_name }}" 
-                                                 src="{{ teacher.user.profile_picture_url }}" 
-                                                 class="rounded-circle">
-                                        </a>
-                                        {% endfor %}
-                                        {% if student.active_teachers_count > 3 %}
-                                        <a href="#" class="avatar avatar-sm bg-primary rounded-circle" 
-                                           data-toggle="tooltip" 
-                                           title="{{ student.active_teachers_count }} enseignants">
-                                            <span class="text-white">+{{ student.active_teachers_count|add:"-3" }}</span>
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                   
+                                   {% if student.statuts == 'actif' %}
+    <span class="badge badge-success">
+        <i class="ni ni-check-circle"></i> Actif
+    </span>
+{% elif student.statuts == 'attente' %}
+    <span class="badge badge-warning">
+        <i class="ni ni-time-alarm"></i> En attente
+    </span>
+{% elif student.statuts == 'abandon' %}
+    <span class="badge badge-danger">
+        <i class="ni ni-fat-remove"></i> Abandon
+    </span>
+{% elif student.statuts == 'terminé' %}
+    <span class="badge badge-info">
+        <i class="ni ni-check-bold"></i> Terminé
+    </span>
+{% endif %}
                                 </td>
                                 <td>
                                     <div class="dropdown">

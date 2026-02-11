@@ -3,7 +3,20 @@
 {% block title %} Dashboard {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+    td .dropdown {
+    position: relative;
+}
+
+td .dropdown .dropdown-menu {
+    position: absolute;
+    transform: translateY(0) !important;
+    top: -30px !important;
+    margin-top: 0;
+}
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 <div class="container-fluid mt-6">
@@ -20,7 +33,7 @@
                             </p>
                         </div>
                         <div class="col text-right">
-                            <button class="btn btn-sm btn-primary">
+                            <button class="btn btn-sm btn-primary beta">
                                 <i class="ni ni-fat-add"></i> Ajouter un enseignant
                             </button>
                         </div>
@@ -124,13 +137,18 @@
                                 </th>
                                 <td>
                                     <div class="d-flex flex-wrap">
-                                        {% for language in teacher.languages.all|slice:":3" %}
-                                        <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
-                                        {% endfor %}
-                                        {% if teacher.languages.count > 3 %}
-                                        <span class="badge badge-secondary">+{{ teacher.languages.count|add:"-3" }}</span>
-                                        {% endif %}
-                                    </div>
+    {% if teacher.languages.all|length == 0 %}
+        <span class="badge badge-secondary mr-1 mb-1">Aucune langue disponible</span>
+    {% else %}
+        {% for language in teacher.languages.all|slice:":3" %}
+            <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
+        {% endfor %}
+        
+        {% if teacher.languages.count > 3 %}
+            <span class="badge badge-secondary">+{{ teacher.languages.count|add:"-3" }}</span>
+        {% endif %}
+    {% endif %}
+</div>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -164,23 +182,23 @@
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-neutral dropdown-toggle" type="button" 
-                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                                             Actions
                                         </button>
                                         <div class="dropdown-menu dropdown-menu-right">
                                             <a class="dropdown-item" href="{% url 'teacher_detail' teacher.id %}">
                                                 <i class="ni ni-zoom-split-in text-info"></i> Voir détails
                                             </a>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item beta" href="#" >
                                                 <i class="ni ni-single-02 text-success"></i> Voir étudiants
                                             </a>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item beta" href="#">
                                                 <i class="ni ni-calendar-grid-58 text-warning"></i> Voir séances
                                             </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">
-                                                <i class="ni ni-send text-primary"></i> Contacter
-                                            </a>
+                                            <div class="dropdown-divider beta"></div>
+                                          <a class="dropdown-item" href="mailto:{{ teacher.user.email }}">
+    <i class="ni ni-send text-primary"></i> Contacter
+</a>
                                         </div>
                                     </div>
                                 </td>
@@ -238,3 +256,15 @@
     </div>
 </div>
 {% endblock %}
+
+{% block javascripts %}
+<script>
+
+
+// jQuery fonctionne directement sur une collection
+$('.beta').click(() =>{
+    alert('Fonction en cours de développement!!!')
+})
+</script>
+
+{% endblock javascripts %}

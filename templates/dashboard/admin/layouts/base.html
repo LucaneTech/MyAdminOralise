@@ -1228,7 +1228,13 @@
   {% include "dashboard/admin/includes/scripts.html" %}
 
   <!-- Specific JS goes HERE --> 
-  {% block javascripts %}{% endblock javascripts %}
+  {% block javascripts %}
+  <script>
+    $('.beta').click(() =>{
+    alert('Fonction en cours de développement!!!')
+})
+  </script>
+  {% endblock javascripts %}
 
   <script src="/static/assets/js/argon.js?v=1.2.0"></script>
 

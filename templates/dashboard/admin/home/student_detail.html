@@ -11,9 +11,11 @@
         <div class="col-xl-4">
             <div class="card card-profile">
                 <div class="card-header bg-gradient-primary text-center py-5">
-                    <div class="avatar avatar-xl rounded-circle border-0">
-                        <img src="{{ student.user.profile_picture_url }}" alt="{{ student.user.full_name }}">
-                    </div>
+                    
+                        <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 100px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
+                    
                 </div>
                 <div class="card-body pt-0">
                     <div class="text-center mt-4">
@@ -28,15 +30,23 @@
                             <span class="badge badge-pill badge-primary">
                                 <i class="ni ni-badge"></i> {{ student.matricule }}
                             </span>
-                            {% if student.hours_remaining > 0 %}
-                            <span class="badge badge-pill badge-success">
-                                <i class="ni ni-check-bold"></i> Actif
-                            </span>
-                            {% else %}
-                            <span class="badge badge-pill badge-danger">
-                                <i class="ni ni-fat-remove"></i> Inactif
-                            </span>
-                            {% endif %}
+                           {% if student.statuts == 'actif' %}
+    <span class="badge badge-success">
+        <i class="ni ni-check-circle"></i> Actif
+    </span>
+{% elif student.statuts == 'attente' %}
+    <span class="badge badge-warning">
+        <i class="ni ni-time-alarm"></i> En attente
+    </span>
+{% elif student.statuts == 'abandon' %}
+    <span class="badge badge-danger">
+        <i class="ni ni-fat-remove"></i> Abandon
+    </span>
+{% elif student.statuts == 'terminé' %}
+    <span class="badge badge-info">
+        <i class="ni ni-check-bold"></i> Terminé
+    </span>
+{% endif %}
                         </div>
                     </div>
                     <div class="mt-4">
@@ -147,9 +157,9 @@
                                 <div class="card-body">
                                     <div class="row align-items-center">
                                         <div class="col-auto">
-                                            <img src="{{ teacher.user.profile_picture_url }}" 
-                                                 alt="{{ teacher.user.full_name }}" 
-                                                 class="avatar rounded-circle">
+                                           <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
+                 border-radius: 50%;
+                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
                                         </div>
                                         <div class="col">
                                             <h6 class="mb-0">{{ teacher.user.full_name }}</h6>

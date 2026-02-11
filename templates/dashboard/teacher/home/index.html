@@ -109,7 +109,7 @@
                     <th scope="col">Langue</th>
                     <th scope="col">Durée</th>
                     <th scope="col">Statut</th>
-                    <th scope="col">Action</th>
+                    
                   </tr>
                 </thead>
                 <tbody>
@@ -132,19 +132,7 @@
                         {{ session.get_status_display }}
                       </span>
                     </td>
-                    <td>
-                      <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-success session-status-btn" data-session-id="{{ session.id }}" data-status="completed">
-                          <i class="ni ni-check-bold"></i> Terminée
-                        </button>
-                        <button type="button" class="btn btn-sm btn-warning session-status-btn" data-session-id="{{ session.id }}" data-status="rescheduled">
-                          <i class="ni ni-calendar-grid-58"></i> Reporter
-                        </button>
-                        <button type="button" class="btn btn-sm btn-danger session-status-btn" data-session-id="{{ session.id }}" data-status="absent">
-                          <i class="ni ni-fat-remove"></i> Absence
-                        </button>
-                      </div>
-                    </td>
+                    
                   </tr>
                   {% empty %}
                   <tr>

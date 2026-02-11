@@ -217,7 +217,7 @@
               <h3 class="mb-0">Évaluations récentes</h3>
             </div>
             <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary">Voir tout</a>
+              <a href="#" class="btn btn-sm btn-primary beta">Voir tout</a>
             </div>
           </div>
         </div>
@@ -244,7 +244,7 @@
               <h3 class="mb-0">Certificats récents</h3>
             </div>
             <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary">Voir tout</a>
+              <a href="#" class="btn btn-sm btn-primary beta ">Voir tout</a>
             </div>
           </div>
         </div>
@@ -269,7 +269,7 @@
     </div>
   </div>
 
-  {% if unread_notifications %}
+  {% comment %} {% if unread_notifications %}
   <div class="row">
     <div class="col-xl-12">
       <div class="card">
@@ -295,7 +295,7 @@
       </div>
     </div>
   </div>
-  {% endif %}
+  {% endif %} {% endcomment %}
 </div>
 
 {% endblock content %}
