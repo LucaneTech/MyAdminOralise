@@ -54,9 +54,9 @@ class ProfileAdmin(admin.ModelAdmin):
      
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ('user__username','user__email', 'speciality', 'date_joined', 'is_available')
-    list_filter = ('is_available', 'languages')
-    search_fields = ('user__first_name', 'user__last_name', 'speciality')
+    list_display = ('user__username','user__email', 'speciality', 'date_joined', 'statut')
+    list_filter = ('statut', 'languages')
+    search_fields = ('user__first_name', 'user__last_name', 'speciality' 'statut')
 
 
 
@@ -69,9 +69,9 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('student', 'amount', 'hours_purchased', 'payment_type', 'status', 'payment_date')
-    list_filter = ('status', 'payment_type', 'payment_date')
-    search_fields = ('student__user__first_name', 'student__user__last_name')
+    list_display = ('student', 'amount', 'hours_purchased', 'payment_type', 'status', 'payment_date', 'languages')
+    list_filter = ('status', 'payment_type', 'payment_date', 'languages')
+    search_fields = ('student__user__first_name', 'student__user__last_name', 'languages')
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):

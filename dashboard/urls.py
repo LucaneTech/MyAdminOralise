@@ -61,7 +61,7 @@ urlpatterns = [
     
     path('teacher/assignments/', teacher_assignments, name='teacher_assignments'),
     path('teacher/students/', teacher_students, name='teacher_students'),
-    path('teacher/students/<int:student_id>/', teacher_student_detail, name='student_detail'),
+    path('teacher/students/<int:student_id>/', teacher_student_detail, name='teacher_student_detail'),
     path('teacher/export-students/', export_students_csv, name='export_students'),
     
     path('teacher/resources/',teacher_resources_dashboard, name='teacher_resources_dashboard'),

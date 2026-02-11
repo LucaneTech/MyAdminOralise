@@ -203,6 +203,7 @@
                                 <th scope="col">Heures achetées</th>
                                 <th scope="col">Type</th>
                                 <th scope="col">Statut</th>
+                                <th scope="col">Langue</th>
                                 <th scope="col">Facture</th>
                             </tr>
                         </thead>
@@ -217,10 +218,22 @@
                                 <td>
                                     <span class="badge badge-default">{{ payment.get_payment_type_display }}</span>
                                 </td>
+                                
                                 <td>
                                     <span class="badge badge-{{ payment.status_color }}">
                                         {{ payment.get_status_display }}
                                     </span>
+                                </td>
+                                 <td>
+                                   {% if payment.languages|lower in "français,french, Français, Francais, francais" %}
+    <span class="badge badge-success">
+        {{ payment.languages }}
+    </span>
+{% elif payment.languages|lower in "anglais,english, Anglais" %}
+    <span class="badge badge-primary">
+        {{ payment.languages }}
+    </span>
+{% endif %}
                                 </td>
                                 <td>
                                     {% if payment.invoice_number %}

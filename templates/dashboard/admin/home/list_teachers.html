@@ -169,13 +169,23 @@ td .dropdown .dropdown-menu {
                                     </div>
                                 </td>
                                 <td>
-                                    {% if teacher.is_available %}
+                                    {% if teacher.statut == 'disponible' %}
                                     <span class="badge badge-success">
                                         <i class="ni ni-check-bold"></i> Disponible
                                     </span>
-                                    {% else %}
+                                    {% elif  teacher.statut == 'conge'%}
                                     <span class="badge badge-danger">
-                                        <i class="ni ni-fat-remove"></i> Indisponible
+                                        <i class="ni ni-fat-remove"></i> En congé
+                                    </span>
+
+                                    {% elif  teacher.statut == 'plein'%}
+                                    <span class="badge badge-primary">
+                                        <i class="ni ni-fat-remove"></i> Plein
+                                    </span>
+
+                                    {% elif  teacher.statut == 'inactif'%}
+                                    <span class="badge badge-danger">
+                                        <i class="ni ni-fat-remove"></i> Inactif
                                     </span>
                                     {% endif %}
                                 </td>

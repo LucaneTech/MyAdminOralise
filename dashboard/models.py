@@ -16,6 +16,8 @@ class CustomUser(AbstractUser):
         ('student', 'Student'),
     )
 
+   
+
     role = models.CharField(
         max_length=20, 
         choices=ROLE_CHOICES,
@@ -210,6 +212,13 @@ def generate_student_matricule(sender, instance, **kwargs):
 
 # Enseignant
 class Teacher(models.Model):
+    STATUT_CHOICES = (
+        ('disponible', 'Disponible'),
+        ('conge', 'En congé'),
+        ('plein', 'Plein'),
+         ('inactif', 'Inactif')
+    )
+     
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE,
@@ -219,6 +228,9 @@ class Teacher(models.Model):
         max_length=100,
         verbose_name="spécialité"
     )
+    statut = models.CharField(  max_length=20, 
+        choices=STATUT_CHOICES,
+        verbose_name="statut")
     date_joined = models.DateField(
         default=timezone.now,
         verbose_name="date d'inscription"
@@ -234,10 +246,7 @@ class Teacher(models.Model):
         default=0,
         verbose_name="taux horaire"
     )
-    is_available = models.BooleanField(
-        default=True,
-        verbose_name="disponible"
-    )
+   
     
     class Meta:
         verbose_name = "enseignant"
@@ -549,6 +558,8 @@ class Payment(models.Model):
         choices=PAYMENT_TYPES,
         verbose_name="type de paiement"
     )
+    languages = models.ForeignKey(Language, on_delete=models.CASCADE, related_name='payments_language')
+    
     status = models.CharField(
         max_length=20, 
         choices=STATUS_CHOICES, 

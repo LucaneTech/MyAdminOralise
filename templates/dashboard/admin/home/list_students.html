@@ -90,7 +90,7 @@ td .dropdown .dropdown-menu {
                     <div class="row">
                         <div class="col">
                             <h5 class="card-title text-uppercase text-muted mb-0">Revenu total</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_revenue | default:0 }} MAD</span>
+                            <span class="h2 font-weight-bold mb-0">{{ total_paid_sum | default:0 }} MAD</span>
                         </div>
                         <div class="col-auto">
                             <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
@@ -221,7 +221,7 @@ td .dropdown .dropdown-menu {
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="font-weight-bold">{{ total_paid_amount|default:0 }}MAD</span>
+                                    <span class="font-weight-bold">{{ student.total_paid_amount|floatformat:2 |default:0 }}MAD</span>
                                     <br>
                                     <small class="text-muted">
                                         {{ student.payments.count }} paiement{{ student.payments.count|pluralize }}
@@ -343,6 +343,8 @@ td .dropdown .dropdown-menu {
         </div>
     </div>
 </div>
+
+
 
 <style>
 .progress-wrapper {

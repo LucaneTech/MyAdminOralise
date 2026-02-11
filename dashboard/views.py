@@ -195,7 +195,7 @@ def teacher_view(request, username=None):
             "languages": teacher.languages.all(),
             "total_students": Student.objects.filter(current_teachers=teacher).count(),
             "hourly_rate": teacher.hourly_rate,
-            "is_available": teacher.is_available,
+           
         }
 
         # Emploi du temps avec filtres par langue
