@@ -162,7 +162,6 @@ class Student(models.Model):
     )
     current_teachers =  models.ManyToManyField(
         'Teacher', 
-        null=True,
         blank=True, 
         related_name='current_students',
         verbose_name="enseignants actuels"  
@@ -230,7 +229,9 @@ class Teacher(models.Model):
     )
     statut = models.CharField(  max_length=20, 
         choices=STATUT_CHOICES,
-        verbose_name="statut")
+        verbose_name="statut",
+        default='disponible'
+        )
     date_joined = models.DateField(
         default=timezone.now,
         verbose_name="date d'inscription"
@@ -558,7 +559,7 @@ class Payment(models.Model):
         choices=PAYMENT_TYPES,
         verbose_name="type de paiement"
     )
-    languages = models.ForeignKey(Language, on_delete=models.CASCADE, related_name='payments_language')
+    languages = models.ForeignKey(Language, on_delete=models.CASCADE, related_name='payments_language', blank=True, null=True)
     
     status = models.CharField(
         max_length=20, 
@@ -742,7 +743,8 @@ class Resource(models.Model):
         Teacher,
         on_delete=models.CASCADE,
         related_name='teachers_resources',
-        verbose_name="enseignant responsable"
+        verbose_name="enseignant responsable",
+        blank=True
     )
     
     is_visible = models.BooleanField(
