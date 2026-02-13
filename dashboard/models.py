@@ -305,15 +305,14 @@ class Schedule(models.Model):
     )
     student = models.ForeignKey(
         Student, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        on_delete=models.CASCADE,  
         blank=True,
         verbose_name="étudiant"
     )
     teacher = models.ForeignKey(
         Teacher, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        on_delete=models.CASCADE, 
+       
         blank=True,
         verbose_name="enseignant"
     )
@@ -559,7 +558,7 @@ class Payment(models.Model):
         choices=PAYMENT_TYPES,
         verbose_name="type de paiement"
     )
-    languages = models.ForeignKey(Language, on_delete=models.CASCADE, related_name='payments_language', blank=True, null=True)
+    languages = models.ForeignKey(Language, on_delete=models.CASCADE, related_name='payments_language', blank=True,)
     
     status = models.CharField(
         max_length=20, 
@@ -803,7 +802,6 @@ class Request(models.Model):
         Teacher, 
         on_delete=models.CASCADE, 
         related_name='received_requests', 
-        null=True, 
         blank=True,
         verbose_name="enseignant"
     )
