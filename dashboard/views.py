@@ -386,31 +386,13 @@ def resources_view(request):
     if user.role == "student":
         student = get_object_or_404(Student, user=user)
         teachers = student.current_teachers.all()
-        
+        resources = Resource.objects.filter(students = student)
         # Obtenir les langues de l'étudiant
         student_languages = student.languages.all()  # Supposons que Student a un champ languages
         
         now = timezone.now()
         
-        resources = Resource.objects.filter(
-            is_visible=True,
-        ).filter(
-            Q(valid_until__isnull=True) | Q(valid_until__gte=now)
-        ).filter(
-            # Logique d'accès basée sur le type d'accès
-            Q(
-                # Cas 1: Ressources accessibles à tous les étudiants
-                Q(teachers__in=teachers) &
-                Q(languages__in=student_languages)  # Filtre par les langues de l'étudiant
-            ) |
-            # Cas 2: Ressources spécifiques à certains étudiants
-            Q(
-                Q(students=student) &  # L'étudiant est dans la liste
-                Q(teachers__in=teachers) &
-                Q(languages__in=student_languages)
-            ) 
-         
-        ).distinct()
+        
         
         # Comptage pour statistiques
         total_resources = resources.count()
@@ -445,7 +427,6 @@ from django.utils import timezone
 
 @login_required
 def teacher_resources_dashboard(request):
-    """Tableau de bord des ressources avec modals"""
     user = request.user
     
     # Vérification du rôle

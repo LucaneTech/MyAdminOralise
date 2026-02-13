@@ -53,6 +53,21 @@
                             {% if not resource.is_visible %}
                                 <span class="badge badge-warning">Masquée</span>
                             {% endif %}
+
+                            {% if resource.languages.exists %}
+    {% for lang in resource.languages.all %}
+        {% with lang.name|lower as lname %}
+            {% if lname == "français" or lname == "francais" %}
+                <span class="badge badge-info">{{ lang.name }}</span>
+            {% elif lname == "anglais" %}
+                <span class="badge badge-primary">{{ lang.name }}</span>
+            {% endif %}
+        {% endwith %}
+    {% endfor %}
+{% endif %}
+
+
+                            
                         </div>
                         
                         <h5 class="card-title mb-2">{{ resource.title|truncatechars:40 }}</h5>
@@ -86,10 +101,10 @@
                     </div>
                     
                     {% if resource.students.exists %}
-                    <div class="card-footer bg-light py-2 small">
+                    <div class="card-footer bg-success py-2 small">
                         
                         {% for student in resource.students.all|slice:":3" %}
-                           <div>
+                           <div  class="text-white ">
                             <span><i class="fas fa-user-graduate mr-1"></i> {{ student.user.first_name }}{% if not forloop.last %}, {% endif %}</span>
                            
                            </div>
@@ -98,6 +113,8 @@
                         {% if resource.students.count > 3 %}...{% endif %}
                     </div>
                     {% endif %}
+
+                    
                 </div>
             </div>
             

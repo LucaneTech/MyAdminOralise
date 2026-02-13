@@ -43,7 +43,7 @@ class CustomUser(AbstractUser):
     def profile_picture_url(self):
         if hasattr(self, 'user_profile') and self.user_profile.profile_picture:
             return self.user_profile.profile_picture.url
-        return static('profile_pics/profile.png')
+        return static('profile.png')
 
 
 

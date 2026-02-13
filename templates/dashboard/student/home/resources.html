@@ -52,7 +52,7 @@
                 </div>
                 <div class="card-body">
                     {% if resources %}
-                        <!-- Filtres rapides -->
+                        {% comment %} <!-- Filtres rapides -->
                         <div class="mb-4">
                             <div class="btn-group btn-group-sm" role="group">
                                 <a href="?type=all" class="btn btn-outline-primary {% if not request.GET.type or request.GET.type == 'all' %}active{% endif %}">
@@ -68,7 +68,7 @@
                                     Liens
                                 </a>
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                         
                         <!-- Tableau optimisé -->
                         <div class="table-responsive">
@@ -79,6 +79,7 @@
                                         <th width="15%">Type</th>
                                         <th width="30%">Description</th>
                                         <th width="15%">Langues</th>
+                                        <th width="15%">Enseignant(e)</th>
                                         <th width="15%">Actions</th>
                                     </tr>
                                 </thead>
@@ -128,6 +129,9 @@
                                         </td>
                                         <td>
                                             {{ resource.languages.all|language_badges }}
+                                        </td>
+                                         <td>
+                                           Mme/Mr {{ resource.teachers.user.full_name }}
                                         </td>
                                         <td>
                                             {{ resource|resource_actions }}
