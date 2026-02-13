@@ -43,16 +43,16 @@
           justify-content: center;
           align-items: center;
          ">
-                {% if form.instance.profile_picture %}
+                {% comment %} {% if form.instance.profile_picture %}
                 <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
                   id="profile-picture-preview" class="current-profile-picture">
-                {% else %}
+                {% else %} {% endcomment %}
                 <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
                  border-radius: 50%;
                  box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062);
                  ">
 
-                {% endif %}
+                {% comment %} {% endif %} {% endcomment %}
 
               </div>
 
