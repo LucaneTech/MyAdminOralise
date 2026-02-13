@@ -170,17 +170,17 @@
           justify-content: center;
           align-items: center;
          ">
-                {% if form.instance.profile_picture %}
+                {% comment %} {% if form.instance.profile_picture %}
                 <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
                   id="profile-picture-preview" class="current-profile-picture">
-                {% else %}
+                {% else %} {% endcomment %}
                 <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 100px;
                  border-radius: 50%;
                  box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062);
                  margin-bottom: 15px;
                  margin-top: 15px;">
 
-                {% endif %}
+                {% comment %} {% endif %} {% endcomment %}
 
               </div>
         <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
@@ -229,18 +229,18 @@
             <div class="form-group profile-picture-group">
               <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Photo de profil</label>
               <div class="profile-picture-preview">
-                {% if form.instance.profile_picture %}
+                {% comment %} {% if form.instance.profile_picture %}
                 <img src="{{ form.instance.profile_picture.url }}" alt="Photo de profil actuelle"
                   id="profile-picture-preview" class="current-profile-picture">
-                {% else %}
+                {% else %} {% endcomment %}
                 <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" class="img-fluid">
 
-                {% endif %}
+                {% comment %} {% endif %} {% endcomment %}
 
               </div>
-              <input type="file" name="{{ form.profile_picture.name }}" id="{{ form.profile_picture.id_for_label }}"
+              {% comment %} <input type="file" name="{{ form.profile_picture.name }}" id="{{ form.profile_picture.id_for_label }}"
                 class="form-input profile-picture-input" accept="image/*">
-              <small class="form-help">Format JPG, PNG ou GIF. Taille max: 5MB.</small>
+              <small class="form-help">Format JPG, PNG ou GIF. Taille max: 5MB.</small> {% endcomment %}
             </div>
 
             <!-- Ville -->

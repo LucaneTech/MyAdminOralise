@@ -1,0 +1,104 @@
+
+
+<!-- Modal de création de ressource -->
+<div class="modal fade" id="createResourceModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus mr-2"></i>Nouvelle ressource
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <form method="post" action="{% url 'resource_create' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="text" value="{{teacher.id}} " class="hidden d-none" name="teachers">
+                <div class="modal-body">
+                    <!-- Titre -->
+                    <div class="form-group">
+                        <label>Titre *</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Type *</label>
+                                <select name="resource_type" class="form-control" required>
+                                    <option value="document">Document</option>
+                                    <option value="video">Vidéo</option>
+                                    <option value="link">Lien</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+                       
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fichier</label>
+                                <div class="custom-file">
+                                    <input type="file" name="file" class="custom-file-input" id="createFile">
+                                    <label class="custom-file-label" for="createFile">Choisir un fichier...</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>URL</label>
+                                <input type="url" name="url" class="form-control" placeholder="https://...">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Étudiants *</label>
+                                
+                                <select name="students" class="form-control" required>
+                                    {% for student in teacher.current_students.all %}
+                                    <option value="{{ student.id }}">{{ student.user.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Langues *</label>
+<select name="languages" class="form-control" required>
+                                    {% for language in teacher.languages.all %}
+                                    <option value="{{ language.id }}">{{ language.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" name="is_visible" class="form-check-input" id="createIsVisible" checked>
+                        <label class="form-check-label" for="createIsVisible">
+                            Rendre visible aux étudiants
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Créer la ressource</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

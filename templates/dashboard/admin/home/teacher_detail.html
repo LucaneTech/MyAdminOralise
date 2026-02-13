@@ -31,15 +31,25 @@
                             <span class="badge badge-pill badge-primary">
                                 <i class="ni ni-badge"></i> Enseignant
                             </span>
-                            {% if teacher.is_available %}
-                            <span class="badge badge-pill badge-success">
-                                <i class="ni ni-check-bold"></i> Disponible
-                            </span>
-                            {% else %}
-                            <span class="badge badge-pill badge-danger">
-                                <i class="ni ni-fat-remove"></i> Indisponible
-                            </span>
-                            {% endif %}
+                            {% if teacher.statut == 'disponible' %}
+                                    <span class="badge badge-success">
+                                        <i class="ni ni-check-bold"></i> Disponible
+                                    </span>
+                                    {% elif  teacher.statut == 'conge'%}
+                                    <span class="badge badge-danger">
+                                        <i class="ni ni-fat-remove"></i> En congé
+                                    </span>
+
+                                    {% elif  teacher.statut == 'plein'%}
+                                    <span class="badge badge-primary">
+                                        <i class="ni ni-fat-remove"></i> Plein
+                                    </span>
+
+                                    {% elif  teacher.statut == 'inactif'%}
+                                    <span class="badge badge-danger">
+                                        <i class="ni ni-fat-remove"></i> Inactif
+                                    </span>
+                                    {% endif %}
                         </div>
                     </div>
                     <div class="mt-4">

@@ -165,7 +165,7 @@
                   {% endfor %}
                 </select>
               </div>
-              <a href="{% url 'teacher_sessions' %}" class="btn btn-primary btn-block">Voir l'emploi du temps</a>
+              <a href="{% url 'teacher_schedule' %}" class="btn btn-primary btn-block">Voir l'emploi du temps</a>
             </div>
           </div>
         </div>
@@ -252,7 +252,7 @@
       </div>
       {% endif %}
       
-      {% if unread_notifications %}
+      {% comment %} {% if unread_notifications %}
       <div class="row">
         <div class="col-xl-12">
           <div class="card">
@@ -280,7 +280,7 @@
           </div>
         </div>
       </div>
-      {% endif %}
+      {% endif %} {% endcomment %}
     </div>
 
 {% endblock content %}

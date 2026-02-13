@@ -93,9 +93,9 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(Resource)
 class ResourceAdmin(admin.ModelAdmin):
-    list_display = ('teachers', 'title', 'access_type', 'resource_type', 'created_at')
+    list_display = ('teachers', 'title', 'resource_type', 'created_at')
     list_filter = ('teachers', 'resource_type')
-    fields = ('teachers', 'title', 'description', 'file', 'url', 'resource_type', 'access_type', 'students', 'languages', 'is_visible')
+    fields = ('teachers', 'title', 'description', 'file', 'url', 'resource_type', 'students', 'languages', 'is_visible')
     readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(Request)

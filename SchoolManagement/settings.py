@@ -1,5 +1,6 @@
 from pathlib import Path
 import dj_database_url
+from datetime import datetime
 from dotenv import load_dotenv
 import os
 from django.contrib.messages import constants as messages
@@ -24,91 +25,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://monespace.oralise.pro",
     "http://127.0.0.1:8000",
 ]
-# ============================================
-# CONFIGURATION BLACKBLAZE B2 - VERSION SIMPLIFIÉE
-# ============================================
 
-# Variables B2 depuis l'environnement
-B2_APPLICATION_KEY_ID = os.getenv('B2_APPLICATION_KEY_ID')
-B2_APPLICATION_KEY = os.getenv('B2_APPLICATION_KEY')
-B2_BUCKET_NAME = os.getenv('B2_BUCKET_NAME')
-B2_REGION = os.getenv('B2_REGION', 'eu-central-003')
 
-# Détection de l'environnement
-USE_B2 = all([B2_APPLICATION_KEY_ID, B2_APPLICATION_KEY, B2_BUCKET_NAME])
 
-# Configuration pour le développement
-if not DEBUG:
-    print("🖥️  Mode développement - stockage local")
-    
-    # Stockage local pour les médias
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    
-    # Configuration des storages
-    STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-        },
-    }
-    
-# Configuration pour la production (Railway + B2)
-elif USE_B2 and ( DEBUG ):
-    print("☁️  Configuration Blackblaze B2 activée")
-    
-    # Configuration AWS-compatible pour B2
-    AWS_ACCESS_KEY_ID = B2_APPLICATION_KEY_ID
-    AWS_SECRET_ACCESS_KEY = B2_APPLICATION_KEY
-    AWS_STORAGE_BUCKET_NAME = B2_BUCKET_NAME
-    AWS_S3_REGION_NAME = B2_REGION
-    
-    # ENDPOINT B2 - IMPORTANT !
-    AWS_S3_ENDPOINT_URL = f'https://s3.{B2_REGION}.backblazeb2.com'
-    
-    # Configuration B2 spécifique
-    AWS_S3_ADDRESSING_STYLE = 'virtual'
-    AWS_DEFAULT_ACL = None  # B2 ne supporte pas les ACLs
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_QUERYSTRING_AUTH = True  # Pour les URLs signées
-    
-    # Custom domain
-    B2_CUSTOM_DOMAIN = os.getenv('B2_CUSTOM_DOMAIN', f'{B2_BUCKET_NAME}.s3.{B2_REGION}.backblazeb2.com')
-    AWS_S3_CUSTOM_DOMAIN = B2_CUSTOM_DOMAIN
-    
-    # Cache
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-    
-    # Configuration SIMPLIFIÉE - pas de classe custom
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-            "OPTIONS": {
-                "access_key": AWS_ACCESS_KEY_ID,
-                "secret_key": AWS_SECRET_ACCESS_KEY,
-                "bucket_name": AWS_STORAGE_BUCKET_NAME,
-                "endpoint_url": AWS_S3_ENDPOINT_URL,
-                "file_overwrite": False,
-                "querystring_auth": True,
-                "default_acl": None,
-                "location": "media",
-            },
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        },
-    }
-    
-    # URLs pour les médias
-    MEDIA_URL = f'https://{B2_CUSTOM_DOMAIN}/media/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     
 
-    
-    
 INSTALLED_APPS = [
     # customise django-admin with django-jazzmin
     "jazzmin",
@@ -371,10 +294,6 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = "Oralise <contact@oralise.pro>"
-
-
-# current year
-from datetime import datetime
 
 
 def current_year(request):

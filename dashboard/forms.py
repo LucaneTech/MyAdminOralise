@@ -85,14 +85,12 @@ class CustomResetPasswordForm(ResetPasswordForm):
         
   
 
-class ResourceForm(forms.ModelForm):
-    """Formulaire pour créer/modifier des ressources"""
-    
+class ResourceForm(forms.ModelForm):    
     class Meta:
         model = Resource
         fields = [
             'title', 'description', 'resource_type', 'file', 'url',
-            'access_type', 'students', 'languages', 'valid_until', 'is_visible'
+            'students', 'teachers', 'languages', 'valid_until', 'is_visible'
         ]
         widgets = {
             'title': forms.TextInput(attrs={
@@ -114,13 +112,11 @@ class ResourceForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'https://exemple.com'
             }),
-            'access_type': forms.Select(attrs={
-                'class': 'form-control'
-            }),
             'students': forms.SelectMultiple(attrs={
                 'class': 'form-control select2-multiple',
                 'data-placeholder': 'Sélectionnez des étudiants...'
             }),
+            'teachers':forms.TextInput(),
             'languages': forms.SelectMultiple(attrs={
                 'class': 'form-control select2-multiple',
                 'data-placeholder': 'Sélectionnez des langues...'
@@ -160,7 +156,6 @@ class ResourceForm(forms.ModelForm):
         cleaned_data = super().clean()
         file = cleaned_data.get('file')
         url = cleaned_data.get('url')
-        access_type = cleaned_data.get('access_type')
         students = cleaned_data.get('students')
         
         # Validation fichier/URL
@@ -174,13 +169,6 @@ class ResourceForm(forms.ModelForm):
                 "Veuillez fournir soit un fichier, soit une URL, pas les deux."
             )
         
-        # Validation du type d'accès
-        if access_type == 'specific_students' and not students:
-            raise forms.ValidationError(
-                "Pour le type d'accès 'Étudiants spécifiques', "
-                "vous devez sélectionner au moins un étudiant."
-            )
-        
         # Validation de la date d'expiration
         valid_until = cleaned_data.get('valid_until')
         if valid_until and valid_until < timezone.now():
@@ -189,96 +177,6 @@ class ResourceForm(forms.ModelForm):
             )
         
         return cleaned_data
-
-
-class ResourceFilterForm(forms.Form):
-    """Formulaire de filtrage des ressources"""
-    resource_type = forms.ChoiceField(
-        choices=[('', 'Tous les types')] + Resource.RESOURCE_TYPES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    language = forms.ModelChoiceField(
-        queryset=Language.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    student = forms.ModelChoiceField(
-        queryset=Student.objects.none(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    access_type = forms.ChoiceField(
-        choices=[('', 'Tous les types')] + Resource.ACCESS_TYPES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    is_visible = forms.ChoiceField(
-        choices=[('', 'Tous'), ('true', 'Visible'), ('false', 'Masqué')],
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    search = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Rechercher...'
-        })
-    )
-    date_from = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'class': 'form-control',
-            'type': 'date'
-        })
-    )
-    date_to = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'class': 'form-control',
-            'type': 'date'
-        })
-    )
-    
-    def __init__(self, *args, **kwargs):
-        teacher = kwargs.pop('teacher', None)
-        super().__init__(*args, **kwargs)
-        
-        if teacher:
-            self.fields['student'].queryset = Student.objects.filter(
-                current_teachers=teacher
-            )
-
-
-class BulkAssignForm(forms.Form):
-    """Formulaire pour assigner plusieurs ressources à plusieurs étudiants"""
-    resources = forms.ModelMultipleChoiceField(
-        queryset=Resource.objects.none(),
-        widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multiple',
-            'data-placeholder': 'Sélectionnez des ressources...'
-        })
-    )
-    students = forms.ModelMultipleChoiceField(
-        queryset=Student.objects.none(),
-        widget=forms.SelectMultiple(attrs={
-            'class': 'form-control select2-multiple',
-            'data-placeholder': 'Sélectionnez des étudiants...'
-        })
-    )
-    
-    def __init__(self, *args, **kwargs):
-        teacher = kwargs.pop('teacher', None)
-        super().__init__(*args, **kwargs)
-        
-        if teacher:
-            self.fields['resources'].queryset = Resource.objects.filter(
-                teachers=teacher,
-                access_type='all_students'  # Seulement les ressources générales
-            )
-            self.fields['students'].queryset = Student.objects.filter(
-                current_teachers=teacher
-            ) 
 
 
       

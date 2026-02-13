@@ -694,11 +694,7 @@ class Resource(models.Model):
         ('other', 'Autre')
     ]
     
-    ACCESS_TYPES = [
-        ('all_students', 'Tous les étudiants'),
-        ('specific_students', 'Étudiants spécifiques'),
-        ('course_students', 'Étudiants d\'un cours spécifique'),
-    ]
+  
     
     title = models.CharField(
         max_length=200,
@@ -725,13 +721,6 @@ class Resource(models.Model):
         verbose_name="type de ressource"
     )
     
-    # Nouvelles relations pour cibler les étudiants
-    access_type = models.CharField(
-        max_length=20,
-        choices=ACCESS_TYPES,
-        default='all_students',
-        verbose_name="type d'accès"
-    )
     
     # Relation ManyToMany avec les étudiants
     students = models.ManyToManyField(
@@ -756,7 +745,6 @@ class Resource(models.Model):
         verbose_name="enseignant responsable"
     )
     
-    # Métadonnées
     is_visible = models.BooleanField(
         default=True,
         verbose_name="visible"
@@ -781,10 +769,6 @@ class Resource(models.Model):
         ordering = ['-created_at']
         verbose_name = "ressource pédagogique"
         verbose_name_plural = "ressources pédagogiques"
-        permissions = [
-            ('assign_resource', 'Peut assigner des ressources aux étudiants'),
-            ('manage_resource', 'Peut gérer toutes les ressources'),
-        ]
 
     def __str__(self):
         return f"{self.teachers.user.get_full_name()} - {self.title}"

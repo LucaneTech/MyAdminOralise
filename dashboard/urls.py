@@ -12,23 +12,28 @@ from .views import (
     delete_schedule,
     delete_student_session_by_id,
     edit_schedule,
-    
     filter_schedule,
-    get_resource_details,
-    get_resource_form,
-  
+    resource_create,
+    resource_delete,
+    resource_edit,
+    
+    #ressources views
+    resources_view,
+    teacher_resources_dashboard,
+ 
+    
     load_schedule_week,
     notifications_mark_all_read,
     profile_view, 
     dashboard_view, profile_edit,
     quick_add_schedule, schedule_view,
-    resources_view,resources_add, requests_view, 
+    requests_view, 
 
     settings_view,
     student_detail_view,
     teacher_detail_view,
 
-    teacher_resources_dashboard,
+    
     teacher_schedule_view, teacher_view, teacher_courses, 
     teacher_assignments, teacher_students,
     api_filter_students, api_filter_assignments,
@@ -36,7 +41,7 @@ from .views import (
     evaluations_view, notifications_view, payments_view,
     teacher_sessions_view, student_sessions_view,
   teacher_evaluations_add, 
-    teacher_resources_add_student, evaluation_edit,
+    evaluation_edit,
     export_students_csv, teacher_student_detail,
     update_request_status,
     update_request_status, 
@@ -65,8 +70,11 @@ urlpatterns = [
     path('teacher/export-students/', export_students_csv, name='export_students'),
     
     path('teacher/resources/',teacher_resources_dashboard, name='teacher_resources_dashboard'),
-    path('teacher/resources/details/<int:resource_id>/', get_resource_details, name='get_resource_details'),
-    path('teacher/resources/add/', get_resource_form, name='get_resource_form'),
+    path('ressources/create/', resource_create, name='resource_create'),
+    path('ressources/<int:resource_id>/update/', resource_edit, name='resource_edit'),
+    path('ressources/<int:resource_id>/delete/', resource_delete, name='resource_delete'),
+   
+  
     
     
     path('teacher/sessions/', teacher_sessions_view, name='teacher_sessions'),

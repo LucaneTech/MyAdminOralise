@@ -1,4 +1,3 @@
-<!-- dashboard/teacher/resources/dashboard.html -->
 {% extends "dashboard/teacher/layouts/base.html" %}
 {% load static %}
 
@@ -7,804 +6,142 @@
 {% block stylesheets %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-.resource-card {
-    transition: all 0.3s ease;
-    border: 1px solid #e9ecef;
-}
-.resource-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    border-color: #147a81;
-}
-.resource-actions {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.resource-card:hover .resource-actions {
-    opacity: 1;
-}
-.badge-access {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-}
-.resource-thumbnail {
-    height: 120px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid #e9ecef;
-}
-.resource-thumbnail i {
-    font-size: 3rem;
-    opacity: 0.7;
-}
-.select2-container {
-    width: 100% !important;
-}
+    .resource-card {
+        transition: transform 0.2s;
+        border: 1px solid #e9ecef;
+    }
+    .resource-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .modal-lg {
+        max-width: 800px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Header -->
 <div class="header bg-primary pb-6">
     <div class="container-fluid">
         <div class="header-body">
             <div class="row align-items-center py-4">
                 <div class="col-lg-6 col-7">
-                
-                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item"><a href="{% url 'dashboard_home' %}"><i class="fas fa-home"></i></a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Ressources</li>
-                        </ol>
-                    </nav>
+                    <h1 class="text-white">Ressources pédagogiques</h1>
                 </div>
                 <div class="col-lg-6 col-5 text-right">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-success" id="createResourceBtn">
-                            <i class="fas fa-plus"></i> Nouvelle ressource
-                        </button>
-                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#chooseStudentModal">
-                            <i class="fas fa-user-plus"></i> Pour un étudiant
-                        </button>
-                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#bulkAssignModal">
-                            <i class="fas fa-users"></i> Assigner en masse
-                        </button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#createResourceModal">
+                        <i class="fas fa-plus mr-2"></i>Nouvelle ressource
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <!-- Liste des ressources -->
+    <div class="row">
+        {% if resources %}
+            {% for resource in resources %}
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card resource-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge badge-{% if resource.resource_type == 'document' %}primary{% elif resource.resource_type == 'video' %}danger{% else %}success{% endif %}">
+                                {{ resource.get_resource_type_display }}
+                            </span>
+                            {% if not resource.is_visible %}
+                                <span class="badge badge-warning">Masquée</span>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="card-title mb-2">{{ resource.title|truncatechars:40 }}</h5>
+                        <p class="card-text small text-muted mb-3">{{ resource.description|truncatewords:15 }}</p>
+                        
+                        <div class="small text-muted mb-3">
+                            <i class="fas fa-calendar mr-1"></i>{{ resource.created_at|date:"d/m/Y" }}
+                            {% if resource.valid_until %}
+                                <br><i class="fas fa-clock mr-1"></i>Expire le {{ resource.valid_until|date:"d/m/Y" }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="btn-group btn-group-sm w-100" role="group">
+                            {% if resource.file %}
+                            <a href="{{ resource.file.url }}" class="btn btn-primary" download title="Télécharger">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            {% endif %}
+                            {% if resource.url %}
+                            <a href="{{ resource.url }}" class="btn btn-info" target="_blank" title="Ouvrir le lien">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#editResourceModal{{ resource.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteResourceModal{{ resource.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
+                    
+                    {% if resource.students.exists %}
+                    <div class="card-footer bg-light py-2 small">
+                        
+                        {% for student in resource.students.all|slice:":3" %}
+                           <div>
+                            <span><i class="fas fa-user-graduate mr-1"></i> {{ student.user.first_name }}{% if not forloop.last %}, {% endif %}</span>
+                           
+                           </div>
+                        {% endfor %}
+                        
+                        {% if resource.students.count > 3 %}...{% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
-            <!-- Statistiques -->
-            <div class="row mt-4">
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Total</h5>
-                                    <span class=" font-weight-bold mb-0">{{ resources.count|default:"0" }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
-                                        <i class="fas fa-book"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Documents</h5>
-                                    <span class="h2 font-weight-bold mb-0">  </span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                                        <i class="fas fa-file-pdf"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Vidéos</h5>
-                                    {% comment %} <span class="h2 font-weight-bold mb-0">{{ resources|resource_type_count:"video" }}</span> {% endcomment %}
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
-                                        <i class="fas fa-video"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card card-stats">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col">
-                                    <h5 class="card-title text-uppercase text-muted mb-0">Étudiants</h5>
-                                    <span class="h2 font-weight-bold mb-0">{{ students.count }}</span>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                        <i class="fas fa-user-graduate"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Modals pour chaque ressource (édition et suppression) -->
+            {% include 'dashboard/teacher/includes/resource_edit_modal.html' with resource=resource %}
+            
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">Aucune ressource</h4>
+                        <p class="text-muted mb-4">Commencez par créer votre première ressource.</p>
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#createResourceModal">
+                            <i class="fas fa-plus mr-2"></i>Créer une ressource
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Page content -->
-<div class="container-fluid mt--6">
-    <!-- Barre d'outils -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row" id="resourcesContainer">
-                        {% if resources %}
-                            {% for resource in resources %}
-                            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                                <div class="card resource-card h-100">
-                                    <!-- Thumbnail -->
-                                    <div class="resource-thumbnail position-relative">
-                                        {% if resource.resource_type == 'document' %}
-                                        <i class="fas fa-file-pdf text-primary"></i>
-                                        {% elif resource.resource_type == 'video' %}
-                                        <i class="fas fa-video text-danger"></i>
-                                        {% elif resource.resource_type == 'link' %}
-                                        <i class="fas fa-link text-success"></i>
-                                        {% else %}
-                                        <i class="fas fa-archive text-warning"></i>
-                                        {% endif %}
-                                        
-                                        <!-- Badge d'accès -->
-                                        <span class="badge-access">
-                                            {% if resource.access_type == 'all_students' %}
-                                            <span class="badge badge-success" data-toggle="tooltip" title="Tous les étudiants">
-                                                <i class="fas fa-users"></i>
-                                            </span>
-                                            {% elif resource.access_type == 'specific_students' %}
-                                            <span class="badge badge-info" data-toggle="tooltip" title="{{ resource.students.count }} étudiant(s)">
-                                                <i class="fas fa-user-check"></i>
-                                            </span>
-                                            {% else %}
-                                            <span class="badge badge-warning" data-toggle="tooltip" title="Cours spécifique">
-                                                <i class="fas fa-chalkboard-teacher"></i>
-                                            </span>
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="card-body">
-                                        <!-- Titre -->
-                                        <h6 class="card-title mb-2">
-                                            <a href="#" class="text-dark view-resource-details" data-id="{{ resource.id }}" style="font-size: 1rem;">
-                                                {{ resource.title|truncatechars:40 }}
-                                            </a>
-                                        </h6>
-                                        
-                                        <!-- Description -->
-                                        <p class="card-text text-sm text-muted mb-3">
-                                            {{ resource.description|truncatewords:15 }}
-                                        </p>
-                                        
-                                        <!-- Métadonnées -->
-                                        <div class="mb-3">
-                                            <div class="d-flex flex-wrap gap-1 mb-2">
-                                                {% for language in resource.languages.all|slice:":2" %}
-                                                <span class="badge badge-light">{{ language.name }}</span>
-                                                {% endfor %}
-                                                {% if resource.languages.count > 2 %}
-                                                <span class="badge badge-light">+{{ resource.languages.count|add:"-2" }}</span>
-                                                {% endif %}
-                                            </div>
-                                            
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-calendar-alt mr-1"></i>
-                                                {{ resource.created_at|date:"d/m/Y" }}
-                                            </small>
-                                            
-                                            {% if resource.valid_until %}
-                                            <small class="{% if resource.valid_until < now %}text-danger{% else %}text-warning{% endif %} d-block">
-                                                <i class="fas fa-clock mr-1"></i>
-                                                Expire le {{ resource.valid_until|date:"d/m/Y" }}
-                                            </small>
-                                            {% endif %}
-                                            
-                                            {% if not resource.is_visible %}
-                                            <small class="text-danger d-block">
-                                                <i class="fas fa-eye-slash mr-1"></i> Masqué
-                                            </small>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <!-- Actions (apparaissent au survol) -->
-                                        <div class="resource-actions">
-                                            <div class="btn-group btn-group-sm w-100" role="group">
-                                                {% if resource.file %}
-                                                <a href="{{ resource.file.url }}" class="btn btn-primary" download data-toggle="tooltip" title="Télécharger">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
-                                                {% endif %}
-                                                {% if resource.url %}
-                                                <a href="{{ resource.url }}" class="btn btn-info" target="_blank" data-toggle="tooltip" title="Ouvrir le lien">
-                                                    <i class="fas fa-external-link-alt"></i>
-                                                </a>
-                                                {% endif %}
-                                                <button type="button" class="btn btn-warning edit-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Modifier">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-success assign-resource-btn" data-id="{{ resource.id }}" data-toggle="tooltip" title="Assigner">
-                                                    <i class="fas fa-user-plus"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-danger delete-resource-btn" data-id="{{ resource.id }}" data-title="{{ resource.title }}" data-toggle="tooltip" title="Supprimer">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Étudiants assignés -->
-                                    {% if resource.students.exists %}
-                                    <div class="card-footer bg-light py-2">
-                                        <small class="text-dark">
-                                            <i class="fas fa-user-graduate mr-1"></i>
-                                            {% for student in resource.students.all|slice:":2" %}
-                                            {{ student.user.get_full_name|truncatechars:15 }}{% if not forloop.last %}, {% endif %}
-                                            {% endfor %}
-                                            {% if resource.students.count > 2 %}
-                                            +{{ resource.students.count|add:"-2" }}
-                                            {% endif %}
-                                        </small>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-body text-center py-5">
-                                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                                    <h4 class="text-muted">Aucune ressource trouvée</h4>
-                                    <p class="text-muted mb-4">Commencez par créer votre première ressource pédagogique.</p>
-                                    <button type="button" class="btn btn-success btn-lg" id="createFirstResourceBtn">
-                                        <i class="fas fa-plus mr-2"></i> Créer ma première ressource
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des ressources -->
-    
-    
-    <!-- Pagination (si nécessaire) -->
-    {% if is_paginated %}
-    <div class="row">
-        <div class="col-12">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-left"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
-                        </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-right"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Inclure les modals -->
-{% include 'dashboard/teacher/includes/modals.html' %}
+<!-- Modal de création (un seul pour toutes les ressources) -->
+{% include 'dashboard/teacher/includes/resource_create_modal.html' with form=create_form %}
 
 {% endblock %}
 
 {% block javascripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="{% static 'assets/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-
 <script>
 $(document).ready(function() {
-    // Variables globales
-    let currentResourceId = null;
-    let currentAction = null;
-    
-    // Initialiser Select2
+    // Initialisation de Select2 pour tous les champs multiples
     $('.select2-multiple').select2({
-        placeholder: "Sélectionnez...",
-        allowClear: true
+        theme: 'bootstrap4',
+        width: '100%',
+        dropdownParent: $('.modal')
     });
     
-    // Initialiser les tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-    
-    // ====================
-    // GESTION DES ÉVÉNEMENTS
-    // ====================
-    
-    // Créer une ressource
-    $('#createResourceBtn, #createFirstResourceBtn').click(function() {
-        loadResourceForm();
-    });
-    
-    // Éditer une ressource
-    $(document).on('click', '.edit-resource-btn', function() {
-        const resourceId = $(this).data('id');
-        loadResourceForm(resourceId);
-    });
-    
-    // Voir les détails d'une ressource
-    $(document).on('click', '.view-resource-details', function(e) {
-        e.preventDefault();
-        const resourceId = $(this).data('id');
-        loadResourceDetails(resourceId);
-    });
-    
-    // Assigner une ressource
-    $(document).on('click', '.assign-resource-btn', function() {
-        const resourceId = $(this).data('id');
-        $('#assignResourceId').val(resourceId);
-        
-        // Pré-remplir avec les étudiants déjà assignés
-        $.ajax({
-            url: `{% url 'get_resource_details' 0 %}`.replace('0', resourceId),
-            type: 'GET',
-            success: function(data) {
-                const studentIds = data.students.map(s => s.id);
-                $('#assignStudents').val(studentIds).trigger('change');
-                $('#assignResourceModal').modal('show');
-            }
-        });
-    });
-    
-    // Supprimer une ressource
-    $(document).on('click', '.delete-resource-btn', function() {
-        const resourceId = $(this).data('id');
-        const resourceTitle = $(this).data('title');
-        
-        $('#deleteResourceId').val(resourceId);
-        $('#resourceToDeleteTitle').text(resourceTitle);
-        $('#confirmDeleteModal').modal('show');
-    });
-    
-    // Choisir un étudiant pour créer une ressource
-    $(document).on('click', '.choose-student-btn', function(e) {
-        e.preventDefault();
-        const studentId = $(this).data('student-id');
-        loadResourceForm(null, studentId);
-        $('#chooseStudentModal').modal('hide');
-    });
-    
-    // Recherche en temps réel
-    $('#globalSearch').on('keyup', function(e) {
-        if (e.keyCode === 13) { // Enter
-            performSearch();
-        }
-    });
-    
-    $('#searchBtn').click(function() {
-        performSearch();
-    });
-    
-    // ====================
-    // FONCTIONS AJAX
-    // ====================
-    
-    function loadResourceForm(resourceId = null, studentId = null) {
-        let url = `{% url 'get_resource_form' %}`;
-        const params = [];
-        
-        if (resourceId) {
-            params.push(`resource_id=${resourceId}`);
-            currentAction = 'edit';
-        } else if (studentId) {
-            params.push(`student_id=${studentId}`);
-            currentAction = 'create_for_student';
-        } else {
-            currentAction = 'create';
-        }
-        
-        if (params.length > 0) {
-            url += '?' + params.join('&');
-        }
-        
-        // Afficher le modal avec le spinner
-        $('#resourceFormBody').html(`
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Chargement...</span>
-                </div>
-            </div>
-        `);
-        
-        // Mettre à jour le titre et le texte du bouton
-        $('#modalActionText').text(resourceId ? 'Modifier la ressource' : 'Nouvelle ressource');
-        $('#submitButtonText').text(resourceId ? 'Modifier' : 'Créer');
-        $('#formAction').val(resourceId ? 'edit' : 'create');
-        $('#resourceId').val(resourceId || '');
-        
-        $('#resourceFormModal').modal('show');
-        
-        // Charger le formulaire
-        $.ajax({
-            url: url,
-            type: 'GET',
-            success: function(data) {
-                $('#resourceFormBody').html(data.html);
-                initSelect2InModal();
-            },
-            error: function() {
-                $('#resourceFormBody').html(`
-                    <div class="alert alert-danger">
-                        Erreur lors du chargement du formulaire. Veuillez réessayer.
-                    </div>
-                `);
-            }
-        });
-    }
-    
-    function loadResourceDetails(resourceId) {
-        $('#resourceDetailsContent').html(`
-            <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only">Chargement...</span>
-                </div>
-            </div>
-        `);
-        
-        $('#resourceDetailsModal').modal('show');
-        
-        $.ajax({
-            url: `{% url 'get_resource_details' 0 %}`.replace('0', resourceId),
-            type: 'GET',
-            success: function(data) {
-                const html = `
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h4>${data.title}</h4>
-                            <p class="text-muted">${data.description || 'Aucune description'}</p>
-                            
-                            <div class="mb-4">
-                                <span class="badge badge-${getResourceTypeColor(data.resource_type)} mr-2">
-                                    ${data.resource_type_display}
-                                </span>
-                                <span class="badge badge-${getAccessTypeColor(data.access_type)}">
-                                    ${data.access_type_display}
-                                </span>
-                                ${data.is_visible ? 
-                                    '<span class="badge badge-success ml-2">Visible</span>' : 
-                                    '<span class="badge badge-danger ml-2">Masqué</span>'
-                                }
-                            </div>
-                            
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <h6><i class="fas fa-calendar-alt mr-2"></i>Date d'ajout</h6>
-                                    <p>${data.created_at}</p>
-                                </div>
-                                ${data.valid_until ? `
-                                <div class="col-md-6">
-                                    <h6><i class="fas fa-clock mr-2 ${data.valid_until < now ? 'text-danger' : 'text-warning'}"></i>Expiration</h6>
-                                    <p class="${data.valid_until < now ? 'text-danger' : 'text-warning'}">${data.valid_until}</p>
-                                </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-title">Accès</h6>
-                                    ${data.file_url ? `
-                                    <a href="${data.file_url}" class="btn btn-primary btn-block mb-2" download>
-                                        <i class="fas fa-download mr-2"></i>Télécharger
-                                    </a>
-                                    ` : ''}
-                                    ${data.url ? `
-                                    <a href="${data.url}" class="btn btn-info btn-block mb-2" target="_blank">
-                                        <i class="fas fa-external-link-alt mr-2"></i>Ouvrir le lien
-                                    </a>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            
-                            <div class="card mt-3">
-                                <div class="card-body">
-                                    <h6 class="card-title">Langues</h6>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        ${data.languages.map(lang => 
-                                            `<span class="badge badge-light">${lang.name}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${data.students.length > 0 ? `
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-user-graduate mr-2"></i>Étudiants assignés</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                ${data.students.map(student => `
-                                <div class="col-md-3 mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-user-circle fa-2x text-muted mr-2"></i>
-                                        <div>
-                                            <strong>${student.name}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                    ` : ''}
-                `;
-                
-                $('#resourceDetailsContent').html(html);
-                currentResourceId = resourceId;
-                
-                // Configurer le bouton "Modifier"
-                $('#editFromDetailsBtn').off('click').on('click', function() {
-                    $('#resourceDetailsModal').modal('hide');
-                    loadResourceForm(resourceId);
-                });
-            },
-            error: function() {
-                $('#resourceDetailsContent').html(`
-                    <div class="alert alert-danger">
-                        Erreur lors du chargement des détails. Veuillez réessayer.
-                    </div>
-                `);
-            }
-        });
-    }
-    
-    function performSearch() {
-        const searchTerm = $('#globalSearch').val();
-        if (searchTerm) {
-            window.location.href = `?search=${encodeURIComponent(searchTerm)}`;
-        } else {
-            window.location.href = '{% url "teacher_resources_dashboard" %}';
-        }
-    }
-    
-    function initSelect2InModal() {
-        $('.modal .select2-multiple').select2({
-            placeholder: "Sélectionnez...",
-            allowClear: true,
-            dropdownParent: $('#resourceFormModal')
-        });
-    }
-    
-    function getResourceTypeColor(type) {
-        const colors = {
-            'document': 'primary',
-            'video': 'danger',
-            'link': 'success',
-            'other': 'warning'
-        };
-        return colors[type] || 'secondary';
-    }
-    
-    function getAccessTypeColor(type) {
-        const colors = {
-            'all_students': 'success',
-            'specific_students': 'info',
-            'course_students': 'warning'
-        };
-        return colors[type] || 'secondary';
-    }
-    
-    // ====================
-    // SOUMISSION DES FORMULAIRES
-    // ====================
-    
-    // Formulaire ressource (création/édition)
-    $('#resourceForm').submit(function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const formData = new FormData(form[0]);
-        const action = $('#formAction').val();
-        const url = '{% url "teacher_resources_dashboard" %}';
-        
-        $('#submitResourceForm').prop('disabled', true).html(`
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            ${action === 'edit' ? 'Modification...' : 'Création...'}
-        `);
-        
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    
-                    $('#resourceFormModal').modal('hide');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        html: Object.values(response.errors).flat().join('<br>')
-                    });
-                    $('#submitResourceForm').prop('disabled', false).html(`
-                        <i class="ni ni-check-bold"></i>
-                        <span id="submitButtonText">${action === 'edit' ? 'Modifier' : 'Créer'}</span>
-                    `);
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Une erreur est survenue. Veuillez réessayer.'
-                });
-                $('#submitResourceForm').prop('disabled', false).html(`
-                    <i class="ni ni-check-bold"></i>
-                    <span id="submitButtonText">${action === 'edit' ? 'Modifier' : 'Créer'}</span>
-                `);
-            }
-        });
-    });
-    
-    // Formulaire d'assignation
-    $('#assignResourceForm').submit(function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const formData = form.serialize();
-        
-        $.ajax({
-            url: '{% url "teacher_resources_dashboard" %}',
-            type: 'POST',
-            data: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: response.message,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    $('#assignResourceModal').modal('hide');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                }
-            }
-        });
-    });
-    
-    // Formulaire de suppression
-    $('#deleteResourceForm').submit(function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const formData = form.serialize();
-        
-        $.ajax({
-            url: '{% url "teacher_resources_dashboard" %}',
-            type: 'POST',
-            data: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: response.message,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    
-                    $('#confirmDeleteModal').modal('hide');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                }
-            }
-        });
-    });
-    
-    // Formulaire d'assignation en masse
-    $('#bulkAssignForm').submit(function(e) {
-        e.preventDefault();
-        
-        const form = $(this);
-        const formData = form.serialize();
-        
-        $.ajax({
-            url: '{% url "teacher_resources_dashboard" %}',
-            type: 'POST',
-            data: formData,
-            success: function() {
-                $('#bulkAssignModal').modal('hide');
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès',
-                    text: 'Assignation en masse effectuée avec succès!',
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.reload();
-                });
-            }
-        });
+    // Mise à jour du label du fichier
+    $('input[type="file"]').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName || 'Choisir un fichier...');
     });
 });
 </script>

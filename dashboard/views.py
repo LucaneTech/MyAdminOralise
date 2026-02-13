@@ -39,8 +39,7 @@ from dashboard.models import (
     Notification,
     Comment,
 )
-from .forms import ProfileUpdateForm, SessionForm, ResourceForm, ResourceFilterForm, BulkAssignForm
- 
+from .forms import ProfileUpdateForm, SessionForm, ResourceForm
 import json
 
 
@@ -401,13 +400,11 @@ def resources_view(request):
             # Logique d'accès basée sur le type d'accès
             Q(
                 # Cas 1: Ressources accessibles à tous les étudiants
-                Q(access_type='all_students') & 
                 Q(teachers__in=teachers) &
                 Q(languages__in=student_languages)  # Filtre par les langues de l'étudiant
             ) |
             # Cas 2: Ressources spécifiques à certains étudiants
             Q(
-                Q(access_type='specific_students') &
                 Q(students=student) &  # L'étudiant est dans la liste
                 Q(teachers__in=teachers) &
                 Q(languages__in=student_languages)
@@ -439,283 +436,126 @@ def resources_view(request):
     
         return render(request, "dashboard/student/home/resources.html", context)
 
+# views/teacher_resources.py
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+
 
 @login_required
 def teacher_resources_dashboard(request):
-   
+    """Tableau de bord des ressources avec modals"""
     user = request.user
+    
+    # Vérification du rôle
     if user.role != "teacher":
+        messages.error(request, "Accès non autorisé")
         return redirect('dashboard')
     
     teacher = get_object_or_404(Teacher, user=user)
     
-    # Variables d'action
-    action = request.GET.get('action', 'list')
-    resource_id = request.GET.get('id')
-    student_id = request.GET.get('student_id')
-    
-    # Récupérer les données nécessaires
+    # Récupération des ressources
+    resources = Resource.objects.filter(teachers=teacher).order_by('-created_at')
     students = Student.objects.filter(current_teachers=teacher)
-    languages = Language.objects.filter(teachers=teacher)
     
-    # Base queryset
-    resources = Resource.objects.filter(teachers=teacher)
+    # Création des formulaires pour les modals
+    create_form = ResourceForm(teacher=teacher)
     
-    # Gestion des actions
-    if request.method == 'POST':
-        return handle_post_actions(request, teacher, action, resource_id)
-    
-    # Filtrage GET
-    resources = apply_filters(request, resources)
-    
-    # Préparer le contexte
     context = {
         'teacher': teacher,
+        'resources': resources,
         'students': students,
-        'languages': languages,
-        'resources': resources.order_by('-created_at'),
-        'current_action': action,
-        'resource_types': Resource.RESOURCE_TYPES,
-        'access_types': Resource.ACCESS_TYPES,
+        'create_form': create_form,
         'now': timezone.now(),
-        
-        # Données pour les modals
-        'selected_resource': None,
-        'selected_student': None,
-        'form': None,
-        'bulk_form': None,
     }
-    
-    # Préparer les données selon l'action
-    if action == 'create':
-        context['form'] = ResourceForm(teacher=teacher)
-    elif action == 'edit' and resource_id:
-        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-        context['selected_resource'] = resource
-        context['form'] = ResourceForm(instance=resource, teacher=teacher)
-    elif action == 'assign' and resource_id:
-        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-        context['selected_resource'] = resource
-        context['bulk_form'] = BulkAssignForm(teacher=teacher, initial={'students': resource.students.all()})
-    elif action == 'create_for_student' and student_id:
-        student = get_object_or_404(Student, id=student_id, current_teachers=teacher)
-        context['selected_student'] = student
-        initial = {
-            'access_type': 'specific_students',
-            'students': [student]
-        }
-        context['form'] = ResourceForm(teacher=teacher, initial=initial)
     
     return render(request, 'dashboard/teacher/home/resources.html', context)
 
 
-def handle_post_actions(request, teacher, action, resource_id):
-    """Gère toutes les actions POST"""
-    if action == 'create':
-        return create_resource(request, teacher)
-    elif action == 'edit' and resource_id:
-        return edit_resource(request, teacher, resource_id)
-    elif action == 'delete' and resource_id:
-        return delete_resource(request, teacher, resource_id)
-    elif action == 'assign' and resource_id:
-        return assign_resource(request, teacher, resource_id)
-    elif action == 'toggle_visibility' and resource_id:
-        return toggle_visibility(request, teacher, resource_id)
-    elif action == 'bulk_assign':
-        return bulk_assign_resources(request, teacher)
+@login_required
+def resource_create(request):
+    """Traitement de la création d'une ressource"""
+    if request.method != 'POST':
+        return redirect('teacher_resources_dashboard')
+    
+    user = request.user
+    if user.role != "teacher":
+        messages.error(request, "Accès non autorisé")
+        return redirect('dashboard')
+
+    
+    # Création du formulaire avec l'enseignant
+    form = ResourceForm(request.POST, request.FILES)
+    
+    if form.is_valid():
+        # CORRECTION IMPORTANTE : sauvegarder avec commit=False pour ajouter le teacher
+        resource = form.save(commit=False)
+        resource.save()
+        
+        # Sauvegarder les relations ManyToMany (students, languages)
+        form.save_m2m()
+        
+        messages.success(request, "Ressource créée avec succès!")
+    else:
+        # Afficher les erreurs du formulaire pour le debug
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"Erreur - {field}: {error}")
     
     return redirect('teacher_resources_dashboard')
 
 
-def create_resource(request, teacher):
-    """Créer une nouvelle ressource"""
-    form = ResourceForm(request.POST, request.FILES, teacher=teacher)
-    
-    if form.is_valid():
-        resource = form.save(commit=False)
-        resource.teachers = teacher
-        resource.save()
-        form.save_m2m()  # Pour les relations ManyToMany
-        
-        messages.success(request, 'Ressource créée avec succès!')
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': 'Ressource créée avec succès!'})
+@login_required
+def resource_edit(request, resource_id):
+    """Traitement de la modification d'une ressource"""
+    if request.method != 'POST':
         return redirect('teacher_resources_dashboard')
     
-    # Si erreur et requête AJAX
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': False, 'errors': form.errors})
+    user = request.user
+    if user.role != "teacher":
+        messages.error(request, "Accès non autorisé")
+        return redirect('dashboard')
     
-    messages.error(request, 'Erreur lors de la création de la ressource')
-    return redirect('teacher_resources_dashboard?action=create')
-
-
-def edit_resource(request, teacher, resource_id):
-    """Modifier une ressource existante"""
+    teacher = get_object_or_404(Teacher, user=user)
     resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-    form = ResourceForm(request.POST, request.FILES, instance=resource, teacher=teacher)
     
+    form = ResourceForm(request.POST, request.FILES, instance=resource, teacher=teacher)
     if form.is_valid():
         form.save()
-        messages.success(request, 'Ressource modifiée avec succès!')
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': 'Ressource modifiée avec succès!'})
+        messages.success(request, "Ressource modifiée avec succès!")
+    else:
+        messages.error(request, "Erreur lors de la modification.")
+    
+    return redirect('teacher_resources_dashboard')
+
+
+@login_required
+def resource_delete(request, resource_id):
+    """Traitement de la suppression d'une ressource"""
+    if request.method != 'POST':
         return redirect('teacher_resources_dashboard')
     
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': False, 'errors': form.errors})
+    user = request.user
+    if user.role != "teacher":
+        messages.error(request, "Accès non autorisé")
+        return redirect('dashboard')
     
-    messages.error(request, 'Erreur lors de la modification de la ressource')
-    return redirect(f'teacher_resources_dashboard?action=edit&id={resource_id}')
-
-
-def delete_resource(request, teacher, resource_id):
-    """Supprimer une ressource"""
+    teacher = get_object_or_404(Teacher, user=user)
     resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
     
-    if request.method == 'POST':
-        resource.delete()
-        messages.success(request, 'Ressource supprimée avec succès!')
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': 'Ressource supprimée avec succès!'})
+    resource_title = resource.title
+    resource.delete()
+    messages.success(request, f"La ressource '{resource_title}' a été supprimée.")
     
     return redirect('teacher_resources_dashboard')
 
 
-def assign_resource(request, teacher, resource_id):
-    """Assigner une ressource à des étudiants"""
-    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-    
-    if request.method == 'POST':
-        student_ids = request.POST.getlist('students')
-        students = Student.objects.filter(id__in=student_ids, current_teachers=teacher)
-        
-        resource.students.clear()
-        resource.students.add(*students)
-        
-        # Si on assigne des étudiants spécifiques, changer le type d'accès
-        if students.exists():
-            resource.access_type = 'specific_students'
-        else:
-            resource.access_type = 'all_students'
-        
-        resource.save()
-        
-        messages.success(request, f'Ressource assignée à {students.count()} étudiant(s)')
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': f'Assignation réussie à {students.count()} étudiant(s)'})
-    
-    return redirect('teacher_resources_dashboard')
 
-
-def toggle_visibility(request, teacher, resource_id):
-    """Activer/désactiver la visibilité d'une ressource"""
-    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-    
-    if request.method == 'POST':
-        resource.is_visible = not resource.is_visible
-        resource.save()
-        
-        status = "visible" if resource.is_visible else "masquée"
-        messages.success(request, f'Ressource {status} avec succès!')
-        
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True, 
-                'message': f'Ressource {status}',
-                'is_visible': resource.is_visible
-            })
-    
-    return redirect('teacher_resources_dashboard')
-
-
-def bulk_assign_resources(request, teacher):
-    """Assigner plusieurs ressources à plusieurs étudiants"""
-    if request.method == 'POST':
-        resource_ids = request.POST.getlist('resources')
-        student_ids = request.POST.getlist('students')
-        
-        resources = Resource.objects.filter(id__in=resource_ids, teachers=teacher)
-        students = Student.objects.filter(id__in=student_ids, current_teachers=teacher)
-        
-        for resource in resources:
-            resource.students.add(*students)
-            if students.exists():
-                resource.access_type = 'specific_students'
-                resource.save()
-        
-        messages.success(request, f'{resources.count()} ressource(s) assignée(s) à {students.count()} étudiant(s)')
-    
-    return redirect('teacher_resources_dashboard')
-
-
-def apply_filters(request, queryset):
-    """Appliquer les filtres sur le queryset"""
-    filters = {}
-    
-    # Filtre par type de ressource
-    resource_type = request.GET.get('resource_type')
-    if resource_type:
-        queryset = queryset.filter(resource_type=resource_type)
-        filters['resource_type'] = resource_type
-    
-    # Filtre par langue
-    language_id = request.GET.get('language')
-    if language_id:
-        queryset = queryset.filter(languages__id=language_id)
-        filters['language'] = language_id
-    
-    # Filtre par étudiant
-    student_id = request.GET.get('student')
-    if student_id:
-        queryset = queryset.filter(students__id=student_id)
-        filters['student'] = student_id
-    
-    # Filtre par type d'accès
-    access_type = request.GET.get('access_type')
-    if access_type:
-        queryset = queryset.filter(access_type=access_type)
-        filters['access_type'] = access_type
-    
-    # Filtre par visibilité
-    is_visible = request.GET.get('is_visible')
-    if is_visible in ['true', 'false']:
-        queryset = queryset.filter(is_visible=(is_visible == 'true'))
-        filters['is_visible'] = is_visible
-    
-    # Filtre par date
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    
-    if date_from:
-        queryset = queryset.filter(created_at__gte=date_from)
-        filters['date_from'] = date_from
-    
-    if date_to:
-        queryset = queryset.filter(created_at__lte=date_to)
-        filters['date_to'] = date_to
-    
-    # Recherche texte
-    search = request.GET.get('search')
-    if search:
-        queryset = queryset.filter(
-            Q(title__icontains=search) |
-            Q(description__icontains=search)
-        )
-        filters['search'] = search
-    
-    return queryset.distinct()
-
-
-# API pour charger les détails d'une ressource (pour AJAX)
 @login_required
 @require_GET
 def get_resource_details(request, resource_id):
-    """API pour récupérer les détails d'une ressource en JSON (pour AJAX)"""
+
     user = request.user
     if user.role != "teacher":
         return JsonResponse({'error': 'Unauthorized'}, status=403)
@@ -729,8 +569,7 @@ def get_resource_details(request, resource_id):
         'description': resource.description,
         'resource_type': resource.resource_type,
         'resource_type_display': resource.get_resource_type_display(),
-        'access_type': resource.access_type,
-        'access_type_display': resource.get_access_type_display(),
+       
         'file_url': resource.file.url if resource.file else None,
         'url': resource.url,
         'is_visible': resource.is_visible,
@@ -742,47 +581,6 @@ def get_resource_details(request, resource_id):
     
     return JsonResponse(data)
 
-
-# API pour charger le formulaire (pour AJAX)
-@login_required
-@require_GET
-def get_resource_form(request):
-    """API pour récupérer le formulaire en HTML (pour AJAX)"""
-    user = request.user
-    if user.role != "teacher":
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-    
-    teacher = get_object_or_404(Teacher, user=user)
-    resource_id = request.GET.get('resource_id')
-    student_id = request.GET.get('student_id')
-    
-    if resource_id:
-        # Édition
-        resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-        form = ResourceForm(instance=resource, teacher=teacher)
-        action = 'edit'
-    elif student_id:
-        # Création pour un étudiant spécifique
-        student = get_object_or_404(Student, id=student_id, current_teachers=teacher)
-        initial = {
-            'access_type': 'specific_students',
-            'students': [student]
-        }
-        form = ResourceForm(teacher=teacher, initial=initial)
-        action = 'create_for_student'
-    else:
-        # Création normale
-        form = ResourceForm(teacher=teacher)
-        action = 'create'
-    
-    from django.template.loader import render_to_string
-    html = render_to_string('dashboard/teacher/resources/includes/resource_form_modal.html', {
-        'form': form,
-        'action': action,
-        'teacher': teacher,
-    })
-    
-    return JsonResponse({'html': html})
 
 
 @login_required
@@ -811,6 +609,8 @@ def resources_add(request):
         "teacher": teacher,
     }
     return render(request, "dashboard/teacher/home/resources_add.html", context)
+
+
 
 
 @login_required
