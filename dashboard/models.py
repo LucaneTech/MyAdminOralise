@@ -505,6 +505,12 @@ class Session(models.Model):
         related_name='sessions',
         verbose_name="enseignant"
     )
+    students = models.ManyToManyField(
+        Student,
+        related_name='sessions_m2m',
+        blank=True,
+        verbose_name="étudiants"
+    )
     language = models.ForeignKey(
         Language,
         on_delete=models.CASCADE,
