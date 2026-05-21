@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # Dashboard app
     "dashboard",
     "widget_tweaks",
+    "lucide",
     # for django-allauth
     "django.contrib.sites",
     "allauth",
