@@ -15,8 +15,6 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST, require_GET
-from django.template.loader import render_to_string
-
 
 
 from dashboard import models
@@ -1396,14 +1394,13 @@ def session_status_update(request, session_id):
             session.status = new_status
             session.save()
 
-            # Créer une notification pour l'étudiant
-            first_student = session.students.first()
-            if first_student:
+            # Créer une notification pour tous les étudiants
+            for student in session.students.all():
                 Notification.objects.create(
-                    user=first_student.user,
-                    notification_type="session_reminder",
-                    title=f"Statut de séance mis à jour",
-                    message=f"Votre séance de {session.language.name} du {session.date} est maintenant {session.get_status_display()}",
+                    user=student.user,
+                    notification_type='evaluation_request',
+                    title="Votre cours est terminé — donnez votre avis",
+                    message=f"Votre séance de {session.language} avec {session.teacher} du {session.date} est terminée. Cliquez pour évaluer.",
                 )
 
             return JsonResponse(
@@ -1755,7 +1752,7 @@ def teacher_sessions_view(request):
 def get_student_session_by_id(request, session_id):
     teacher = get_object_or_404(Teacher, user=request.user)
     student = Student.objects.filter(id=session_id, current_teachers=teacher).first()
-    sessions = Session.objects.filter(student__id=session_id, teacher=teacher).order_by("date", "start_time")
+    sessions = Session.objects.filter(students__id=session_id, teacher=teacher).order_by("date", "start_time")
      
     context ={
         "sessions": sessions,
@@ -1763,15 +1760,6 @@ def get_student_session_by_id(request, session_id):
     }
     
     return render(  request, "dashboard/teacher/home/sessions.html", context  )
-
-@login_required
-def delete_student_session_by_id(request, session_id):
-    teacher = get_object_or_404(Teacher, user=request.user)
-    session = get_object_or_404(Session, id=session_id, teacher=teacher)
-    session.delete()
-    messages.success(request, "La session a été supprimée avec succès !")
-    return redirect("teacher_sessions")
-
 
 
 
