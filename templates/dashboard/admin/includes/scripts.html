@@ -26,6 +26,9 @@ function openSessionModal(sessionId) {
     .then(r => r.json())
     .then(data => {
       openModal(buildSessionForm(data));
+    })
+    .catch(() => {
+      openModal('<p class="text-sm text-red-500 text-center py-4">Erreur lors du chargement de la séance.</p>');
     });
 }
 
