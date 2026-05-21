@@ -1,375 +1,92 @@
-{% extends 'dashboard/admin/layouts/base.html' %}
+{% extends "dashboard/admin/layouts/base.html" %}
+{% load static %}
+{% load lucide %}
+{% load humanize %}
 
-{% block title %} Dashboard {% endblock title %}
-
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
-
-<!-- Header -->
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-6 col-7">
-          <h6 class="h2 text-white d-inline-block mb-0">Tableau de bord Admin</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Vue d'ensemble</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-      <!-- Card stats -->
-      <div class="row">
-        <div class="col-xl-3 col-md-6">
-          <div class="card card-stats">
-            <!-- Card body -->
-            <div class="card-body">
-              <div class="row">
-                <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">Enseignants</h5>
-                  <span class="h2 font-weight-bold mb-0">{{ total_teachers }}</span>
-                  <p class="mt-2 mb-0 text-sm">
-                    <span class="text-success mr-2"> disponibles</span>
-                  </p>
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
-                    <i class="ni ni-single-02"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card card-stats">
-            <!-- Card body -->
-            <div class="card-body">
-              <div class="row">
-                <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">Étudiants</h5>
-                  <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
-                  <p class="mt-2 mb-0 text-sm">
-                    <span class="text-success mr-2">+{{ new_students_this_month }} ce mois</span>
-                  </p>
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
-                    <i class="ni ni-single-02"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card card-stats">
-            <!-- Card body -->
-            <div class="card-body">
-              <div class="row">
-                <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">Séances terminées</h5>
-                  <span class="h2 font-weight-bold mb-0">{{ completed_sessions }}</span>
-                  <p class="mt-2 mb-0 text-sm">
-                    <span class="text-warning mr-2">{{ scheduled_sessions }} programmées</span>
-                  </p>
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
-                    <i class="ni ni-check-bold"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card card-stats">
-            <!-- Card body -->
-            <div class="card-body">
-              <div class="row">
-                <div class="col">
-                  <h5 class="card-title text-uppercase text-muted mb-0">Langues</h5>
-                  <span class="h2 font-weight-bold mb-0">{{ total_languages }}</span>
-                  <p class="mt-2 mb-0 text-sm">
-                    <span class="text-info mr-2">{{ attendance_rate }}% présence</span>
-                  </p>
-                </div>
-                <div class="col-auto">
-                  <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                    <i class="ni ni-books"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- Stats cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-md shadow-xl p-5">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiants</span>
+      {% lucide "graduation-cap" class="w-5 h-5 text-[#26b2bd]" %}
     </div>
+    <p class="text-3xl font-bold text-gray-900">{{ total_students }}</p>
+  </div>
+  <div class="bg-white rounded-md shadow-xl p-5">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Formateurs</span>
+      {% lucide "users" class="w-5 h-5 text-[#26b2bd]" %}
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ total_teachers }}</p>
+  </div>
+  <div class="bg-white rounded-md shadow-xl p-5">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Séances aujourd'hui</span>
+      {% lucide "calendar" class="w-5 h-5 text-[#26b2bd]" %}
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ sessions_today }}</p>
+  </div>
+  <div class="bg-white rounded-md shadow-xl p-5">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">CA total</span>
+      {% lucide "banknote" class="w-5 h-5 text-[#26b2bd]" %}
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ revenue_total|intcomma }} MAD</p>
   </div>
 </div>
-<!-- Nouveaux KPIs pédagogiques -->
-<div class="container-fluid mt-3">
-  <div class="row">
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <div class="card card-stats shadow h-100">
-        <div class="card-body p-3">
-          <p class="text-muted text-xs mb-1 text-uppercase">Étudiants actifs</p>
-          <h4 class="mb-0">{{ active_students }}</h4>
-        </div>
-      </div>
+
+<!-- Sessions récentes + Actions rapides -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white rounded-md shadow-xl">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-700">Séances récentes</h2>
+      <a href="{% url 'admin_sessions_list' %}" class="text-xs text-[#26b2bd] hover:underline">Voir le calendrier</a>
     </div>
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <div class="card card-stats shadow h-100">
-        <div class="card-body p-3">
-          <p class="text-muted text-xs mb-1 text-uppercase">Formateurs actifs</p>
-          <h4 class="mb-0">{{ active_teachers }}</h4>
+    <div class="divide-y divide-gray-50">
+      {% for session in recent_sessions %}
+      <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+        <div>
+          <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
+          <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
         </div>
+        <span class="px-2 py-0.5 text-xs font-semibold rounded-md
+          {% if session.status == 'completed' %}bg-green-100 text-green-700
+          {% elif session.status == 'cancelled' %}bg-red-100 text-red-700
+          {% else %}bg-blue-100 text-blue-700{% endif %}">
+          {{ session.get_status_display }}
+        </span>
       </div>
+      {% empty %}
+        <p class="px-5 py-8 text-sm text-gray-400 text-center">Aucune séance récente</p>
+      {% endfor %}
     </div>
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <div class="card card-stats shadow h-100">
-        <div class="card-body p-3">
-          <p class="text-muted text-xs mb-1 text-uppercase">Séances réalisées</p>
-          <h4 class="mb-0">{{ total_sessions_all }}</h4>
-        </div>
-      </div>
+  </div>
+
+  <div class="bg-white rounded-md shadow-xl">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-700">Actions rapides</h2>
     </div>
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <div class="card card-stats shadow h-100">
-        <div class="card-body p-3">
-          <p class="text-muted text-xs mb-1 text-uppercase">Fiches complétées</p>
-          <h4 class="mb-0">{{ taux_completion_fiches }}%</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <div class="card card-stats shadow h-100">
-        <div class="card-body p-3">
-          <p class="text-muted text-xs mb-1 text-uppercase">Heures enseignées</p>
-          <h4 class="mb-0">{{ total_heures_enseignees }}h</h4>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-2 col-md-4 col-6 mb-3">
-      <a href="{% url 'paiements_formateurs_list' %}" class="text-decoration-none">
-        <div class="card card-stats shadow h-100 border-warning">
-          <div class="card-body p-3">
-            <p class="text-muted text-xs mb-1 text-uppercase">Paiements versés</p>
-            <h4 class="mb-0">{{ total_paiements_formateurs|floatformat:0 }}MAD</h4>
-          </div>
-        </div>
+    <div class="p-4 space-y-2">
+      <a href="{% url 'admin_student_create' %}"
+         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
+        {% lucide "user-plus" class="w-4 h-4 text-[#26b2bd]" %} Ajouter un étudiant
+      </a>
+      <a href="{% url 'admin_teacher_create' %}"
+         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
+        {% lucide "user-plus" class="w-4 h-4 text-[#26b2bd]" %} Ajouter un formateur
+      </a>
+      <a href="{% url 'admin_session_create' %}"
+         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
+        {% lucide "calendar-plus" class="w-4 h-4 text-[#26b2bd]" %} Créer une séance
+      </a>
+      <a href="{% url 'admin_payment_create' %}"
+         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
+        {% lucide "credit-card" class="w-4 h-4 text-[#26b2bd]" %} Enregistrer un paiement
       </a>
     </div>
   </div>
-
-  {% if sessions_en_attente_validation > 0 %}
-  <div class="row mb-3">
-    <div class="col">
-      <div class="alert alert-warning d-flex justify-content-between align-items-center">
-        <span><i class="fas fa-exclamation-triangle mr-2"></i>
-          <strong>{{ sessions_en_attente_validation }}</strong> fiche(s) pédagogique(s) en attente de validation.
-        </span>
-        <a href="{% url 'admin_sessions_list' %}?statut_validation=en_attente" class="btn btn-sm btn-warning">
-          Valider maintenant
-        </a>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 </div>
-
-<!-- Page content -->
-<div class="container-fluid mt--6">
-  <div class="row">
-    <div class="col-xl-8">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Séances à venir</h3>
-            </div>
-            <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary">Voir tout</a>
-            </div>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <!-- Projects table -->
-          <table class="table align-items-center table-flush">
-            <thead class="thead-light">
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Langue</th>
-                <th scope="col">Étudiant</th>
-                <th scope="col">Enseignant</th>
-                <th scope="col">Heure</th>
-                <th scope="col">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for session in upcoming_sessions|slice:":5" %}
-              <tr>
-                <th scope="row">
-                  {{ session.date|date:"d/m/Y" }}
-                </th>
-                <td>
-                  {{ session.language.name }}
-                </td>
-                <td>
-                  {{ session.student.user.get_full_name }}
-                </td>
-                <td>
-                  {{ session.teacher.user.get_full_name }}
-                </td>
-                <td>
-                  {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
-                </td>
-                <td>
-                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
-                    {{ session.get_status_display }}
-                  </span>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="text-center">Aucune séance prévue</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-4">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Statistiques financières</h3>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h6 class="mb-0">Chiffre d'affaires total</h6>
-            </div>
-            <span class="badge badge-success">{{ total_revenue }} MAD</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h6 class="mb-0">Paiements en attente</h6>
-            </div>
-            <span class="badge badge-warning">{{ pending_payments }}</span>
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h6 class="mb-0">Demandes en attente</h6>
-            </div>
-            <span class="badge badge-info">{{ pending_requests }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-xl-6">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Évaluations récentes</h3>
-            </div>
-            <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary beta">Voir tout</a>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          {% for evaluation in recent_evaluations %}
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h6 class="mb-0">{{ evaluation.student.user.get_full_name }}</h6>
-              <small class="text-muted">{{ evaluation.language.name }} - {{ evaluation.get_evaluation_type_display }}</small>
-            </div>
-            <span class="badge badge-success">{{ evaluation.score }}/20</span>
-          </div>
-          {% empty %}
-          <p class="text-muted">Aucune évaluation récente</p>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-6">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Certificats récents</h3>
-            </div>
-            <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary beta ">Voir tout</a>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          {% for certificate in recent_certificates %}
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h6 class="mb-0">{{ certificate.student.user.get_full_name }}</h6>
-              <small class="text-muted">{{ certificate.language.name }} - {{ certificate.level }}</small>
-            </div>
-            {% if certificate.certificate_file %}
-            <span class="badge badge-success">Émis</span>
-            {% else %}
-            <span class="badge badge-warning">En attente</span>
-            {% endif %}
-          </div>
-          {% empty %}
-          <p class="text-muted">Aucun certificat récent</p>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% comment %} {% if unread_notifications %}
-  <div class="row">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Notifications récentes</h3>
-            </div>
-            <div class="col text-right">
-              <a href="#" class="btn btn-sm btn-primary">Voir tout</a>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          {% for notification in unread_notifications %}
-          <div class="alert alert-info alert-dismissible fade show mb-2" role="alert">
-            <strong>{{ notification.title }}</strong><br>
-            {{ notification.message }}
-            <small class="float-right">{{ notification.created_at|timesince }} ago</small>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %} {% endcomment %}
-</div>
-
-{% endblock content %}
-
-<!-- Specific JS goes HERE -->
-{% block javascripts %}{% endblock javascripts %}
+{% endblock %}

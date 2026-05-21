@@ -154,7 +154,9 @@ def dashboard_view(request, username=None):
             {
                 "total_sessions": total_sessions,
                 "completed_sessions_count": completed_count,
-              
+                # Tailwind dashboard variables
+                "completed_sessions": completed_count,
+                "hours_remaining": student.hours_remaining,
             }
         )
 
@@ -285,6 +287,13 @@ def teacher_view(request, username=None):
             is_read=False
         ).order_by("-created_at")[:5]
         context["unread_notifications"] = unread_notifications
+
+        # Tailwind dashboard variables
+        context['sessions_today_count'] = Session.objects.filter(teacher=teacher, date=today).count()
+        context['sessions_week_count'] = Session.objects.filter(
+            teacher=teacher, date__gte=today, date__lte=today + timedelta(days=7)
+        ).count()
+        context['total_students_count'] = teacher.total_students
 
         return render(request, "dashboard/teacher/home/index.html", context)
 
@@ -1888,6 +1897,14 @@ def admin_dashboard(request):
         fiche_completee=True, statut_validation='en_attente'
     ).count()
 
+    # Variables for new Tailwind dashboard
+    sessions_today_count = Session.objects.filter(date=today).count()
+    revenue_total = Payment.objects.filter(status='paid').aggregate(
+        total=Sum('amount'))['total'] or 0
+    recent_sessions = Session.objects.select_related(
+        'teacher__user', 'language'
+    ).order_by('-date', '-start_time')[:8]
+
     context = {
         'total_teachers': total_teachers,
         'total_students': total_students,
@@ -1912,6 +1929,10 @@ def admin_dashboard(request):
         'total_heures_enseignees': total_heures_enseignees,
         'total_paiements_formateurs': total_paiements_formateurs,
         'sessions_en_attente_validation': sessions_en_attente_validation,
+        # Tailwind dashboard variables
+        'sessions_today': sessions_today_count,
+        'revenue_total': revenue_total,
+        'recent_sessions': recent_sessions,
     }
 
     return render(request, 'dashboard/admin/home/index.html', context)
