@@ -71,14 +71,26 @@
             </a>
           </li>
 
-           <li class="nav-item">
+          <li class="nav-item">
             <a class="nav-link" href="{% url 'requests_view' %}">
               <i class="ni ni-send text-pink"></i>
               <span class="nav-link-text">Demandes / Requêtes</span>
             </a>
           </li>
-          
-         
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'reporting_formateur' %}">
+              <i class="fas fa-chart-line text-teal"></i>
+              <span class="nav-link-text">Reporting</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'mes_paiements_formateur' %}">
+              <i class="fas fa-money-bill-wave text-green"></i>
+              <span class="nav-link-text">Mes paiements</span>
+            </a>
+          </li>
 
         {% if user.is_authenticated %}
           <li class="nav-item">

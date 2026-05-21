@@ -1,0 +1,75 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">{{ titre }}</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_students' %}" class="btn btn-sm btn-light">
+            <i class="fas fa-arrow-left mr-1"></i>Retour
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <!-- Compte utilisateur -->
+      <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="fas fa-user mr-2"></i>Compte utilisateur</h5></div>
+          <div class="card-body">
+            {% for field in user_form %}
+            <div class="form-group">
+              <label class="form-control-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.errors %}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Profil étudiant -->
+      <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="ni ni-hat-3 mr-2"></i>Profil étudiant</h5></div>
+          <div class="card-body">
+            {% for field in student_form %}
+            <div class="form-group">
+              <label class="form-control-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.errors %}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-right mb-5">
+      <a href="{% url 'admin_students' %}" class="btn btn-secondary mr-2">Annuler</a>
+      <button type="submit" class="btn" style="background-color:#147a81;color:white;">
+        <i class="fas fa-save mr-1"></i>Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

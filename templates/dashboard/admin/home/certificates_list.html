@@ -1,0 +1,70 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Certificats{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des certificats</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_certificate_create' %}" class="btn btn-white btn-sm">
+            <i class="fas fa-plus mr-1"></i>Ajouter un certificat
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>ID Certificat</th>
+              <th>Étudiant</th>
+              <th>Langue</th>
+              <th>Niveau</th>
+              <th>Durée</th>
+              <th>Délivré le</th>
+              <th>Actif</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in certs %}
+            <tr>
+              <td><code>{{ c.certificate_id }}</code></td>
+              <td>{{ c.student }}</td>
+              <td>{{ c.language }}</td>
+              <td>{{ c.level }}</td>
+              <td>{{ c.duree_formation|default:"—" }}</td>
+              <td>{{ c.issued_date|date:"d/m/Y" }}</td>
+              <td>
+                {% if c.is_active %}<span class="badge badge-success">Oui</span>
+                {% else %}<span class="badge badge-secondary">Non</span>{% endif %}
+              </td>
+              <td>
+                <a href="{% url 'admin_certificate_edit' cert_id=c.id %}" class="btn btn-sm btn-warning">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'certificate_public_view' certificate_id=c.certificate_id %}" class="btn btn-sm btn-info" target="_blank" title="Page publique">
+                  <i class="fas fa-external-link-alt"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted py-5">Aucun certificat enregistré.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

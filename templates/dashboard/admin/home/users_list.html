@@ -1,0 +1,119 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des utilisateurs</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_user_create' %}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>Nouvel utilisateur
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show"><i class="fas fa-info-circle mr-2"></i>{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <!-- Filtres -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <form method="get" class="row align-items-end">
+        <div class="col-md-3 form-group mb-0">
+          <label class="small text-muted">Rôle</label>
+          <select name="role" class="form-control form-control-sm">
+            <option value="">Tous les rôles</option>
+            <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+            <option value="teacher" {% if role_filter == 'teacher' %}selected{% endif %}>Formateur</option>
+            <option value="student" {% if role_filter == 'student' %}selected{% endif %}>Étudiant</option>
+          </select>
+        </div>
+        <div class="col-md-5 form-group mb-0">
+          <label class="small text-muted">Recherche</label>
+          <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Nom, email, username…">
+        </div>
+        <div class="col-md-2 form-group mb-0">
+          <button type="submit" class="btn btn-sm btn-block" style="background-color:#147a81;color:white;">Filtrer</button>
+        </div>
+        <div class="col-md-2 form-group mb-0">
+          <a href="{% url 'admin_users_list' %}" class="btn btn-sm btn-block btn-outline-secondary">Réinitialiser</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>Utilisateur</th>
+              <th>Rôle</th>
+              <th>Email</th>
+              <th>Inscription</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>
+                <span class="font-weight-bold">{{ u.get_full_name|default:u.username }}</span><br>
+                <small class="text-muted">@{{ u.username }}</small>
+              </td>
+              <td>
+                <span class="badge badge-{% if u.role == 'admin' %}danger{% elif u.role == 'teacher' %}warning{% else %}primary{% endif %}">
+                  {{ u.role }}
+                </span>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+              <td>
+                {% if u.is_active %}
+                <span class="badge badge-success">Actif</span>
+                {% else %}
+                <span class="badge badge-secondary">Inactif</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'admin_user_reset_password' u.id %}" class="btn btn-sm btn-warning" title="Réinitialiser MDP"><i class="fas fa-key"></i></a>
+                <form method="post" action="{% url 'admin_user_toggle_active' u.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button class="btn btn-sm {% if u.is_active %}btn-secondary{% else %}btn-success{% endif %}" title="{% if u.is_active %}Désactiver{% else %}Activer{% endif %}">
+                    <i class="fas fa-{% if u.is_active %}ban{% else %}check{% endif %}"></i>
+                  </button>
+                </form>
+                <a href="{% url 'admin_user_delete' u.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-5">Aucun utilisateur trouvé.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if users.has_other_pages %}
+    <div class="card-footer">
+      <nav><ul class="pagination justify-content-end mb-0">
+        {% if users.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ users.previous_page_number }}&role={{ role_filter }}&q={{ search }}">Précédent</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ users.number }} / {{ users.paginator.num_pages }}</span></li>
+        {% if users.has_next %}<li class="page-item"><a class="page-link" href="?page={{ users.next_page_number }}&role={{ role_filter }}&q={{ search }}">Suivant</a></li>{% endif %}
+      </ul></nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

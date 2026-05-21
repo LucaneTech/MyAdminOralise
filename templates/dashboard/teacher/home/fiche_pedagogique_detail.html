@@ -1,0 +1,125 @@
+{% extends 'dashboard/teacher/layouts/base.html' %}
+{% block title %}Détail fiche pédagogique{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Fiche pédagogique — Détail</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <!-- En-tête -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3 border-right">
+              <p class="text-muted mb-1">Étudiant</p>
+              <h5>{{ session.student }}</h5>
+            </div>
+            <div class="col-md-3 border-right">
+              <p class="text-muted mb-1">Langue</p>
+              <h5>{{ session.language }}</h5>
+            </div>
+            <div class="col-md-3 border-right">
+              <p class="text-muted mb-1">Date</p>
+              <h5>{{ session.date|date:"d/m/Y" }}</h5>
+            </div>
+            <div class="col-md-3">
+              <p class="text-muted mb-1">Durée</p>
+              <h5>{{ session.duree_minutes|default:"-" }} min</h5>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer text-center">
+          <span class="badge badge-{% if session.statut_validation == 'validee' %}success{% elif session.statut_validation == 'refusee' %}danger{% else %}warning{% endif %} badge-lg px-3 py-2">
+            {{ session.get_statut_validation_display }}
+          </span>
+          <span class="badge badge-info ml-2">{{ session.get_type_seance_display }}</span>
+        </div>
+      </div>
+
+      <!-- Thème et compétences -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Contenu pédagogique</h5></div>
+        <div class="card-body">
+          <p><strong>Thème :</strong> {{ session.theme_cours|default:"Non renseigné" }}</p>
+          <p><strong>Compétences travaillées :</strong>
+            {% if session.competences_list %}
+              {% for c in session.competences_list %}
+                <span class="badge badge-primary mr-1">{{ c }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted">Aucune sélectionnée</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- Évaluations -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Évaluation rapide</h5></div>
+        <div class="card-body">
+          <div class="row text-center">
+            {% with p=session.participation c=session.comprehension_score e=session.engagement %}
+            <div class="col-md-4">
+              <p class="text-muted">Participation</p>
+              <h3>{{ p|default:"-" }} <small class="text-muted">/ 4</small></h3>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted">Compréhension</p>
+              <h3>{{ c|default:"-" }} <small class="text-muted">/ 4</small></h3>
+            </div>
+            <div class="col-md-4">
+              <p class="text-muted">Engagement</p>
+              <h3>{{ e|default:"-" }} <small class="text-muted">/ 4</small></h3>
+            </div>
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyse pédagogique -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Analyse pédagogique</h5></div>
+        <div class="card-body">
+          <p><strong>Difficultés :</strong><br>{{ session.difficultes|default:"Aucune" }}</p>
+          <hr>
+          <p><strong>Observations :</strong><br>{{ session.observations_formateur|default:"—" }}</p>
+          <hr>
+          <p><strong>Prochaine étape :</strong><br>{{ session.prochaine_etape|default:"—" }}</p>
+        </div>
+      </div>
+
+      <!-- Devoir -->
+      {% if session.devoir_donne %}
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Devoir donné</h5></div>
+        <div class="card-body">
+          <p>{{ session.description_devoir|default:"—" }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-center mb-5">
+        {% if request.user.role == 'teacher' %}
+        <a href="{% url 'fiche_pedagogique_edit' session_id=session.id %}" class="btn btn-warning">
+          <i class="fas fa-edit mr-1"></i>Modifier la fiche
+        </a>
+        {% endif %}
+        <a href="javascript:history.back()" class="btn btn-secondary ml-2">Retour</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Évaluations{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des évaluations</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_evaluation_create' %}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>Nouvelle évaluation
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <!-- Filtres -->
+  <div class="card mb-3">
+    <div class="card-body py-3">
+      <form method="get" class="row align-items-end">
+        <div class="col-md-3 form-group mb-0">
+          <label class="small text-muted">Formateur</label>
+          <select name="teacher" class="form-control form-control-sm">
+            <option value="">Tous</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {% if teacher_filter == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3 form-group mb-0">
+          <label class="small text-muted">Étudiant</label>
+          <select name="student" class="form-control form-control-sm">
+            <option value="">Tous</option>
+            {% for s in students %}
+            <option value="{{ s.id }}" {% if student_filter == s.id|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 form-group mb-0">
+          <button type="submit" class="btn btn-sm btn-block" style="background-color:#147a81;color:white;">Filtrer</button>
+        </div>
+        <div class="col-md-2 form-group mb-0">
+          <a href="{% url 'admin_evaluations_list' %}" class="btn btn-sm btn-block btn-outline-secondary">Réinitialiser</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>Étudiant</th>
+              <th>Formateur</th>
+              <th>Langue</th>
+              <th>Type</th>
+              <th>Note</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ev in evaluations %}
+            <tr>
+              <td>{{ ev.student }}</td>
+              <td>{{ ev.teacher }}</td>
+              <td>{{ ev.language }}</td>
+              <td>{{ ev.get_evaluation_type_display }}</td>
+              <td>
+                <span class="badge badge-{% if ev.score >= 16 %}success{% elif ev.score >= 12 %}info{% elif ev.score >= 10 %}warning{% else %}danger{% endif %}">
+                  {{ ev.score }}/20
+                </span>
+              </td>
+              <td>{{ ev.evaluation_date|date:"d/m/Y" }}</td>
+              <td>
+                <a href="{% url 'admin_evaluation_edit' ev.id %}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'admin_evaluation_delete' ev.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-5">Aucune évaluation trouvée.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if evaluations.has_other_pages %}
+    <div class="card-footer">
+      <nav><ul class="pagination justify-content-end mb-0">
+        {% if evaluations.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ evaluations.previous_page_number }}&teacher={{ teacher_filter }}&student={{ student_filter }}">Précédent</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ evaluations.number }} / {{ evaluations.paginator.num_pages }}</span></li>
+        {% if evaluations.has_next %}<li class="page-item"><a class="page-link" href="?page={{ evaluations.next_page_number }}&teacher={{ teacher_filter }}&student={{ student_filter }}">Suivant</a></li>{% endif %}
+      </ul></nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

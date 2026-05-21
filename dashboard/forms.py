@@ -1,9 +1,13 @@
 from time import timezone
 from django import forms
-from dashboard.models import Profile, CustomUser, Resource, Session, Student, Language
-from django import forms
-from allauth.account.forms import LoginForm, SignupForm,ResetPasswordForm
+from dashboard.models import (
+    Profile, CustomUser, Resource, Session, Student, Language,
+    Certificate, PaiementFormateur, Teacher, Schedule, Payment,
+    Evaluation, Request, Notification, Assignment, Comment,
+)
+from allauth.account.forms import LoginForm, SignupForm, ResetPasswordForm
 from django.contrib.auth import authenticate
+from django.contrib.auth.forms import SetPasswordForm
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -223,13 +227,359 @@ def __init__(self, *args, **kwargs):
         self.teacher = kwargs.pop('teacher', None)
         self.session_instance = kwargs.get('instance', None)
         super(SessionForm, self).__init__(*args, **kwargs)
-        
+
         if self.teacher:
-            # Filtrer les langues disponibles pour cet enseignant
             self.fields['language'].queryset = self.teacher.languages.all()
-            
-            # Filtrer les étudiants (selon votre logique métier)
-            # Option 1: Tous les étudiants
             from django.contrib.auth import get_user_model
             User = get_user_model()
             self.fields['student'].queryset = User.objects.filter(role='student')
+
+
+class FichePedagogiqueForm(forms.ModelForm):
+    """Formulaire de saisie de la fiche pédagogique après une séance."""
+    class Meta:
+        model = Session
+        fields = [
+            'duree_minutes', 'type_seance', 'theme_cours',
+            'comp_oral', 'comp_comprehension', 'comp_ecrit', 'comp_grammaire', 'comp_vocabulaire',
+            'participation', 'comprehension_score', 'engagement',
+            'difficultes', 'observations_formateur', 'prochaine_etape',
+            'devoir_donne', 'description_devoir',
+            'seance_realisee', 'fiche_completee',
+        ]
+        widgets = {
+            'duree_minutes': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 60'}),
+            'type_seance': forms.Select(attrs={'class': 'form-control'}),
+            'theme_cours': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Thème abordé'}),
+            'participation': forms.Select(attrs={'class': 'form-control'}),
+            'comprehension_score': forms.Select(attrs={'class': 'form-control'}),
+            'engagement': forms.Select(attrs={'class': 'form-control'}),
+            'difficultes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'observations_formateur': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'prochaine_etape': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'description_devoir': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+        labels = {
+            'duree_minutes': 'Durée (minutes)',
+            'type_seance': 'Type de séance',
+            'theme_cours': 'Thème du cours',
+            'comp_oral': 'Oral',
+            'comp_comprehension': 'Compréhension',
+            'comp_ecrit': 'Écrit',
+            'comp_grammaire': 'Grammaire',
+            'comp_vocabulaire': 'Vocabulaire',
+            'participation': 'Participation (1→4)',
+            'comprehension_score': 'Compréhension (1→4)',
+            'engagement': 'Engagement (1→4)',
+            'difficultes': 'Difficultés rencontrées',
+            'observations_formateur': 'Observations du formateur',
+            'prochaine_etape': 'Prochaine étape pédagogique',
+            'devoir_donne': 'Devoir donné',
+            'description_devoir': 'Description du devoir',
+            'seance_realisee': 'Séance réalisée',
+            'fiche_completee': 'Fiche complétée',
+        }
+
+
+class CertificateForm(forms.ModelForm):
+    """Formulaire admin pour créer/modifier un certificat."""
+    class Meta:
+        model = Certificate
+        fields = [
+            'student', 'language', 'level',
+            'certificate_file', 'is_active',
+            'duree_formation', 'competences_validees', 'appreciation_pedagogique',
+        ]
+        widgets = {
+            'student': forms.Select(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
+            'level': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: B2'}),
+            'certificate_file': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'duree_formation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 5 mois'}),
+            'competences_validees': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,
+                'placeholder': 'Compréhension orale\nExpression orale\nInteraction'}),
+            'appreciation_pedagogique': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'student': 'Étudiant',
+            'language': 'Langue',
+            'level': 'Niveau',
+            'certificate_file': 'Fichier PDF',
+            'is_active': 'Actif',
+            'duree_formation': 'Durée de formation',
+            'competences_validees': 'Compétences validées (une par ligne)',
+            'appreciation_pedagogique': 'Appréciation pédagogique',
+        }
+
+
+class PaiementFormateurForm(forms.ModelForm):
+    """Formulaire admin pour créer un paiement formateur."""
+    class Meta:
+        model = PaiementFormateur
+        fields = ['formateur', 'montant', 'periode_debut', 'periode_fin', 'commentaire', 'statut', 'date_paiement']
+        widgets = {
+            'formateur': forms.Select(attrs={'class': 'form-control'}),
+            'montant': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'periode_debut': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'periode_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'commentaire': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'statut': forms.Select(attrs={'class': 'form-control'}),
+            'date_paiement': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+        labels = {
+            'formateur': 'Formateur',
+            'montant': 'Montant (MAD)',
+            'periode_debut': 'Début de période',
+            'periode_fin': 'Fin de période',
+            'commentaire': 'Commentaire',
+            'statut': 'Statut',
+            'date_paiement': 'Date de paiement',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['formateur'].queryset = Teacher.objects.filter(statut__in=['actif', 'disponible'])
+
+
+# ─────────────────────────────────────────────────────────────
+#  FORMULAIRES ADMIN — GESTION COMPLÈTE
+# ─────────────────────────────────────────────────────────────
+
+W = {'class': 'form-control'}
+WTA = {'class': 'form-control', 'rows': 3}
+WCB = {'class': 'custom-control-input'}
+
+
+class AdminUserCreateForm(forms.ModelForm):
+    password1 = forms.CharField(label='Mot de passe', widget=forms.PasswordInput(attrs=W))
+    password2 = forms.CharField(label='Confirmer le mot de passe', widget=forms.PasswordInput(attrs=W))
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active']
+        widgets = {
+            'username': forms.TextInput(attrs=W),
+            'first_name': forms.TextInput(attrs=W),
+            'last_name': forms.TextInput(attrs=W),
+            'email': forms.EmailInput(attrs=W),
+            'role': forms.Select(attrs=W),
+            'is_active': forms.CheckboxInput(attrs=WCB),
+        }
+
+    def clean_password2(self):
+        p1 = self.cleaned_data.get('password1')
+        p2 = self.cleaned_data.get('password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("Les mots de passe ne correspondent pas.")
+        return p2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        if commit:
+            user.save()
+        return user
+
+
+class AdminUserEditForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active']
+        widgets = {
+            'username': forms.TextInput(attrs=W),
+            'first_name': forms.TextInput(attrs=W),
+            'last_name': forms.TextInput(attrs=W),
+            'email': forms.EmailInput(attrs=W),
+            'role': forms.Select(attrs=W),
+            'is_active': forms.CheckboxInput(attrs=WCB),
+        }
+
+
+class AdminResetPasswordForm(forms.Form):
+    password1 = forms.CharField(label='Nouveau mot de passe', widget=forms.PasswordInput(attrs=W))
+    password2 = forms.CharField(label='Confirmer', widget=forms.PasswordInput(attrs=W))
+
+    def clean_password2(self):
+        p1 = self.cleaned_data.get('password1')
+        p2 = self.cleaned_data.get('password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("Les mots de passe ne correspondent pas.")
+        return p2
+
+
+class StudentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = ['statuts', 'languages', 'current_teachers', 'total_hours_purchased', 'total_hours_used', 'objectif_formation']
+        widgets = {
+            'statuts': forms.Select(attrs=W),
+            'languages': forms.SelectMultiple(attrs=W),
+            'current_teachers': forms.SelectMultiple(attrs=W),
+            'total_hours_purchased': forms.NumberInput(attrs=W),
+            'total_hours_used': forms.NumberInput(attrs=W),
+            'objectif_formation': forms.Textarea(attrs=WTA),
+        }
+
+
+class TeacherAdminForm(forms.ModelForm):
+    class Meta:
+        model = Teacher
+        fields = ['speciality', 'statut', 'languages', 'hourly_rate', 'taux_remuneration']
+        widgets = {
+            'speciality': forms.TextInput(attrs=W),
+            'statut': forms.Select(attrs=W),
+            'languages': forms.SelectMultiple(attrs=W),
+            'hourly_rate': forms.NumberInput(attrs={**W, 'step': '0.01'}),
+            'taux_remuneration': forms.NumberInput(attrs={**W, 'step': '0.01'}),
+        }
+
+
+class LanguageForm(forms.ModelForm):
+    class Meta:
+        model = Language
+        fields = ['name', 'code', 'description', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs=W),
+            'code': forms.TextInput(attrs=W),
+            'description': forms.Textarea(attrs=WTA),
+            'is_active': forms.CheckboxInput(attrs=WCB),
+        }
+
+
+class ScheduleAdminForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = ['day', 'language', 'student', 'teacher', 'classroom', 'start_time', 'end_time', 'is_active']
+        widgets = {
+            'day': forms.Select(attrs=W),
+            'language': forms.Select(attrs=W),
+            'student': forms.Select(attrs=W),
+            'teacher': forms.Select(attrs=W),
+            'classroom': forms.TextInput(attrs=W),
+            'start_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
+            'is_active': forms.CheckboxInput(attrs=WCB),
+        }
+
+
+class SessionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Session
+        fields = [
+            'student', 'teacher', 'language', 'date', 'start_time', 'end_time',
+            'duree_minutes', 'type_seance', 'status', 'meeting_link',
+            'theme_cours', 'comp_oral', 'comp_comprehension', 'comp_ecrit',
+            'comp_grammaire', 'comp_vocabulaire',
+            'participation', 'comprehension_score', 'engagement',
+            'difficultes', 'observations_formateur', 'prochaine_etape',
+            'devoir_donne', 'description_devoir',
+            'seance_realisee', 'fiche_completee', 'statut_validation',
+            'notes', 'feedback',
+        ]
+        widgets = {
+            'student': forms.Select(attrs=W),
+            'teacher': forms.Select(attrs=W),
+            'language': forms.Select(attrs=W),
+            'date': forms.DateInput(attrs={**W, 'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
+            'duree_minutes': forms.NumberInput(attrs=W),
+            'type_seance': forms.Select(attrs=W),
+            'status': forms.Select(attrs=W),
+            'meeting_link': forms.URLInput(attrs=W),
+            'theme_cours': forms.TextInput(attrs=W),
+            'participation': forms.Select(attrs=W),
+            'comprehension_score': forms.Select(attrs=W),
+            'engagement': forms.Select(attrs=W),
+            'difficultes': forms.Textarea(attrs=WTA),
+            'observations_formateur': forms.Textarea(attrs=WTA),
+            'prochaine_etape': forms.Textarea(attrs=WTA),
+            'description_devoir': forms.Textarea(attrs=WTA),
+            'statut_validation': forms.Select(attrs=W),
+            'notes': forms.Textarea(attrs=WTA),
+            'feedback': forms.Textarea(attrs=WTA),
+        }
+
+
+class PaymentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['student', 'amount', 'hours_purchased', 'hours_remaining', 'payment_type', 'languages', 'status', 'expiry_date']
+        widgets = {
+            'student': forms.Select(attrs=W),
+            'amount': forms.NumberInput(attrs={**W, 'step': '0.01'}),
+            'hours_purchased': forms.NumberInput(attrs=W),
+            'hours_remaining': forms.NumberInput(attrs=W),
+            'payment_type': forms.Select(attrs=W),
+            'languages': forms.Select(attrs=W),
+            'status': forms.Select(attrs=W),
+            'expiry_date': forms.DateInput(attrs={**W, 'type': 'date'}),
+        }
+
+
+class EvaluationAdminForm(forms.ModelForm):
+    class Meta:
+        model = Evaluation
+        fields = ['student', 'teacher', 'language', 'evaluation_type', 'score', 'comments']
+        widgets = {
+            'student': forms.Select(attrs=W),
+            'teacher': forms.Select(attrs=W),
+            'language': forms.Select(attrs=W),
+            'evaluation_type': forms.Select(attrs=W),
+            'score': forms.NumberInput(attrs={**W, 'step': '0.01', 'min': '0', 'max': '20'}),
+            'comments': forms.Textarea(attrs=WTA),
+        }
+
+
+class ResourceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Resource
+        fields = ['title', 'description', 'resource_type', 'file', 'url', 'teachers', 'students', 'languages', 'is_visible', 'valid_until']
+        widgets = {
+            'title': forms.TextInput(attrs=W),
+            'description': forms.Textarea(attrs=WTA),
+            'resource_type': forms.Select(attrs=W),
+            'file': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'url': forms.URLInput(attrs=W),
+            'teachers': forms.Select(attrs=W),
+            'students': forms.SelectMultiple(attrs=W),
+            'languages': forms.SelectMultiple(attrs=W),
+            'is_visible': forms.CheckboxInput(attrs=WCB),
+            'valid_until': forms.DateTimeInput(attrs={**W, 'type': 'datetime-local'}),
+        }
+
+
+class RequestAdminForm(forms.ModelForm):
+    class Meta:
+        model = Request
+        fields = ['status', 'response']
+        widgets = {
+            'status': forms.Select(attrs=W),
+            'response': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+        }
+
+
+class NotificationAdminForm(forms.ModelForm):
+    class Meta:
+        model = Notification
+        fields = ['user', 'notification_type', 'title', 'message']
+        widgets = {
+            'user': forms.Select(attrs=W),
+            'notification_type': forms.Select(attrs=W),
+            'title': forms.TextInput(attrs=W),
+            'message': forms.Textarea(attrs=WTA),
+        }
+
+
+class AssignmentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ['title', 'description', 'language', 'type', 'status', 'due_date']
+        widgets = {
+            'title': forms.TextInput(attrs=W),
+            'description': forms.Textarea(attrs=WTA),
+            'language': forms.Select(attrs=W),
+            'type': forms.Select(attrs=W),
+            'status': forms.Select(attrs=W),
+            'due_date': forms.DateTimeInput(attrs={**W, 'type': 'datetime-local'}),
+        }

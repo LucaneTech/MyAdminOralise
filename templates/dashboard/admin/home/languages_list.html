@@ -1,0 +1,63 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Langues{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des langues</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_language_create' %}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>Ajouter une langue
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>#</th>
+              <th>Langue</th>
+              <th>Description</th>
+              <th>Étudiants</th>
+              <th>Formateurs</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lang in languages %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><strong>{{ lang.name }}</strong></td>
+              <td>{{ lang.description|default:"—"|truncatechars:60 }}</td>
+              <td><span class="badge badge-primary">{{ lang.students.count }}</span></td>
+              <td><span class="badge badge-warning">{{ lang.teachers.count }}</span></td>
+              <td>
+                <a href="{% url 'admin_language_edit' lang.id %}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'admin_language_delete' lang.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-5">Aucune langue enregistrée.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

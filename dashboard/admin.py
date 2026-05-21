@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    CustomUser, Student, Teacher, Schedule,  
-    Resource, Request, Language, Session, Payment, Certificate, 
-    Evaluation, Notification, Comment, Profile
+    CustomUser, Student, Teacher, Schedule,
+    Resource, Request, Language, Session, Payment, Certificate,
+    Evaluation, Notification, Comment, Profile, PaiementFormateur
 )
 
 
@@ -62,10 +62,34 @@ class TeacherAdmin(admin.ModelAdmin):
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('student', 'teacher', 'language', 'date', 'start_time', 'end_time', 'status')
-    list_filter = ('status', 'language', 'date', 'teacher')
-    search_fields = ('student__user__first_name', 'student__user__last_name', 'teacher__user__first_name', 'teacher__user__last_name')
+    list_display = ('student', 'teacher', 'language', 'date', 'type_seance', 'status', 'statut_validation', 'fiche_completee')
+    list_filter = ('status', 'statut_validation', 'type_seance', 'language', 'date', 'teacher')
+    search_fields = ('student__user__first_name', 'student__user__last_name', 'teacher__user__first_name', 'teacher__user__last_name', 'theme_cours')
     date_hierarchy = 'date'
+    fieldsets = (
+        ("Identification", {
+            "fields": ("student", "teacher", "language", "date", "start_time", "end_time", "duree_minutes", "type_seance", "status", "meeting_link"),
+        }),
+        ("Contenu pédagogique", {
+            "fields": ("theme_cours", "comp_oral", "comp_comprehension", "comp_ecrit", "comp_grammaire", "comp_vocabulaire"),
+        }),
+        ("Évaluation rapide", {
+            "fields": ("participation", "comprehension_score", "engagement"),
+        }),
+        ("Analyse pédagogique", {
+            "fields": ("difficultes", "observations_formateur", "prochaine_etape"),
+        }),
+        ("Devoir", {
+            "fields": ("devoir_donne", "description_devoir"),
+        }),
+        ("Validation", {
+            "fields": ("seance_realisee", "fiche_completee", "statut_validation"),
+        }),
+        ("Notes legacy", {
+            "fields": ("notes", "feedback"),
+            "classes": ("collapse",),
+        }),
+    )
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
@@ -75,9 +99,18 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(Certificate)
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('student', 'language', 'level', 'issued_date', 'is_active')
+    list_display = ('student', 'language', 'level', 'certificate_id', 'issued_date', 'is_active')
     list_filter = ('language', 'level', 'is_active', 'issued_date')
-    search_fields = ('student__user__first_name', 'student__user__last_name')
+    search_fields = ('student__user__first_name', 'student__user__last_name', 'certificate_id')
+    readonly_fields = ('certificate_id', 'issued_date')
+    fieldsets = (
+        ("Informations de base", {
+            "fields": ("student", "language", "level", "certificate_id", "issued_date", "certificate_file", "is_active"),
+        }),
+        ("Informations pédagogiques", {
+            "fields": ("duree_formation", "competences_validees", "appreciation_pedagogique"),
+        }),
+    )
 
 @admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
@@ -117,3 +150,19 @@ class Comment(admin.ModelAdmin):
     list_display = ('comment', 'student', 'teacher', 'language', 'comment_at')
     list_filter = ('student', 'teacher', 'language')
     fields = ('comment', 'student', 'teacher', 'language')
+
+
+@admin.register(PaiementFormateur)
+class PaiementFormateurAdmin(admin.ModelAdmin):
+    list_display = ('formateur', 'montant', 'montant_calcule', 'periode_debut', 'periode_fin', 'statut', 'date_paiement')
+    list_filter = ('statut', 'formateur', 'periode_debut')
+    search_fields = ('formateur__user__first_name', 'formateur__user__last_name')
+    readonly_fields = ('montant_calcule', 'created_at', 'updated_at')
+    fieldsets = (
+        ("Formateur & Période", {
+            "fields": ("formateur", "periode_debut", "periode_fin"),
+        }),
+        ("Paiement", {
+            "fields": ("montant", "montant_calcule", "statut", "date_paiement", "commentaire"),
+        }),
+    )

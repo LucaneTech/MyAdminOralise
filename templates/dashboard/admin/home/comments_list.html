@@ -1,0 +1,72 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Commentaires{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des commentaires</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>Formateur</th>
+              <th>Langue</th>
+              <th>Commentaire</th>
+              <th>Note</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in comments %}
+            <tr>
+              <td>{{ c.teacher }}</td>
+              <td>{{ c.language|default:"—" }}</td>
+              <td>{{ c.comment|truncatechars:80 }}</td>
+              <td>
+                {% if c.rating %}
+                <span class="badge badge-{% if c.rating >= 4 %}success{% elif c.rating >= 3 %}warning{% else %}danger{% endif %}">
+                  {{ c.rating }}/5
+                </span>
+                {% else %}—{% endif %}
+              </td>
+              <td>{{ c.comment_at|date:"d/m/Y" }}</td>
+              <td>
+                <a href="{% url 'admin_comment_delete' c.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-5">Aucun commentaire trouvé.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if comments.has_other_pages %}
+    <div class="card-footer">
+      <nav><ul class="pagination justify-content-end mb-0">
+        {% if comments.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ comments.previous_page_number }}">Précédent</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ comments.number }} / {{ comments.paginator.num_pages }}</span></li>
+        {% if comments.has_next %}<li class="page-item"><a class="page-link" href="?page={{ comments.next_page_number }}">Suivant</a></li>{% endif %}
+      </ul></nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

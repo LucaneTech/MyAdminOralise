@@ -1,0 +1,176 @@
+{% extends 'dashboard/teacher/layouts/base.html' %}
+{% block title %}Reporting pédagogique{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Reporting pédagogique</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item active">Reporting</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+
+  <!-- Filtres -->
+  <div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0"><i class="fas fa-filter mr-2"></i>Période d'analyse</h5></div>
+    <div class="card-body">
+      <form method="get" class="row align-items-end">
+        {% if teachers %}
+        <div class="col-md-3 form-group mb-0">
+          <label>Formateur</label>
+          <select name="teacher" class="form-control">
+            <option value="">Tous</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {% if teacher and teacher.id == t.id %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div class="col-md-3 form-group mb-0">
+          <label>Date début</label>
+          <input type="date" name="date_debut" class="form-control" value="{{ date_debut|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3 form-group mb-0">
+          <label>Date fin</label>
+          <input type="date" name="date_fin" class="form-control" value="{{ date_fin|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-2 form-group mb-0">
+          <button type="submit" class="btn btn-block" style="background-color:#147a81;color:white;">
+            <i class="fas fa-search mr-1"></i>Analyser
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col"><p class="text-muted text-uppercase mb-0">Séances réalisées</p><h4 class="mb-0">{{ total_sessions }}</h4></div>
+            <div class="col-auto"><div class="icon icon-shape bg-primary text-white rounded-circle shadow"><i class="fas fa-chalkboard-teacher"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col"><p class="text-muted text-uppercase mb-0">Séances validées</p><h4 class="mb-0">{{ sessions_validees }}</h4></div>
+            <div class="col-auto"><div class="icon icon-shape bg-success text-white rounded-circle shadow"><i class="fas fa-check-circle"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-stats">
+        <div class="card-body">
+          <div class="row">
+            <div class="col"><p class="text-muted text-uppercase mb-0">Étudiants suivis</p><h4 class="mb-0">{{ student_stats|length }}</h4></div>
+            <div class="col-auto"><div class="icon icon-shape bg-info text-white rounded-circle shadow"><i class="fas fa-user-graduate"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Tableau étudiants -->
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Suivi des étudiants</h5></div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+              <thead class="thead-light">
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Séances</th>
+                  <th>Participation</th>
+                  <th>Compréhension</th>
+                  <th>Engagement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in student_stats %}
+                <tr>
+                  <td>{{ stat.student }}</td>
+                  <td>{{ stat.nb_sessions }}</td>
+                  <td>
+                    {% if stat.avg_participation %}
+                    <span class="badge badge-{% if stat.avg_participation >= 3 %}success{% elif stat.avg_participation >= 2 %}warning{% else %}danger{% endif %}">
+                      {{ stat.avg_participation }}/4
+                    </span>
+                    {% else %}-{% endif %}
+                  </td>
+                  <td>
+                    {% if stat.avg_comprehension %}
+                    <span class="badge badge-{% if stat.avg_comprehension >= 3 %}success{% elif stat.avg_comprehension >= 2 %}warning{% else %}danger{% endif %}">
+                      {{ stat.avg_comprehension }}/4
+                    </span>
+                    {% else %}-{% endif %}
+                  </td>
+                  <td>
+                    {% if stat.avg_engagement %}
+                    <span class="badge badge-{% if stat.avg_engagement >= 3 %}success{% elif stat.avg_engagement >= 2 %}warning{% else %}danger{% endif %}">
+                      {{ stat.avg_engagement }}/4
+                    </span>
+                    {% else %}-{% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucune donnée pour cette période.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertes & Compétences -->
+    <div class="col-lg-4">
+      <!-- Étudiants en difficulté -->
+      {% if students_en_difficulte %}
+      <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white"><h5 class="mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Étudiants en difficulté</h5></div>
+        <ul class="list-group list-group-flush">
+          {% for s in students_en_difficulte %}
+          <li class="list-group-item">{{ s }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Points faibles récurrents -->
+      <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Points faibles récurrents</h5></div>
+        <div class="card-body">
+          {% for comp, count in comp_faibles.items %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-capitalize">{{ comp }}</span>
+            <span class="badge badge-pill badge-primary">{{ count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

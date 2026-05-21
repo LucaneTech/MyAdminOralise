@@ -38,8 +38,9 @@ from dashboard.models import (
     Evaluation,
     Notification,
     Comment,
+    PaiementFormateur,
 )
-from .forms import ProfileUpdateForm, SessionForm, ResourceForm
+from .forms import ProfileUpdateForm, SessionForm, ResourceForm, FichePedagogiqueForm, CertificateForm, PaiementFormateurForm
 import json
 
 
@@ -1571,9 +1572,13 @@ def teacher_resources_add_student(request):
 
 @login_required
 def certificates_view(request):
-    """Vue des certificats pour les étudiants"""
-    if request.user.role != "student":
-        raise Http404("Cette page est réservée aux étudiants")
+    """Vue des certificats — redirige selon le rôle."""
+    if request.user.role == "admin":
+        return redirect("admin_certificates_list")
+
+    if request.user.role == "teacher":
+        messages.info(request, "La gestion des certificats est réservée à l'administration.")
+        return redirect("teacher_view", username=request.user.username)
 
     student = get_object_or_404(Student, user=request.user)
     certificates = Certificate.objects.filter(student=student, is_active=True)
@@ -2389,6 +2394,23 @@ def admin_dashboard(request):
         date_joined__gte=this_month_start
     ).count()
     
+    # Nouveaux KPIs pédagogiques
+    active_students = Student.objects.filter(statuts='actif').count()
+    active_teachers = Teacher.objects.filter(statut__in=['actif', 'disponible']).count()
+    total_sessions_all = Session.objects.filter(seance_realisee=True).count()
+    fiches_completees = Session.objects.filter(fiche_completee=True).count()
+    taux_completion_fiches = round((fiches_completees / total_sessions_all * 100), 1) if total_sessions_all > 0 else 0
+    total_heures_enseignees = Session.objects.filter(
+        seance_realisee=True
+    ).aggregate(total=Sum('duree_minutes'))['total'] or 0
+    total_heures_enseignees = round(total_heures_enseignees / 60, 1)
+    total_paiements_formateurs = PaiementFormateur.objects.filter(
+        statut='paye'
+    ).aggregate(total=Sum('montant'))['total'] or 0
+    sessions_en_attente_validation = Session.objects.filter(
+        fiche_completee=True, statut_validation='en_attente'
+    ).count()
+
     context = {
         'total_teachers': total_teachers,
         'total_students': total_students,
@@ -2405,8 +2427,16 @@ def admin_dashboard(request):
         'upcoming_sessions': upcoming_sessions,
         'today_sessions': today_sessions,
         'new_students_this_month': new_students_this_month,
+        # Nouveaux KPIs
+        'active_students': active_students,
+        'active_teachers': active_teachers,
+        'total_sessions_all': total_sessions_all,
+        'taux_completion_fiches': taux_completion_fiches,
+        'total_heures_enseignees': total_heures_enseignees,
+        'total_paiements_formateurs': total_paiements_formateurs,
+        'sessions_en_attente_validation': sessions_en_attente_validation,
     }
-    
+
     return render(request, 'dashboard/admin/home/index.html', context)
 
 
@@ -2538,3 +2568,1164 @@ def student_detail_view(request, student_id):
         "teachers": student.current_teachers.all(),
     }
     return render(request, 'dashboard/admin/home/student_detail.html', context)
+
+
+# ─────────────────────────────────────────────────────────────
+#  FICHE PÉDAGOGIQUE (formateur)
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def fiche_pedagogique_edit(request, session_id):
+    """Permet au formateur de remplir la fiche pédagogique d'une séance."""
+    session = get_object_or_404(Session, id=session_id)
+
+    if request.user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=request.user)
+        if session.teacher != teacher:
+            messages.error(request, "Vous n'êtes pas autorisé à modifier cette fiche.")
+            return redirect('teacher_sessions')
+    elif request.user.role != 'admin':
+        messages.error(request, "Accès refusé.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = FichePedagogiqueForm(request.POST, instance=session)
+        if form.is_valid():
+            fiche = form.save(commit=False)
+            fiche.fiche_completee = True
+            fiche.save()
+            messages.success(request, "Fiche pédagogique enregistrée avec succès.")
+            if request.user.role == 'teacher':
+                return redirect('teacher_sessions')
+            return redirect('admin_sessions_list')
+    else:
+        form = FichePedagogiqueForm(instance=session)
+
+    return render(request, 'dashboard/teacher/home/fiche_pedagogique.html', {
+        'form': form,
+        'session': session,
+    })
+
+
+@login_required
+def fiche_pedagogique_detail(request, session_id):
+    """Affiche la fiche pédagogique complète d'une séance (lecture seule)."""
+    session = get_object_or_404(Session, id=session_id)
+
+    if request.user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=request.user)
+        if session.teacher != teacher:
+            raise Http404
+    elif request.user.role == 'student':
+        student = get_object_or_404(Student, user=request.user)
+        if session.student != student:
+            raise Http404
+
+    return render(request, 'dashboard/teacher/home/fiche_pedagogique_detail.html', {
+        'session': session,
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+#  VALIDATION DES SÉANCES (admin)
+# ─────────────────────────────────────────────────────────────
+
+@admin_required
+def admin_sessions_list(request):
+    """Liste toutes les séances avec filtres de validation."""
+    sessions = Session.objects.select_related(
+        'student__user', 'teacher__user', 'language'
+    ).order_by('-date')
+
+    statut = request.GET.get('statut_validation', '')
+    teacher_id = request.GET.get('teacher', '')
+    if statut:
+        sessions = sessions.filter(statut_validation=statut)
+    if teacher_id:
+        sessions = sessions.filter(teacher_id=teacher_id)
+
+    paginator = Paginator(sessions, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'dashboard/admin/home/sessions_list.html', {
+        'sessions': page_obj,
+        'teachers': Teacher.objects.all(),
+        'statut_filter': statut,
+        'teacher_filter': teacher_id,
+    })
+
+
+@admin_required
+def admin_valider_session(request, session_id):
+    """Valide ou refuse une fiche pédagogique (admin)."""
+    session = get_object_or_404(Session, id=session_id)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'valider':
+            session.statut_validation = 'validee'
+            messages.success(request, f"Séance du {session.date} validée.")
+        elif action == 'refuser':
+            session.statut_validation = 'refusee'
+            messages.warning(request, f"Séance du {session.date} refusée.")
+        session.save()
+    return redirect('admin_sessions_list')
+
+
+# ─────────────────────────────────────────────────────────────
+#  REPORTING BI-HEBDOMADAIRE (admin / formateur)
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def reporting_formateur(request, teacher_id=None):
+    """Synthèse pédagogique dynamique pour une période donnée."""
+    if request.user.role == 'admin':
+        if teacher_id:
+            teacher = get_object_or_404(Teacher, id=teacher_id)
+        else:
+            teacher = None
+        teachers = Teacher.objects.all()
+    elif request.user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=request.user)
+        teachers = None
+    else:
+        raise Http404
+
+    today = timezone.now().date()
+    date_fin_default = today
+    date_debut_default = today - timedelta(days=14)
+
+    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
+    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
+    try:
+        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+    except ValueError:
+        date_debut = date_debut_default
+        date_fin = date_fin_default
+
+    sessions_qs = Session.objects.filter(
+        date__gte=date_debut,
+        date__lte=date_fin,
+        seance_realisee=True,
+    )
+    if teacher:
+        sessions_qs = sessions_qs.filter(teacher=teacher)
+
+    total_sessions = sessions_qs.count()
+    sessions_validees = sessions_qs.filter(statut_validation='validee').count()
+
+    # Étudiants suivis
+    student_ids = sessions_qs.values_list('student_id', flat=True).distinct()
+    students = Student.objects.filter(id__in=student_ids).select_related('user')
+
+    # Moyennes par étudiant
+    student_stats = []
+    students_en_difficulte = []
+    for s in students:
+        s_sessions = sessions_qs.filter(student=s)
+        avg_participation = s_sessions.aggregate(Avg('participation'))['participation__avg']
+        avg_comprehension = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg']
+        avg_engagement = s_sessions.aggregate(Avg('engagement'))['engagement__avg']
+        nb = s_sessions.count()
+        stat = {
+            'student': s,
+            'nb_sessions': nb,
+            'avg_participation': round(avg_participation, 1) if avg_participation else None,
+            'avg_comprehension': round(avg_comprehension, 1) if avg_comprehension else None,
+            'avg_engagement': round(avg_engagement, 1) if avg_engagement else None,
+        }
+        student_stats.append(stat)
+        score_moyen = (avg_participation or 0) + (avg_comprehension or 0) + (avg_engagement or 0)
+        if score_moyen > 0 and score_moyen / 3 < 2.5:
+            students_en_difficulte.append(s)
+
+    # Points faibles récurrents
+    comp_faibles = {
+        'oral': sessions_qs.filter(comp_oral=True).count(),
+        'comprehension': sessions_qs.filter(comp_comprehension=True).count(),
+        'ecrit': sessions_qs.filter(comp_ecrit=True).count(),
+        'grammaire': sessions_qs.filter(comp_grammaire=True).count(),
+        'vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
+    }
+
+    return render(request, 'dashboard/teacher/home/reporting.html', {
+        'teacher': teacher,
+        'teachers': teachers,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'total_sessions': total_sessions,
+        'sessions_validees': sessions_validees,
+        'student_stats': student_stats,
+        'students_en_difficulte': students_en_difficulte,
+        'comp_faibles': comp_faibles,
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+#  PAIEMENTS FORMATEURS (admin)
+# ─────────────────────────────────────────────────────────────
+
+@admin_required
+def paiements_formateurs_list(request):
+    """Liste tous les paiements formateurs."""
+    paiements = PaiementFormateur.objects.select_related('formateur__user').order_by('-created_at')
+
+    statut = request.GET.get('statut', '')
+    teacher_id = request.GET.get('teacher', '')
+    if statut:
+        paiements = paiements.filter(statut=statut)
+    if teacher_id:
+        paiements = paiements.filter(formateur_id=teacher_id)
+
+    paginator = Paginator(paiements, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    total_en_attente = PaiementFormateur.objects.filter(statut='en_attente').aggregate(
+        t=Sum('montant'))['t'] or 0
+    total_paye = PaiementFormateur.objects.filter(statut='paye').aggregate(
+        t=Sum('montant'))['t'] or 0
+
+    return render(request, 'dashboard/admin/home/paiements_formateurs.html', {
+        'paiements': page_obj,
+        'teachers': Teacher.objects.all(),
+        'statut_filter': statut,
+        'teacher_filter': teacher_id,
+        'total_en_attente': total_en_attente,
+        'total_paye': total_paye,
+    })
+
+
+@admin_required
+def paiement_formateur_create(request):
+    """Créer un nouveau paiement formateur."""
+    if request.method == 'POST':
+        form = PaiementFormateurForm(request.POST)
+        if form.is_valid():
+            paiement = form.save(commit=False)
+            paiement.calculer_montant()
+            paiement.save()
+            messages.success(request, "Paiement formateur créé avec succès.")
+            return redirect('paiements_formateurs_list')
+    else:
+        form = PaiementFormateurForm()
+
+    return render(request, 'dashboard/admin/home/paiement_formateur_form.html', {
+        'form': form,
+        'titre': 'Créer un paiement',
+    })
+
+
+@admin_required
+def paiement_formateur_edit(request, paiement_id):
+    """Modifier un paiement formateur existant."""
+    paiement = get_object_or_404(PaiementFormateur, id=paiement_id)
+    if request.method == 'POST':
+        form = PaiementFormateurForm(request.POST, instance=paiement)
+        if form.is_valid():
+            p = form.save(commit=False)
+            p.calculer_montant()
+            p.save()
+            messages.success(request, "Paiement mis à jour.")
+            return redirect('paiements_formateurs_list')
+    else:
+        form = PaiementFormateurForm(instance=paiement)
+
+    return render(request, 'dashboard/admin/home/paiement_formateur_form.html', {
+        'form': form,
+        'paiement': paiement,
+        'titre': 'Modifier le paiement',
+    })
+
+
+@admin_required
+def paiement_formateur_delete(request, paiement_id):
+    """Supprimer un paiement formateur."""
+    paiement = get_object_or_404(PaiementFormateur, id=paiement_id)
+    if request.method == 'POST':
+        paiement.delete()
+        messages.success(request, "Paiement supprimé.")
+    return redirect('paiements_formateurs_list')
+
+
+# ─────────────────────────────────────────────────────────────
+#  MES PAIEMENTS (vue formateur)
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def mes_paiements_formateur(request):
+    """Vue formateur : ses paiements reçus et montants en attente."""
+    if request.user.role != 'teacher':
+        raise Http404
+    teacher = get_object_or_404(Teacher, user=request.user)
+
+    paiements = PaiementFormateur.objects.filter(formateur=teacher).order_by('-created_at')
+    total_recu = paiements.filter(statut='paye').aggregate(t=Sum('montant'))['t'] or 0
+    total_attente = paiements.filter(statut='en_attente').aggregate(t=Sum('montant'))['t'] or 0
+
+    return render(request, 'dashboard/teacher/home/mes_paiements.html', {
+        'paiements': paiements,
+        'total_recu': total_recu,
+        'total_attente': total_attente,
+    })
+
+
+# ─────────────────────────────────────────────────────────────
+#  CERTIFICATS — vues améliorées
+# ─────────────────────────────────────────────────────────────
+
+@admin_required
+def admin_certificate_create(request):
+    """Créer un certificat (admin) avec les nouveaux champs."""
+    if request.method == 'POST':
+        form = CertificateForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Certificat créé avec succès.")
+            return redirect('admin_certificates_list')
+    else:
+        form = CertificateForm()
+
+    return render(request, 'dashboard/admin/home/certificate_form.html', {
+        'form': form,
+        'titre': 'Ajouter un certificat',
+    })
+
+
+@admin_required
+def admin_certificate_edit(request, cert_id):
+    """Modifier un certificat existant."""
+    cert = get_object_or_404(Certificate, id=cert_id)
+    if request.method == 'POST':
+        form = CertificateForm(request.POST, request.FILES, instance=cert)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Certificat mis à jour.")
+            return redirect('admin_certificates_list')
+    else:
+        form = CertificateForm(instance=cert)
+
+    return render(request, 'dashboard/admin/home/certificate_form.html', {
+        'form': form,
+        'cert': cert,
+        'titre': 'Modifier le certificat',
+    })
+
+
+@admin_required
+def admin_certificates_list(request):
+    """Liste tous les certificats (admin)."""
+    certs = Certificate.objects.select_related('student__user', 'language').order_by('-issued_date')
+    return render(request, 'dashboard/admin/home/certificates_list.html', {
+        'certs': certs,
+    })
+
+
+def certificate_public_view(request, certificate_id):
+    """Page publique de vérification d'un certificat (sans connexion requise)."""
+    try:
+        cert = Certificate.objects.select_related('student__user', 'language').get(
+            certificate_id=certificate_id,
+            is_active=True,
+        )
+        valid = True
+    except Certificate.DoesNotExist:
+        cert = None
+        valid = False
+
+    return render(request, 'dashboard/public/certificate_verify.html', {
+        'cert': cert,
+        'valid': valid,
+        'certificate_id': certificate_id,
+    })
+
+
+@login_required
+def certificate_detail_student(request, cert_id):
+    """Détail d'un certificat côté étudiant."""
+    cert = get_object_or_404(Certificate, id=cert_id, is_active=True)
+    if request.user.role == 'student':
+        student = get_object_or_404(Student, user=request.user)
+        if cert.student != student:
+            raise Http404
+
+    return render(request, 'dashboard/student/home/certificate_detail.html', {
+        'cert': cert,
+    })
+
+
+# ═════════════════════════════════════════════════════════════
+#  ADMIN DASHBOARD COMPLET — GESTION DE TOUS LES MODÈLES
+# ═════════════════════════════════════════════════════════════
+from .forms import (
+    AdminUserCreateForm, AdminUserEditForm, AdminResetPasswordForm,
+    StudentAdminForm, TeacherAdminForm, LanguageForm, ScheduleAdminForm,
+    SessionAdminForm, PaymentAdminForm, EvaluationAdminForm,
+    ResourceAdminForm, RequestAdminForm, NotificationAdminForm,
+    AssignmentAdminForm,
+)
+from dashboard.models import Schedule, Evaluation, Assignment, Submission
+from django.contrib.auth.hashers import make_password
+
+
+# ─── HELPERS ──────────────────────────────────────────────────
+def _admin_ctx(titre, section, back_url=None, **extra):
+    ctx = {'titre': titre, 'section_active': section}
+    if back_url:
+        ctx['back_url'] = back_url
+    ctx.update(extra)
+    return ctx
+
+
+# ═══════════════════════════════════════════════════════════════
+#  1. GESTION DES UTILISATEURS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_users_list(request):
+    role = request.GET.get('role', '')
+    search = request.GET.get('q', '')
+    users = CustomUser.objects.select_related('user_profile').order_by('-date_joined')
+    if role:
+        users = users.filter(role=role)
+    if search:
+        users = users.filter(
+            Q(username__icontains=search) | Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) | Q(email__icontains=search)
+        )
+    paginator = Paginator(users, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/users_list.html', {
+        'users': page_obj, 'role_filter': role, 'search': search,
+        'section_active': 'users',
+    })
+
+
+@admin_required
+def admin_user_create(request):
+    if request.method == 'POST':
+        form = AdminUserCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Utilisateur créé avec succès.")
+            return redirect('admin_users_list')
+    else:
+        form = AdminUserCreateForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Créer un utilisateur', 'users', 'admin_users_list', form=form,
+    ))
+
+
+@admin_required
+def admin_user_edit(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        form = AdminUserEditForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Utilisateur mis à jour.")
+            return redirect('admin_users_list')
+    else:
+        form = AdminUserEditForm(instance=user)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        f'Modifier {user.username}', 'users', 'admin_users_list', form=form,
+    ))
+
+
+@admin_required
+def admin_user_reset_password(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        form = AdminResetPasswordForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['password1'])
+            user.save()
+            messages.success(request, f"Mot de passe de {user.username} réinitialisé.")
+            return redirect('admin_users_list')
+    else:
+        form = AdminResetPasswordForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        f'Réinitialiser le mot de passe — {user.username}', 'users', 'admin_users_list', form=form,
+    ))
+
+
+@admin_required
+def admin_user_toggle_active(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        user.is_active = not user.is_active
+        user.save()
+        state = "activé" if user.is_active else "désactivé"
+        messages.success(request, f"Compte {user.username} {state}.")
+    return redirect('admin_users_list')
+
+
+@admin_required
+def admin_user_delete(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        username = user.username
+        user.delete()
+        messages.success(request, f"Utilisateur {username} supprimé.")
+        return redirect('admin_users_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': user, 'back_url': 'admin_users_list', 'section_active': 'users',
+        'titre': f'Supprimer {user.username}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  2. GESTION DES ÉTUDIANTS (CRUD COMPLET)
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_student_create(request):
+    """Créer un étudiant : d'abord créer le compte user, puis le profil étudiant."""
+    if request.method == 'POST':
+        user_form = AdminUserCreateForm(request.POST)
+        student_form = StudentAdminForm(request.POST)
+        if user_form.is_valid() and student_form.is_valid():
+            user = user_form.save(commit=False)
+            user.role = 'student'
+            user.save()
+            student = student_form.save(commit=False)
+            student.user = user
+            student.save()
+            student_form.save_m2m()
+            messages.success(request, f"Étudiant {user.get_full_name()} créé.")
+            return redirect('admin_students')
+        messages.error(request, "Veuillez corriger les erreurs.")
+    else:
+        user_form = AdminUserCreateForm()
+        student_form = StudentAdminForm()
+    return render(request, 'dashboard/admin/home/student_form.html', {
+        'user_form': user_form, 'student_form': student_form,
+        'titre': 'Créer un étudiant', 'section_active': 'students',
+    })
+
+
+@admin_required
+def admin_student_edit(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    user = student.user
+    if request.method == 'POST':
+        user_form = AdminUserEditForm(request.POST, instance=user)
+        student_form = StudentAdminForm(request.POST, instance=student)
+        if user_form.is_valid() and student_form.is_valid():
+            user_form.save()
+            student_form.save()
+            messages.success(request, "Étudiant mis à jour.")
+            return redirect('student_detail', student_id=student.id)
+    else:
+        user_form = AdminUserEditForm(instance=user)
+        student_form = StudentAdminForm(instance=student)
+    return render(request, 'dashboard/admin/home/student_form.html', {
+        'user_form': user_form, 'student_form': student_form,
+        'titre': f'Modifier {user.get_full_name()}', 'section_active': 'students',
+        'student': student,
+    })
+
+
+@admin_required
+def admin_student_delete(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    if request.method == 'POST':
+        name = str(student)
+        student.user.delete()
+        messages.success(request, f"{name} supprimé.")
+        return redirect('admin_students')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': student, 'back_url': 'admin_students', 'section_active': 'students',
+        'titre': f'Supprimer {student}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  3. GESTION DES FORMATEURS (CRUD COMPLET)
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_teacher_create(request):
+    if request.method == 'POST':
+        user_form = AdminUserCreateForm(request.POST)
+        teacher_form = TeacherAdminForm(request.POST)
+        if user_form.is_valid() and teacher_form.is_valid():
+            user = user_form.save(commit=False)
+            user.role = 'teacher'
+            user.save()
+            teacher = teacher_form.save(commit=False)
+            teacher.user = user
+            teacher.save()
+            teacher_form.save_m2m()
+            messages.success(request, f"Formateur {user.get_full_name()} créé.")
+            return redirect('admin_teachers')
+        messages.error(request, "Veuillez corriger les erreurs.")
+    else:
+        user_form = AdminUserCreateForm()
+        teacher_form = TeacherAdminForm()
+    return render(request, 'dashboard/admin/home/teacher_form.html', {
+        'user_form': user_form, 'teacher_form': teacher_form,
+        'titre': 'Créer un formateur', 'section_active': 'teachers',
+    })
+
+
+@admin_required
+def admin_teacher_edit(request, teacher_id):
+    teacher = get_object_or_404(Teacher, id=teacher_id)
+    user = teacher.user
+    if request.method == 'POST':
+        user_form = AdminUserEditForm(request.POST, instance=user)
+        teacher_form = TeacherAdminForm(request.POST, instance=teacher)
+        if user_form.is_valid() and teacher_form.is_valid():
+            user_form.save()
+            teacher_form.save()
+            messages.success(request, "Formateur mis à jour.")
+            return redirect('teacher_detail', teacher_id=teacher.id)
+    else:
+        user_form = AdminUserEditForm(instance=user)
+        teacher_form = TeacherAdminForm(instance=teacher)
+    return render(request, 'dashboard/admin/home/teacher_form.html', {
+        'user_form': user_form, 'teacher_form': teacher_form,
+        'titre': f'Modifier {user.get_full_name()}', 'section_active': 'teachers',
+        'teacher': teacher,
+    })
+
+
+@admin_required
+def admin_teacher_delete(request, teacher_id):
+    teacher = get_object_or_404(Teacher, id=teacher_id)
+    if request.method == 'POST':
+        name = str(teacher)
+        teacher.user.delete()
+        messages.success(request, f"{name} supprimé.")
+        return redirect('admin_teachers')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': teacher, 'back_url': 'admin_teachers', 'section_active': 'teachers',
+        'titre': f'Supprimer {teacher}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  4. GESTION DES LANGUES
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_languages_list(request):
+    languages = Language.objects.order_by('name')
+    return render(request, 'dashboard/admin/home/languages_list.html', {
+        'languages': languages, 'section_active': 'languages',
+    })
+
+
+@admin_required
+def admin_language_create(request):
+    if request.method == 'POST':
+        form = LanguageForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Langue créée.")
+            return redirect('admin_languages_list')
+    else:
+        form = LanguageForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Ajouter une langue', 'languages', 'admin_languages_list', form=form,
+    ))
+
+
+@admin_required
+def admin_language_edit(request, lang_id):
+    lang = get_object_or_404(Language, id=lang_id)
+    if request.method == 'POST':
+        form = LanguageForm(request.POST, instance=lang)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Langue mise à jour.")
+            return redirect('admin_languages_list')
+    else:
+        form = LanguageForm(instance=lang)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        f'Modifier {lang.name}', 'languages', 'admin_languages_list', form=form,
+    ))
+
+
+@admin_required
+def admin_language_delete(request, lang_id):
+    lang = get_object_or_404(Language, id=lang_id)
+    if request.method == 'POST':
+        lang.delete()
+        messages.success(request, f"Langue {lang.name} supprimée.")
+        return redirect('admin_languages_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': lang, 'back_url': 'admin_languages_list', 'section_active': 'languages',
+        'titre': f'Supprimer {lang.name}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  5. GESTION DES EMPLOIS DU TEMPS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_schedules_list(request):
+    teacher_id = request.GET.get('teacher', '')
+    schedules = Schedule.objects.select_related('language', 'student__user', 'teacher__user').order_by('day', 'start_time')
+    if teacher_id:
+        schedules = schedules.filter(teacher_id=teacher_id)
+    return render(request, 'dashboard/admin/home/schedules_list.html', {
+        'schedules': schedules, 'teachers': Teacher.objects.all(),
+        'teacher_filter': teacher_id, 'section_active': 'schedules',
+    })
+
+
+@admin_required
+def admin_schedule_create(request):
+    if request.method == 'POST':
+        form = ScheduleAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Emploi du temps créé.")
+            return redirect('admin_schedules_list')
+    else:
+        form = ScheduleAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Ajouter un créneau', 'schedules', 'admin_schedules_list', form=form,
+    ))
+
+
+@admin_required
+def admin_schedule_edit(request, sched_id):
+    sched = get_object_or_404(Schedule, id=sched_id)
+    if request.method == 'POST':
+        form = ScheduleAdminForm(request.POST, instance=sched)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Créneau mis à jour.")
+            return redirect('admin_schedules_list')
+    else:
+        form = ScheduleAdminForm(instance=sched)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Modifier le créneau', 'schedules', 'admin_schedules_list', form=form,
+    ))
+
+
+@admin_required
+def admin_schedule_delete(request, sched_id):
+    sched = get_object_or_404(Schedule, id=sched_id)
+    if request.method == 'POST':
+        sched.delete()
+        messages.success(request, "Créneau supprimé.")
+        return redirect('admin_schedules_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': sched, 'back_url': 'admin_schedules_list', 'section_active': 'schedules',
+        'titre': f'Supprimer le créneau {sched}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  6. GESTION DES SÉANCES (CRUD COMPLET)
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_session_create(request):
+    if request.method == 'POST':
+        form = SessionAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Séance créée.")
+            return redirect('admin_sessions_list')
+    else:
+        form = SessionAdminForm()
+    return render(request, 'dashboard/admin/home/session_form.html', {
+        'form': form, 'titre': 'Créer une séance', 'section_active': 'sessions',
+    })
+
+
+@admin_required
+def admin_session_edit(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+    if request.method == 'POST':
+        form = SessionAdminForm(request.POST, instance=session)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Séance mise à jour.")
+            return redirect('admin_sessions_list')
+    else:
+        form = SessionAdminForm(instance=session)
+    return render(request, 'dashboard/admin/home/session_form.html', {
+        'form': form, 'session': session,
+        'titre': f'Modifier séance — {session.date}', 'section_active': 'sessions',
+    })
+
+
+@admin_required
+def admin_session_delete(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+    if request.method == 'POST':
+        session.delete()
+        messages.success(request, "Séance supprimée.")
+        return redirect('admin_sessions_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': session, 'back_url': 'admin_sessions_list', 'section_active': 'sessions',
+        'titre': f'Supprimer la séance du {session.date}',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  7. GESTION DES PAIEMENTS ÉTUDIANTS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_payments_list(request):
+    status = request.GET.get('status', '')
+    student_id = request.GET.get('student', '')
+    payments = Payment.objects.select_related('student__user', 'languages').order_by('-payment_date')
+    if status:
+        payments = payments.filter(status=status)
+    if student_id:
+        payments = payments.filter(student_id=student_id)
+    total = payments.filter(status='paid').aggregate(t=Sum('amount'))['t'] or 0
+    paginator = Paginator(payments, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/payments_list.html', {
+        'payments': page_obj, 'students': Student.objects.all(),
+        'status_filter': status, 'student_filter': student_id,
+        'total_paye': total, 'section_active': 'payments',
+    })
+
+
+@admin_required
+def admin_payment_create(request):
+    if request.method == 'POST':
+        form = PaymentAdminForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.invoice_number = f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            payment.save()
+            messages.success(request, "Paiement enregistré.")
+            return redirect('admin_payments_list')
+    else:
+        form = PaymentAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Nouveau paiement étudiant', 'payments', 'admin_payments_list', form=form,
+    ))
+
+
+@admin_required
+def admin_payment_edit(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    if request.method == 'POST':
+        form = PaymentAdminForm(request.POST, instance=payment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Paiement mis à jour.")
+            return redirect('admin_payments_list')
+    else:
+        form = PaymentAdminForm(instance=payment)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Modifier le paiement', 'payments', 'admin_payments_list', form=form,
+    ))
+
+
+@admin_required
+def admin_payment_delete(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    if request.method == 'POST':
+        payment.delete()
+        messages.success(request, "Paiement supprimé.")
+        return redirect('admin_payments_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': payment, 'back_url': 'admin_payments_list', 'section_active': 'payments',
+        'titre': 'Supprimer ce paiement',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  8. GESTION DES ÉVALUATIONS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_evaluations_list(request):
+    evals = Evaluation.objects.select_related('student__user', 'teacher__user', 'language').order_by('-evaluation_date')
+    teacher_id = request.GET.get('teacher', '')
+    if teacher_id:
+        evals = evals.filter(teacher_id=teacher_id)
+    paginator = Paginator(evals, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/evaluations_list.html', {
+        'evaluations': page_obj, 'teachers': Teacher.objects.all(),
+        'teacher_filter': teacher_id, 'section_active': 'evaluations',
+    })
+
+
+@admin_required
+def admin_evaluation_create(request):
+    if request.method == 'POST':
+        form = EvaluationAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Évaluation créée.")
+            return redirect('admin_evaluations_list')
+    else:
+        form = EvaluationAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Nouvelle évaluation', 'evaluations', 'admin_evaluations_list', form=form,
+    ))
+
+
+@admin_required
+def admin_evaluation_edit(request, eval_id):
+    ev = get_object_or_404(Evaluation, id=eval_id)
+    if request.method == 'POST':
+        form = EvaluationAdminForm(request.POST, instance=ev)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Évaluation mise à jour.")
+            return redirect('admin_evaluations_list')
+    else:
+        form = EvaluationAdminForm(instance=ev)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Modifier l\'évaluation', 'evaluations', 'admin_evaluations_list', form=form,
+    ))
+
+
+@admin_required
+def admin_evaluation_delete(request, eval_id):
+    ev = get_object_or_404(Evaluation, id=eval_id)
+    if request.method == 'POST':
+        ev.delete()
+        messages.success(request, "Évaluation supprimée.")
+        return redirect('admin_evaluations_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': ev, 'back_url': 'admin_evaluations_list', 'section_active': 'evaluations',
+        'titre': 'Supprimer cette évaluation',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  9. GESTION DES RESSOURCES
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_resources_list(request):
+    resources = Resource.objects.select_related('teachers__user').order_by('-created_at')
+    paginator = Paginator(resources, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/resources_list.html', {
+        'resources': page_obj, 'section_active': 'resources',
+    })
+
+
+@admin_required
+def admin_resource_create(request):
+    if request.method == 'POST':
+        form = ResourceAdminForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ressource créée.")
+            return redirect('admin_resources_list')
+    else:
+        form = ResourceAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Ajouter une ressource', 'resources', 'admin_resources_list', form=form,
+    ))
+
+
+@admin_required
+def admin_resource_edit(request, resource_id):
+    res = get_object_or_404(Resource, id=resource_id)
+    if request.method == 'POST':
+        form = ResourceAdminForm(request.POST, request.FILES, instance=res)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ressource mise à jour.")
+            return redirect('admin_resources_list')
+    else:
+        form = ResourceAdminForm(instance=res)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Modifier la ressource', 'resources', 'admin_resources_list', form=form,
+    ))
+
+
+@admin_required
+def admin_resource_delete(request, resource_id):
+    res = get_object_or_404(Resource, id=resource_id)
+    if request.method == 'POST':
+        res.delete()
+        messages.success(request, "Ressource supprimée.")
+        return redirect('admin_resources_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': res, 'back_url': 'admin_resources_list', 'section_active': 'resources',
+        'titre': f'Supprimer "{res.title}"',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  10. GESTION DES DEMANDES / REQUÊTES
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_requests_list(request):
+    status = request.GET.get('status', '')
+    reqs = Request.objects.select_related('student__user', 'teacher__user').order_by('-created_at')
+    if status:
+        reqs = reqs.filter(status=status)
+    paginator = Paginator(reqs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/requests_list.html', {
+        'requests': page_obj, 'status_filter': status, 'section_active': 'requests',
+    })
+
+
+@admin_required
+def admin_request_detail(request, req_id):
+    req = get_object_or_404(Request, id=req_id)
+    if request.method == 'POST':
+        form = RequestAdminForm(request.POST, instance=req)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Demande mise à jour.")
+            return redirect('admin_requests_list')
+    else:
+        form = RequestAdminForm(instance=req)
+    return render(request, 'dashboard/admin/home/request_detail.html', {
+        'req': req, 'form': form, 'section_active': 'requests',
+    })
+
+
+@admin_required
+def admin_request_delete(request, req_id):
+    req = get_object_or_404(Request, id=req_id)
+    if request.method == 'POST':
+        req.delete()
+        messages.success(request, "Demande supprimée.")
+        return redirect('admin_requests_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': req, 'back_url': 'admin_requests_list', 'section_active': 'requests',
+        'titre': 'Supprimer cette demande',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  11. GESTION DES NOTIFICATIONS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_notifications_list(request):
+    notifs = Notification.objects.select_related('user').order_by('-created_at')
+    paginator = Paginator(notifs, 25)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/notifications_list.html', {
+        'notifs': page_obj, 'section_active': 'notifications',
+    })
+
+
+@admin_required
+def admin_notification_create(request):
+    if request.method == 'POST':
+        form = NotificationAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Notification envoyée.")
+            return redirect('admin_notifications_list')
+    else:
+        form = NotificationAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Envoyer une notification', 'notifications', 'admin_notifications_list', form=form,
+    ))
+
+
+@admin_required
+def admin_notification_delete(request, notif_id):
+    notif = get_object_or_404(Notification, id=notif_id)
+    if request.method == 'POST':
+        notif.delete()
+        messages.success(request, "Notification supprimée.")
+        return redirect('admin_notifications_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': notif, 'back_url': 'admin_notifications_list', 'section_active': 'notifications',
+        'titre': 'Supprimer cette notification',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  12. GESTION DES DEVOIRS
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_assignments_list(request):
+    assignments = Assignment.objects.select_related('language').order_by('-created_at')
+    paginator = Paginator(assignments, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/assignments_list.html', {
+        'assignments': page_obj, 'section_active': 'assignments',
+    })
+
+
+@admin_required
+def admin_assignment_create(request):
+    if request.method == 'POST':
+        form = AssignmentAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Devoir créé.")
+            return redirect('admin_assignments_list')
+    else:
+        form = AssignmentAdminForm()
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        'Créer un devoir', 'assignments', 'admin_assignments_list', form=form,
+    ))
+
+
+@admin_required
+def admin_assignment_edit(request, assign_id):
+    assign = get_object_or_404(Assignment, id=assign_id)
+    if request.method == 'POST':
+        form = AssignmentAdminForm(request.POST, instance=assign)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Devoir mis à jour.")
+            return redirect('admin_assignments_list')
+    else:
+        form = AssignmentAdminForm(instance=assign)
+    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
+        f'Modifier "{assign.title}"', 'assignments', 'admin_assignments_list', form=form,
+    ))
+
+
+@admin_required
+def admin_assignment_delete(request, assign_id):
+    assign = get_object_or_404(Assignment, id=assign_id)
+    if request.method == 'POST':
+        assign.delete()
+        messages.success(request, "Devoir supprimé.")
+        return redirect('admin_assignments_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': assign, 'back_url': 'admin_assignments_list', 'section_active': 'assignments',
+        'titre': f'Supprimer "{assign.title}"',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  13. GESTION DES COMMENTAIRES
+# ═══════════════════════════════════════════════════════════════
+
+@admin_required
+def admin_comments_list(request):
+    comments = Comment.objects.select_related('teacher__user', 'language').order_by('-comment_at')
+    paginator = Paginator(comments, 25)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'dashboard/admin/home/comments_list.html', {
+        'comments': page_obj, 'section_active': 'comments',
+    })
+
+
+@admin_required
+def admin_comment_delete(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if request.method == 'POST':
+        comment.delete()
+        messages.success(request, "Commentaire supprimé.")
+        return redirect('admin_comments_list')
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': comment, 'back_url': 'admin_comments_list', 'section_active': 'comments',
+        'titre': 'Supprimer ce commentaire',
+    })

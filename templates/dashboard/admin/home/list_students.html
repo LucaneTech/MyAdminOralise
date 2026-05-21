@@ -34,12 +34,12 @@ td .dropdown .dropdown-menu {
                         </div>
                         <div class="col text-right">
                             <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-primary">
+                                <a href="{% url 'admin_student_create' %}" class="btn btn-sm btn-primary">
                                     <i class="ni ni-fat-add"></i> Ajouter un étudiant
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary">
-                                    <i class="ni ni-cloud-download-95"></i> Exporter
-                                </button>
+                                </a>
+                                <a href="{% url 'export_students' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="ni ni-cloud-download-95"></i> Exporter CSV
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -279,13 +279,15 @@ td .dropdown .dropdown-menu {
                                             <a class="dropdown-item" href="{% url 'student_detail' student.id %}">
                                                 <i class="ni ni-zoom-split-in text-info"></i> Voir détails
                                             </a>
-                                           
-                                            <a class="dropdown-item" href="#">
-                                                <i class="ni ni-calendar-grid-58 text-warning"></i> Voir séances
+                                            <a class="dropdown-item" href="{% url 'admin_student_edit' student.id %}">
+                                                <i class="fas fa-edit text-warning"></i> Modifier
+                                            </a>
+                                            <a class="dropdown-item" href="mailto:{{ student.user.email }}">
+                                                <i class="ni ni-send text-primary"></i> Contacter
                                             </a>
                                             <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">
-                                                <i class="ni ni-send text-primary"></i> Contacter
+                                            <a class="dropdown-item text-danger" href="{% url 'admin_student_delete' student.id %}">
+                                                <i class="fas fa-trash text-danger"></i> Supprimer
                                             </a>
                                         </div>
                                     </div>

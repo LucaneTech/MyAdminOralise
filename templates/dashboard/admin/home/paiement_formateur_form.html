@@ -1,0 +1,79 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">{{ titre }}</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header"><h5 class="mb-0"><i class="fas fa-money-bill-wave mr-2"></i>{{ titre }}</h5></div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <label>{{ form.formateur.label }}</label>
+                {{ form.formateur }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label>{{ form.periode_debut.label }}</label>
+                {{ form.periode_debut }}
+              </div>
+              <div class="col-md-6 form-group">
+                <label>{{ form.periode_fin.label }}</label>
+                {{ form.periode_fin }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label>{{ form.montant.label }}</label>
+                {{ form.montant }}
+                <small class="text-muted">Le montant calculé automatiquement (55% du CA) sera affiché après enregistrement.</small>
+              </div>
+              <div class="col-md-6 form-group">
+                <label>{{ form.statut.label }}</label>
+                {{ form.statut }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ form.date_paiement.label }}</label>
+              {{ form.date_paiement }}
+            </div>
+            <div class="form-group">
+              <label>{{ form.commentaire.label }}</label>
+              {{ form.commentaire }}
+            </div>
+
+            {% if paiement %}
+            <div class="alert alert-info">
+              <strong>Montant calculé (55% CA) :</strong> {{ paiement.montant_calcule }} MAD
+            </div>
+            {% endif %}
+
+            <div class="text-right">
+              <a href="{% url 'paiements_formateurs_list' %}" class="btn btn-secondary mr-2">Annuler</a>
+              <button type="submit" class="btn" style="background-color:#147a81;color:white;">
+                <i class="fas fa-save mr-1"></i>Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

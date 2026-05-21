@@ -1,0 +1,77 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">Gestion des notifications</h6>
+        </div>
+        <div class="col text-right">
+          <a href="{% url 'admin_notification_create' %}" class="btn btn-sm btn-light">
+            <i class="fas fa-plus mr-1"></i>Nouvelle notification
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  {% if messages %}{% for msg in messages %}
+  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
+  {% endfor %}{% endif %}
+
+  <div class="card shadow">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th>Titre</th>
+              <th>Destinataire</th>
+              <th>Message</th>
+              <th>Lue</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notifications %}
+            <tr>
+              <td><strong>{{ n.title }}</strong></td>
+              <td>{{ n.user }}</td>
+              <td>{{ n.message|truncatechars:60 }}</td>
+              <td>
+                {% if n.is_read %}
+                <span class="badge badge-success">Lue</span>
+                {% else %}
+                <span class="badge badge-warning">Non lue</span>
+                {% endif %}
+              </td>
+              <td>{{ n.created_at|date:"d/m/Y H:i" }}</td>
+              <td>
+                <a href="{% url 'admin_notification_delete' n.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-5">Aucune notification trouvée.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if notifications.has_other_pages %}
+    <div class="card-footer">
+      <nav><ul class="pagination justify-content-end mb-0">
+        {% if notifications.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ notifications.previous_page_number }}">Précédent</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ notifications.number }} / {{ notifications.paginator.num_pages }}</span></li>
+        {% if notifications.has_next %}<li class="page-item"><a class="page-link" href="?page={{ notifications.next_page_number }}">Suivant</a></li>{% endif %}
+      </ul></nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

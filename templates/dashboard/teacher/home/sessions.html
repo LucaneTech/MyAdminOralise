@@ -723,6 +723,11 @@
                       <i class="ni ni-zoom-split-in"></i>
                     </a>
 
+                    <a href="{% url 'fiche_pedagogique_edit' session_id=session.id %}" class="btn btn-sm btn-warning"
+                       data-toggle="tooltip" title="Fiche pédagogique">
+                      <i class="fas fa-clipboard-list"></i>
+                    </a>
+
                     {% if session.meeting_link %}
                     <a href="{{ session.meeting_link }}" target="_blank" class="btn btn-sm btn-success"
                        data-toggle="tooltip" title="Rejoindre la réunion">

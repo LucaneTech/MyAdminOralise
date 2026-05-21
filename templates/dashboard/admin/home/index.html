@@ -113,6 +113,77 @@
     </div>
   </div>
 </div>
+<!-- Nouveaux KPIs pédagogiques -->
+<div class="container-fluid mt-3">
+  <div class="row">
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <div class="card card-stats shadow h-100">
+        <div class="card-body p-3">
+          <p class="text-muted text-xs mb-1 text-uppercase">Étudiants actifs</p>
+          <h4 class="mb-0">{{ active_students }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <div class="card card-stats shadow h-100">
+        <div class="card-body p-3">
+          <p class="text-muted text-xs mb-1 text-uppercase">Formateurs actifs</p>
+          <h4 class="mb-0">{{ active_teachers }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <div class="card card-stats shadow h-100">
+        <div class="card-body p-3">
+          <p class="text-muted text-xs mb-1 text-uppercase">Séances réalisées</p>
+          <h4 class="mb-0">{{ total_sessions_all }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <div class="card card-stats shadow h-100">
+        <div class="card-body p-3">
+          <p class="text-muted text-xs mb-1 text-uppercase">Fiches complétées</p>
+          <h4 class="mb-0">{{ taux_completion_fiches }}%</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <div class="card card-stats shadow h-100">
+        <div class="card-body p-3">
+          <p class="text-muted text-xs mb-1 text-uppercase">Heures enseignées</p>
+          <h4 class="mb-0">{{ total_heures_enseignees }}h</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+      <a href="{% url 'paiements_formateurs_list' %}" class="text-decoration-none">
+        <div class="card card-stats shadow h-100 border-warning">
+          <div class="card-body p-3">
+            <p class="text-muted text-xs mb-1 text-uppercase">Paiements versés</p>
+            <h4 class="mb-0">{{ total_paiements_formateurs|floatformat:0 }}MAD</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  {% if sessions_en_attente_validation > 0 %}
+  <div class="row mb-3">
+    <div class="col">
+      <div class="alert alert-warning d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>{{ sessions_en_attente_validation }}</strong> fiche(s) pédagogique(s) en attente de validation.
+        </span>
+        <a href="{% url 'admin_sessions_list' %}?statut_validation=en_attente" class="btn btn-sm btn-warning">
+          Valider maintenant
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 <!-- Page content -->
 <div class="container-fluid mt--6">
   <div class="row">

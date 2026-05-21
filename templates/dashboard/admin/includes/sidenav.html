@@ -7,39 +7,148 @@
   <div class="scrollbar-inner">
     <!-- Brand -->
     <div class="sidenav-header align-items-center">
-      <a class="navbar-brand" href="{% url 'dashboard_view' username=request.user.username %}">
-        <img src="{% static 'assets/img/icons/logo.png' %}" class="w-full object-cover" alt="logo Edusco">
+      <a class="navbar-brand" href="{% url 'admin_dashboard' %}">
+        <img src="{% static 'assets/img/icons/logo.png' %}" class="w-full object-cover" alt="logo Oralise">
       </a>
     </div>
 
     <div class="navbar-inner">
       <div class="collapse navbar-collapse" id="sidenav-collapse-main">
-        <!-- Main Navigation -->
         <ul class="navbar-nav">
 
+          <!-- Tableau de bord -->
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'dashboard_view' username=request.user.username %}">
+            <a class="nav-link" href="{% url 'admin_dashboard' %}">
               <i class="ni ni-tv-2 text-primary"></i>
               <span class="nav-link-text">Tableau de bord</span>
             </a>
           </li>
 
+          <hr class="my-2">
+          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Utilisateurs</span></h6>
+
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_teachers'%}">
-              <i class="ni ni-single-02" style="color: yellow"></i>
-              <span class="nav-link-text">Les enseignants</span>
+            <a class="nav-link" href="{% url 'admin_users_list' %}">
+              <i class="fas fa-users-cog text-primary"></i>
+              <span class="nav-link-text">Tous les comptes</span>
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_students'%}">
-             
-              <i class="ni ni-hat-3" style="color: blue "></i>
-              <span class="nav-link-text">Les étudiants</span>
+            <a class="nav-link" href="{% url 'admin_teachers' %}">
+              <i class="ni ni-single-02" style="color:#f5a623;"></i>
+              <span class="nav-link-text">Formateurs</span>
             </a>
           </li>
 
-         
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_students' %}">
+              <i class="ni ni-hat-3" style="color:#4a90d9;"></i>
+              <span class="nav-link-text">Étudiants</span>
+            </a>
+          </li>
+
+          <hr class="my-2">
+          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Pédagogie</span></h6>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_sessions_list' %}">
+              <i class="fas fa-clipboard-check text-success"></i>
+              <span class="nav-link-text">Séances & validation</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_evaluations_list' %}">
+              <i class="fas fa-star text-warning"></i>
+              <span class="nav-link-text">Évaluations</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_assignments_list' %}">
+              <i class="fas fa-tasks text-info"></i>
+              <span class="nav-link-text">Devoirs</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_resources_list' %}">
+              <i class="fas fa-folder-open text-success"></i>
+              <span class="nav-link-text">Ressources</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_schedules_list' %}">
+              <i class="ni ni-calendar-grid-58 text-primary"></i>
+              <span class="nav-link-text">Plannings</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_languages_list' %}">
+              <i class="ni ni-books text-info"></i>
+              <span class="nav-link-text">Langues</span>
+            </a>
+          </li>
+
+          <hr class="my-2">
+          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Finances</span></h6>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_payments_list' %}">
+              <i class="ni ni-money-coins text-success"></i>
+              <span class="nav-link-text">Paiements étudiants</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'paiements_formateurs_list' %}">
+              <i class="fas fa-money-bill-wave text-warning"></i>
+              <span class="nav-link-text">Paiements formateurs</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'reporting_formateur' %}">
+              <i class="fas fa-chart-bar text-info"></i>
+              <span class="nav-link-text">Reporting</span>
+            </a>
+          </li>
+
+          <hr class="my-2">
+          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Administratif</span></h6>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_certificates_list' %}">
+              <i class="ni ni-badge text-primary"></i>
+              <span class="nav-link-text">Certificats</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_requests_list' %}">
+              <i class="fas fa-inbox text-warning"></i>
+              <span class="nav-link-text">Demandes</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_notifications_list' %}">
+              <i class="fas fa-bell text-danger"></i>
+              <span class="nav-link-text">Notifications</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_comments_list' %}">
+              <i class="fas fa-comments text-secondary"></i>
+              <span class="nav-link-text">Commentaires</span>
+            </a>
+          </li>
+
+          <hr class="my-2">
 
           {% if user.is_authenticated %}
           <li class="nav-item">
@@ -49,44 +158,33 @@
             </a>
           </li>
           {% endif %}
+
         </ul>
 
         <hr class="my-3">
-
-        <!-- Autre éléments -->
-        <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Autres éléments</span></h6>
+        <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Liens externes</span></h6>
         <ul class="navbar-nav mb-md-3">
-          
-
-            <li class="nav-item">
+          <li class="nav-item">
             <a class="nav-link" href="https://www.oralise.pro" target="_blank">
-           <i class="ni ni-world text-successhhn"></i>
+              <i class="ni ni-world text-success"></i>
               <span class="nav-link-text">Site web Oralise</span>
             </a>
           </li>
-          
           <li class="nav-item">
             <a class="nav-link" href="https://www.facebook.com/tonprofil" target="_blank">
               <i class="fab fa-facebook-square text-primary"></i>
               <span class="nav-link-text">Facebook</span>
             </a>
           </li>
-
           <li class="nav-item">
             <a class="nav-link" href="https://www.instagram.com/tonprofil" target="_blank">
               <i class="fab fa-instagram text-danger"></i>
               <span class="nav-link-text">Instagram</span>
             </a>
           </li>
+        </ul>
 
-         
       </div>
-      </li>
-
-
-      </ul>
-
     </div>
-  </div>
   </div>
 </nav>

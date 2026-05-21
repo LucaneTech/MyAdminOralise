@@ -33,9 +33,9 @@ td .dropdown .dropdown-menu {
                             </p>
                         </div>
                         <div class="col text-right">
-                            <button class="btn btn-sm btn-primary beta">
-                                <i class="ni ni-fat-add"></i> Ajouter un enseignant
-                            </button>
+                            <a href="{% url 'admin_teacher_create' %}" class="btn btn-sm btn-primary">
+                                <i class="ni ni-fat-add"></i> Ajouter un formateur
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -199,16 +199,19 @@ td .dropdown .dropdown-menu {
                                             <a class="dropdown-item" href="{% url 'teacher_detail' teacher.id %}">
                                                 <i class="ni ni-zoom-split-in text-info"></i> Voir détails
                                             </a>
-                                            <a class="dropdown-item beta" href="#" >
-                                                <i class="ni ni-single-02 text-success"></i> Voir étudiants
+                                            <a class="dropdown-item" href="{% url 'admin_teacher_edit' teacher.id %}">
+                                                <i class="fas fa-edit text-warning"></i> Modifier
                                             </a>
-                                            <a class="dropdown-item beta" href="#">
-                                                <i class="ni ni-calendar-grid-58 text-warning"></i> Voir séances
+                                            <a class="dropdown-item" href="{% url 'admin_reporting_formateur' teacher.id %}">
+                                                <i class="fas fa-chart-bar text-info"></i> Reporting
                                             </a>
-                                            <div class="dropdown-divider beta"></div>
-                                          <a class="dropdown-item" href="mailto:{{ teacher.user.email }}">
-    <i class="ni ni-send text-primary"></i> Contacter
-</a>
+                                            <a class="dropdown-item" href="mailto:{{ teacher.user.email }}">
+                                                <i class="ni ni-send text-primary"></i> Contacter
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item text-danger" href="{% url 'admin_teacher_delete' teacher.id %}">
+                                                <i class="fas fa-trash text-danger"></i> Supprimer
+                                            </a>
                                         </div>
                                     </div>
                                 </td>

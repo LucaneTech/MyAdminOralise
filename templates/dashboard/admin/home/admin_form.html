@@ -1,0 +1,73 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="header pb-6" style="background-color:#147a81;">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col">
+          <h6 class="h2 text-white d-inline-block mb-0">{{ titre }}</h6>
+        </div>
+        {% if back_url %}
+        <div class="col text-right">
+          <a href="{% url back_url %}" class="btn btn-sm btn-light">
+            <i class="fas fa-arrow-left mr-1"></i>Retour
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      {% if messages %}
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <div class="card shadow">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-edit mr-2"></i>{{ titre }}</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+              <label class="form-control-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+              </label>
+              {{ field }}
+              {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %}
+              {% if field.errors %}
+              {% for error in field.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="text-right mt-4">
+              {% if back_url %}
+              <a href="{% url back_url %}" class="btn btn-secondary mr-2">Annuler</a>
+              {% endif %}
+              <button type="submit" class="btn" style="background-color:#147a81;color:white;">
+                <i class="fas fa-save mr-1"></i>Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
