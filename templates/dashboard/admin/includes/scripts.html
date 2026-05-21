@@ -21,6 +21,47 @@ function closeModal() {
   });
 }
 
+function loadModal(url) {
+  fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(r => r.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const formBlock = doc.querySelector('main form') || doc.querySelector('form') || doc.querySelector('.modal-body');
+      openModal(formBlock ? formBlock.outerHTML : html);
+    })
+    .catch(() => {
+      openModal('<p class="text-sm text-red-500 text-center py-4">Erreur lors du chargement.</p>');
+    });
+}
+
+document.addEventListener('submit', function(e) {
+  const form = e.target;
+  if (modalContent && modalContent.contains(form)) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    fetch(form.action || window.location.href, {
+      method: 'POST',
+      body: formData,
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        closeModal();
+        if (data.redirect) window.location.href = data.redirect;
+        else window.location.reload();
+      } else {
+        const errDiv = modalContent.querySelector('.modal-errors');
+        if (errDiv && data.errors) {
+          errDiv.innerHTML = Object.values(data.errors).flat().join('<br>');
+        }
+      }
+    }).catch(() => {
+      closeModal();
+      window.location.reload();
+    });
+  }
+});
+
 function openSessionModal(sessionId) {
   fetch(`/api/sessions/${sessionId}/`)
     .then(r => r.json())

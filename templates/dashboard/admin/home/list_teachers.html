@@ -1,5 +1,6 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
 {% load static %}
+{% load lucide %}
 {% block title %} Dashboard {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
@@ -33,9 +34,7 @@ td .dropdown .dropdown-menu {
                             </p>
                         </div>
                         <div class="col text-right">
-                            <a href="{% url 'admin_teacher_create' %}" class="btn btn-sm btn-primary">
-                                <i class="ni ni-fat-add"></i> Ajouter un formateur
-                            </a>
+                            <button onclick="loadModal('{% url 'admin_teacher_create' %}')" class="flex items-center gap-2 px-4 py-2 bg-[#26b2bd] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">{% lucide "plus" class="w-4 h-4" %} Ajouter</button>
                         </div>
                     </div>
                 </div>

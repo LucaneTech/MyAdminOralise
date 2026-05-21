@@ -1,4 +1,5 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
 {% block title %}Évaluations{% endblock %}
 
 {% block content %}
@@ -10,9 +11,7 @@
           <h6 class="h2 text-white d-inline-block mb-0">Gestion des évaluations</h6>
         </div>
         <div class="col text-right">
-          <a href="{% url 'admin_evaluation_create' %}" class="btn btn-sm btn-light">
-            <i class="fas fa-plus mr-1"></i>Nouvelle évaluation
-          </a>
+          <button onclick="loadModal('{% url 'admin_evaluation_create' %}')" class="flex items-center gap-2 px-4 py-2 bg-[#26b2bd] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">{% lucide "plus" class="w-4 h-4" %} Ajouter</button>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.generic import DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.http import Http404, JsonResponse
 from datetime import date, datetime, timedelta
 from django.db.models import Count, Avg, Q
@@ -2590,7 +2590,11 @@ def admin_student_create(request):
             student.save()
             student_form.save_m2m()
             messages.success(request, f"Étudiant {user.get_full_name()} créé.")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect': reverse('admin_students')})
             return redirect('admin_students')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': user_form.errors | student_form.errors})
         messages.error(request, "Veuillez corriger les erreurs.")
     else:
         user_form = AdminUserCreateForm()
@@ -2655,7 +2659,11 @@ def admin_teacher_create(request):
             teacher.save()
             teacher_form.save_m2m()
             messages.success(request, f"Formateur {user.get_full_name()} créé.")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect': reverse('admin_teachers')})
             return redirect('admin_teachers')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': user_form.errors | teacher_form.errors})
         messages.error(request, "Veuillez corriger les erreurs.")
     else:
         user_form = AdminUserCreateForm()
@@ -2721,7 +2729,11 @@ def admin_language_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Langue créée.")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'redirect': reverse('admin_languages_list')})
             return redirect('admin_languages_list')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = LanguageForm()
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(

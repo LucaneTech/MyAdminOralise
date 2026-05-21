@@ -1,5 +1,6 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
 {% load static %}
+{% load lucide %}
 {% block title %} Dashboard {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
@@ -34,9 +35,7 @@ td .dropdown .dropdown-menu {
                         </div>
                         <div class="col text-right">
                             <div class="btn-group" role="group">
-                                <a href="{% url 'admin_student_create' %}" class="btn btn-sm btn-primary">
-                                    <i class="ni ni-fat-add"></i> Ajouter un étudiant
-                                </a>
+                                <button onclick="loadModal('{% url 'admin_student_create' %}')" class="flex items-center gap-2 px-4 py-2 bg-[#26b2bd] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">{% lucide "plus" class="w-4 h-4" %} Ajouter</button>
                                 <a href="{% url 'export_students' %}" class="btn btn-sm btn-outline-primary">
                                     <i class="ni ni-cloud-download-95"></i> Exporter CSV
                                 </a>
