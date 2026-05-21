@@ -4,54 +4,70 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %} Oralise | Login {% endblock title %}
+{% block title %}Oralise | Connexion{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center px-4 py-10">
-  <div class="md:bg-white md:rounded-3xl md:shadow-2xl overflow-hidden w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 transition-all duration-300 min-h-[600px] dark:bg-gray-900 dark:rounded-3xl dark:shadow-2xl">
+<div class="min-h-screen flex">
 
-    <!-- FORMULAIRE -->
-    <div class="p-10 flex flex-col justify-center h-full">
-      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="logo Oralise" class="w-24 mb-3 mx-auto">
-      <h2 class="text-base md:text-3xl main-color text-center mb-4 font-bold">{% trans 'Connexion' %}</h2>
+  <!-- Gauche : image + accroche -->
+  <div class="hidden md:flex md:w-1/2 relative flex-col">
+    <div class="absolute inset-0 bg-cover bg-center"
+         style="background-image: url('{% static "assets/img/theme/img-login.jpg" %}')"></div>
+    <div class="absolute inset-0 bg-[#033050]/70"></div>
+    <!-- Logo haut gauche -->
+    <div class="relative z-10 p-6">
+      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-10 h-10">
+    </div>
+    <!-- Accroche centrée -->
+    <div class="relative z-10 flex-1 flex flex-col justify-end p-10 pb-16">
+      <h2 class="text-3xl font-bold text-white leading-tight mb-3">
+        Gérez votre école<br>en toute clarté.
+      </h2>
+      <p class="text-white/70 text-base">La plateforme tout-en-un d'Oralise.</p>
+    </div>
+  </div>
 
-      <form method="post" action="{% url 'account_login' %}" class="space-y-5 animate-slide-in">
+  <!-- Droite : formulaire -->
+  <div class="w-full md:w-1/2 flex items-center justify-center bg-white px-8 py-12">
+    <div class="w-full max-w-sm">
+
+      <!-- Mobile logo -->
+      <div class="flex justify-center mb-8 md:hidden">
+        <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-12 h-12">
+      </div>
+
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Connexion</h1>
+      <p class="text-sm text-gray-500 mb-8">Entrez vos identifiants pour accéder à votre espace.</p>
+
+      <form method="post" action="{% url 'account_login' %}" class="space-y-5">
         {% csrf_token %}
 
         <div>
-          {{ form.login|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white" }}
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Adresse email</label>
+          {{ form.login|add_class:"w-full px-4 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/40 focus:border-[#26b2bd] transition" }}
         </div>
 
         <div>
-          {{ form.password|add_class:"w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-1 focus:ring-sky-700 focus:border-blue-500 transition dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white" }}
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
+            <a href="{% url 'account_reset_password' %}" class="text-xs text-[#26b2bd] hover:underline">
+              Mot de passe oublié ?
+            </a>
+          </div>
+          {{ form.password|add_class:"w-full px-4 py-2.5 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/40 focus:border-[#26b2bd] transition" }}
         </div>
 
         {% if form.errors %}
-        <p class="text-red-600 text-sm mt-1">{% trans 'Email ou mot de passe incorrect !' %}</p>
+          <p class="text-sm text-red-600">Email ou mot de passe incorrect.</p>
         {% endif %}
 
-        <button type="submit" class="w-full bg-main-color hover:bg-main-color-opacity text-white font-medium py-2.5 rounded-xl shadow-md hover:shadow-xl transition-all duration-300">
+        <button type="submit"
+                class="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition-colors">
           Se connecter
         </button>
-
-        <div class="text-center text-gray-400 text-sm">
-             <a href="{% url 'account_reset_password' %}" class="hover:underline">Mot de passe oublié ?</a> 
-        </div>
-
-       
-
-        <!-- <div class="text-center text-xs text-gray-400 mt-8">
-          <a href="#" class="hover:underline">Conditions d'utilisation</a> |
-          <a href="#" class="hover:underline">Politique de confidentialité</a>
-        </div> -->
       </form>
     </div>
-
-    <!-- IMAGE -->
-    <div class="h-full w-full hidden md:block">
-      <img src="{% static 'assets/img/account/login.jpg' %}" alt="Langues étrangères" class="object-cover w-full h-full">
-    </div>
-
   </div>
+
 </div>
-{% endblock content %}
+{% endblock %}
