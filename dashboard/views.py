@@ -313,20 +313,31 @@ def profile_view(request):
 
     if user.role == "student":
         student = get_object_or_404(Student, user=user)
-        total_sessions = Session.objects.filter(students=student).count()
-        context = {
+        total_sessions = Session.objects.filter(students=student, status='completed').count()
+        avg_rating_val = Comment.objects.filter(
+            teacher__in=student.current_teachers.all()
+        ).aggregate(avg=Avg('rating'))['avg']
+        context.update({
             "student": student,
             "total_sessions": total_sessions,
-        }
+            "avg_rating": round(avg_rating_val, 1) if avg_rating_val else None,
+        })
         return render(request, "dashboard/student/home/profile.html", context)
 
     elif user.role == "teacher":
         teacher = get_object_or_404(Teacher, user=user)
         total_sessions = Session.objects.filter(teacher=teacher).count()
-        context = {
+        now = timezone.now()
+        sessions_this_month = Session.objects.filter(
+            teacher=teacher,
+            date__year=now.year,
+            date__month=now.month
+        ).count()
+        context.update({
             "teacher": teacher,
             "total_sessions": total_sessions,
-        }
+            "sessions_this_month": sessions_this_month,
+        })
         return render(request, "dashboard/teacher/home/profile.html", context)
     
 

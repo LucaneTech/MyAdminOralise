@@ -1,166 +1,86 @@
-{% extends 'dashboard/student/layouts/base.html' %}
-{% block title %} Mon Profil {% endblock title %}
+{% extends "dashboard/student/layouts/base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Mon Profil{% endblock %}
 
 {% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
 
-<div class="header pb-6 d-flex align-items-center" 
-     style="min-height: 500px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
-  <!-- Mask -->
-  <span class="mask bg-gradient-default opacity-8"></span>
-  <!-- Header container -->
-  <div class="container-fluid d-flex align-items-center">
-    <div class="row">
-      <div class="col-lg-7 col-md-10">
-        <h1 class="display-2 text-white"> 
-          Salut {{ request.user.first_name }} {{request.user.username}}!!
-        </h1>
-        <p class="text-white mt-0 mb-5">Ceci est votre page de profil. Vous pouvez suivre votre progression et modifier vos informations personnelles sans la moindre difficulté</p>
-        <a href="{% url 'profile_edit' %}" class="btn btn-neutral">Modifier votre profil</a>
+  <!-- Header profil -->
+  <div class="bg-white rounded-md shadow-xl p-6 flex items-start gap-6">
+    <div class="relative shrink-0">
+      <img src="{{ request.user.profile_picture_url }}" alt="avatar"
+           class="w-24 h-24 rounded-md object-cover ring-4 ring-[#d9a505]/30">
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-3 flex-wrap mb-1">
+        <h1 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name }}</h1>
+        <span class="px-2 py-0.5 text-xs font-semibold bg-[#d9a505] text-white rounded-md">Étudiant</span>
+        {% if student.matricule %}
+          <span class="text-xs text-gray-400 font-mono">{{ student.matricule }}</span>
+        {% endif %}
       </div>
+      <p class="text-sm text-gray-500">
+        {{ profile.city }}{% if profile.city and profile.country %} · {% endif %}{{ profile.country }}
+        {% if profile.number %} · {{ profile.number }}{% endif %}
+      </p>
+    </div>
+    <a href="{% url 'profile_edit' %}"
+       class="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#d9a505] text-white text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
+      {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-md shadow-xl p-5 text-center">
+      <p class="text-3xl font-bold text-[#d9a505]">{{ total_sessions }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Séances totales</p>
+    </div>
+    <div class="bg-white rounded-md shadow-xl p-5 text-center">
+      <p class="text-3xl font-bold text-[#d9a505]">{{ student.hours_remaining|default:"0" }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Heures restantes</p>
+    </div>
+    <div class="bg-white rounded-md shadow-xl p-5 text-center">
+      <p class="text-3xl font-bold text-[#d9a505]">{{ avg_rating|default:"—" }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Note moyenne</p>
     </div>
   </div>
-</div>
-<!-- Page content -->
-<div class="container-fluid mt--6">
-  <div class="row">
-    <div class="col-xl-4 order-xl-2">
-      <div class="card card-profile">
-       
-        <div class="card-header text-center border-0 pt-8 pt-md-4 pb-0 pb-md-4">
-          <div class="d-flex justify-content-between">
-            <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-info mr-4">Modifier</a>
-            <a href="{% url 'settings_view' %}" class="btn btn-sm btn-default float-right">Paramètres</a>
-          </div>
-        </div>
-        <div class="card-body pt-0">
-          <div class="row">
-            <div class="col">
-              <div class="card-profile-stats d-flex justify-content-center">
-                <div>
-                  <span class="heading">{{ student.hours_remaining }}</span>
-                  <span class="description">Heures restantes</span>
-                </div>
-                <div>
-                  <span class="heading">{{ student.languages.count }}</span>
-                  <span class="description">Langues</span>
-                </div>
-                <div>
-                  <span class="heading">{{ total_sessions }}</span>
-                  <span class="description">Séances</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="text-center">
-            <h5 class="h3">
-              {{user.full_name}} 
-              <p>( {{ user.get_role_display }} )</p>
-            </h5>
-            <div class="h5 font-weight-300">
-              {{ request.user.email }}
-            </div>
-            <div class="h5 mt-4">
-              <i class="ni ni-badge mr-2"></i>Matricule: {{ student.matricule }}
-            </div>
-            <div>
-              <i class="ni ni-calendar-grid-58 mr-2"></i>Inscrit le {{ student.date_joined|date:"d/m/Y" }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xl-8 order-xl-1">
-      <div class="card">
-        <div class="card-header">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h3 class="mb-0">Informations personnelles</h3>
-            </div>
-            <div class="col-4 text-right">
-              <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-primary">Modifier</a>
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          <form>
-            <h6 class="heading-small text-muted mb-4">Informations utilisateur</h6>
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label">Nom</label>
-                    <input type="text" class="form-control" value="{{ user.first_name }}" readonly>
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label">Prénom</label>
-                    <input type="text" class="form-control" value="{{ user.last_name }}" readonly>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label">Email</label>
-                    <input type="email" class="form-control" value="{{ user.email }}" readonly>
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <div class="form-group">
-                    <label class="form-control-label">Nom d'utilisateur</label>
-                    <input type="text" class="form-control" value="{{ user.username }}" readonly>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <hr class="my-4" />
-            <h6 class="heading-small text-muted mb-4">Informations de contact</h6>
-            <div class="pl-lg-4">
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label class="form-control-label">Adresse</label>
-                    <input type="text" class="form-control" value="{{ user.profile.address }}" readonly>
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-lg-4">
-                  <div class="form-group">
-                    <label class="form-control-label">Ville</label>
-                    <input type="text" class="form-control" value="{{ user.profile.city }}" readonly>
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="form-group">
-                    <label class="form-control-label">Pays</label>
-                    <input type="text" class="form-control" value="{{ user.profile.country }}" readonly>
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="form-group">
-                    <label class="form-control-label">Téléphone</label>
-                    <input type="text" class="form-control" value="{{ user.profile.number }}" readonly>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <hr class="my-4" />
-            <h6 class="heading-small text-muted mb-4">À propos</h6>
-            <div class="pl-lg-4">
-              <div class="form-group">
-                <label class="form-control-label">Bio</label>
-                <textarea rows="4" class="form-control" readonly>{{ user.profile.about }}</textarea>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock content %}
 
-<!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+  <!-- Corps -->
+  <div class="bg-white rounded-md shadow-xl p-6 space-y-5">
+    {% if profile.about and profile.about.strip %}
+    <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        {% lucide "user" class="w-4 h-4 text-[#d9a505]" %} À propos
+      </h3>
+      <p class="text-sm text-gray-600 leading-relaxed">{{ profile.about }}</p>
+    </div>
+    {% endif %}
+
+    {% if student.languages.all %}
+    <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        {% lucide "globe" class="w-4 h-4 text-[#d9a505]" %} Langues
+      </h3>
+      <div class="flex flex-wrap gap-2">
+        {% for lang in student.languages.all %}
+          <span class="px-3 py-1 text-xs font-medium bg-[#d9a505]/10 text-[#d9a505] rounded-md">{{ lang.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if student.objectif_formation %}
+    <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        {% lucide "target" class="w-4 h-4 text-[#d9a505]" %} Objectif de formation
+      </h3>
+      <p class="text-sm text-gray-600 leading-relaxed">{{ student.objectif_formation }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
