@@ -2858,9 +2858,6 @@
   .me-1 {
     margin-inline-end: calc(var(--spacing) * 1);
   }
-  .me-auto {
-    margin-inline-end: auto;
-  }
   .mt-0 {
     margin-top: calc(var(--spacing) * 0);
   }
@@ -4409,9 +4406,6 @@
   }
   .opacity-10 {
     opacity: 10%;
-  }
-  .opacity-75 {
-    opacity: 75%;
   }
   .shadow {
     --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));

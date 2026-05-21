@@ -1,185 +1,83 @@
 {% load static %}
-{% load i18n %}
-{% load compress %}
-{% load static i18n compress %}
+{% load lucide %}
+<aside class="fixed top-0 left-0 h-screen w-64 bg-[#26b2bd] text-white flex flex-col z-40 shadow-xl">
+  <!-- Logo -->
+  <div class="flex items-center gap-3 px-6 py-5 border-b border-white/20">
+    <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-8 h-8">
+    <span class="text-lg font-semibold tracking-wide">Oralise</span>
+  </div>
 
-<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
-  <div class="scrollbar-inner">
-    <!-- Brand -->
-    <div class="sidenav-header align-items-center">
-      <a class="navbar-brand" href="{% url 'admin_dashboard' %}">
-        <img src="{% static 'assets/img/icons/logo.png' %}" class="w-full object-cover" alt="logo Oralise">
+  <!-- Nav -->
+  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+    <a href="{% url 'admin_dashboard' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-white/20{% endif %}">
+      {% lucide "layout-dashboard" class="w-4 h-4 shrink-0" %} Tableau de bord
+    </a>
+    <a href="{% url 'admin_sessions_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'seances' in request.path %}bg-white/20{% endif %}">
+      {% lucide "calendar" class="w-4 h-4 shrink-0" %} Séances
+    </a>
+    <a href="{% url 'admin_students' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'students' in request.path %}bg-white/20{% endif %}">
+      {% lucide "graduation-cap" class="w-4 h-4 shrink-0" %} Étudiants
+    </a>
+    <a href="{% url 'admin_teachers' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'teachers' in request.path %}bg-white/20{% endif %}">
+      {% lucide "users" class="w-4 h-4 shrink-0" %} Formateurs
+    </a>
+    <a href="{% url 'admin_payments_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'paiements' in request.path %}bg-white/20{% endif %}">
+      {% lucide "credit-card" class="w-4 h-4 shrink-0" %} Paiements
+    </a>
+    <a href="{% url 'admin_certificates_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'certificats' in request.path %}bg-white/20{% endif %}">
+      {% lucide "award" class="w-4 h-4 shrink-0" %} Certificats
+    </a>
+    <a href="{% url 'admin_evaluations_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'evaluations' in request.path %}bg-white/20{% endif %}">
+      {% lucide "bar-chart-2" class="w-4 h-4 shrink-0" %} Évaluations
+    </a>
+    <a href="{% url 'admin_languages_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'langues' in request.path %}bg-white/20{% endif %}">
+      {% lucide "globe" class="w-4 h-4 shrink-0" %} Langues
+    </a>
+    <a href="{% url 'admin_resources_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'ressources' in request.path %}bg-white/20{% endif %}">
+      {% lucide "folder-open" class="w-4 h-4 shrink-0" %} Ressources
+    </a>
+    <a href="{% url 'admin_requests_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'demandes' in request.path %}bg-white/20{% endif %}">
+      {% lucide "mail" class="w-4 h-4 shrink-0" %} Demandes
+    </a>
+    <a href="{% url 'admin_users_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'utilisateurs' in request.path %}bg-white/20{% endif %}">
+      {% lucide "user-cog" class="w-4 h-4 shrink-0" %} Utilisateurs
+    </a>
+    <a href="{% url 'paiements_formateurs_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'paiements-formateurs' in request.path %}bg-white/20{% endif %}">
+      {% lucide "banknote" class="w-4 h-4 shrink-0" %} Paiements formateurs
+    </a>
+    <a href="{% url 'admin_assignments_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'devoirs' in request.path %}bg-white/20{% endif %}">
+      {% lucide "book-open" class="w-4 h-4 shrink-0" %} Devoirs
+    </a>
+    <a href="{% url 'reporting_formateur' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'reporting' in request.path %}bg-white/20{% endif %}">
+      {% lucide "trending-up" class="w-4 h-4 shrink-0" %} Reporting
+    </a>
+  </nav>
+
+  <!-- User -->
+  <div class="border-t border-white/20 px-4 py-4">
+    <div class="flex items-center gap-3">
+      <img src="{{ request.user.profile_picture_url }}" alt="avatar" class="w-8 h-8 rounded-md object-cover">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+        <p class="text-xs text-white/60 truncate">Admin</p>
+      </div>
+      <a href="{% url 'account_logout' %}" title="Déconnexion">
+        {% lucide "log-out" class="w-4 h-4 text-white/70 hover:text-white" %}
       </a>
     </div>
-
-    <div class="navbar-inner">
-      <div class="collapse navbar-collapse" id="sidenav-collapse-main">
-        <ul class="navbar-nav">
-
-          <!-- Tableau de bord -->
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_dashboard' %}">
-              <i class="ni ni-tv-2 text-primary"></i>
-              <span class="nav-link-text">Tableau de bord</span>
-            </a>
-          </li>
-
-          <hr class="my-2">
-          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Utilisateurs</span></h6>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_users_list' %}">
-              <i class="fas fa-users-cog text-primary"></i>
-              <span class="nav-link-text">Tous les comptes</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_teachers' %}">
-              <i class="ni ni-single-02" style="color:#f5a623;"></i>
-              <span class="nav-link-text">Formateurs</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_students' %}">
-              <i class="ni ni-hat-3" style="color:#4a90d9;"></i>
-              <span class="nav-link-text">Étudiants</span>
-            </a>
-          </li>
-
-          <hr class="my-2">
-          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Pédagogie</span></h6>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_sessions_list' %}">
-              <i class="fas fa-clipboard-check text-success"></i>
-              <span class="nav-link-text">Séances & validation</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_evaluations_list' %}">
-              <i class="fas fa-star text-warning"></i>
-              <span class="nav-link-text">Évaluations</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_assignments_list' %}">
-              <i class="fas fa-tasks text-info"></i>
-              <span class="nav-link-text">Devoirs</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_resources_list' %}">
-              <i class="fas fa-folder-open text-success"></i>
-              <span class="nav-link-text">Ressources</span>
-            </a>
-          </li>
-
-          {# Plannings nav item removed — Schedule model deleted #}
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_languages_list' %}">
-              <i class="ni ni-books text-info"></i>
-              <span class="nav-link-text">Langues</span>
-            </a>
-          </li>
-
-          <hr class="my-2">
-          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Finances</span></h6>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_payments_list' %}">
-              <i class="ni ni-money-coins text-success"></i>
-              <span class="nav-link-text">Paiements étudiants</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'paiements_formateurs_list' %}">
-              <i class="fas fa-money-bill-wave text-warning"></i>
-              <span class="nav-link-text">Paiements formateurs</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'reporting_formateur' %}">
-              <i class="fas fa-chart-bar text-info"></i>
-              <span class="nav-link-text">Reporting</span>
-            </a>
-          </li>
-
-          <hr class="my-2">
-          <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Administratif</span></h6>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_certificates_list' %}">
-              <i class="ni ni-badge text-primary"></i>
-              <span class="nav-link-text">Certificats</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_requests_list' %}">
-              <i class="fas fa-inbox text-warning"></i>
-              <span class="nav-link-text">Demandes</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_notifications_list' %}">
-              <i class="fas fa-bell text-danger"></i>
-              <span class="nav-link-text">Notifications</span>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'admin_comments_list' %}">
-              <i class="fas fa-comments text-secondary"></i>
-              <span class="nav-link-text">Commentaires</span>
-            </a>
-          </li>
-
-          <hr class="my-2">
-
-          {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'account_logout' %}">
-              <i class="ni ni-user-run text-red"></i>
-              <span class="nav-link-text">Déconnexion</span>
-            </a>
-          </li>
-          {% endif %}
-
-        </ul>
-
-        <hr class="my-3">
-        <h6 class="navbar-heading p-0 text-muted"><span class="docs-normal">Liens externes</span></h6>
-        <ul class="navbar-nav mb-md-3">
-          <li class="nav-item">
-            <a class="nav-link" href="https://www.oralise.pro" target="_blank">
-              <i class="ni ni-world text-success"></i>
-              <span class="nav-link-text">Site web Oralise</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="https://www.facebook.com/tonprofil" target="_blank">
-              <i class="fab fa-facebook-square text-primary"></i>
-              <span class="nav-link-text">Facebook</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="https://www.instagram.com/tonprofil" target="_blank">
-              <i class="fab fa-instagram text-danger"></i>
-              <span class="nav-link-text">Instagram</span>
-            </a>
-          </li>
-        </ul>
-
-      </div>
-    </div>
   </div>
-</nav>
+</aside>
