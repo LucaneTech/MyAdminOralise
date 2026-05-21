@@ -2,7 +2,7 @@ from time import timezone
 from django import forms
 from dashboard.models import (
     Profile, CustomUser, Resource, Session, Student, Language,
-    Certificate, PaiementFormateur, Teacher, Schedule, Payment,
+    Certificate, PaiementFormateur, Teacher, Payment,
     Evaluation, Request, Notification, Assignment, Comment,
 )
 from allauth.account.forms import LoginForm, SignupForm, ResetPasswordForm
@@ -188,7 +188,7 @@ class ResourceForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'student', 'meeting_link']
+        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'students', 'meeting_link']
         widgets = {
             'date': forms.DateInput(attrs={
                 'type': 'date',
@@ -196,13 +196,13 @@ class SessionForm(forms.ModelForm):
                 'placeholder': 'Sélectionnez une date'
             }),
             'start_time': forms.TimeInput(attrs={
-                'type': 'time', 
+                'type': 'time',
                 'class': 'form-control',
                 'placeholder': 'Heure de début'
             }),
             'end_time': forms.TimeInput(attrs={
                 'type': 'time',
-                'class': 'form-control', 
+                'class': 'form-control',
                 'placeholder': 'Heure de fin'
             }),
             'language': forms.Select(attrs={
@@ -211,7 +211,7 @@ class SessionForm(forms.ModelForm):
             'status': forms.Select(attrs={
                 'class': 'form-control'
             }),
-            'student': forms.Select(attrs={
+            'students': forms.SelectMultiple(attrs={
                 'class': 'form-control'
             }),
             'meeting_link': forms.URLInput(attrs={
@@ -219,10 +219,8 @@ class SessionForm(forms.ModelForm):
                 'placeholder': 'https://meet.google.com/...'
             }),
         }
-    
 
-
-def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         # Récupérer l'enseignant pour filtrer les étudiants
         self.teacher = kwargs.pop('teacher', None)
         self.session_instance = kwargs.get('instance', None)
@@ -230,9 +228,6 @@ def __init__(self, *args, **kwargs):
 
         if self.teacher:
             self.fields['language'].queryset = self.teacher.languages.all()
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            self.fields['student'].queryset = User.objects.filter(role='student')
 
 
 class FichePedagogiqueForm(forms.ModelForm):
@@ -446,27 +441,11 @@ class LanguageForm(forms.ModelForm):
         }
 
 
-class ScheduleAdminForm(forms.ModelForm):
-    class Meta:
-        model = Schedule
-        fields = ['day', 'language', 'student', 'teacher', 'classroom', 'start_time', 'end_time', 'is_active']
-        widgets = {
-            'day': forms.Select(attrs=W),
-            'language': forms.Select(attrs=W),
-            'student': forms.Select(attrs=W),
-            'teacher': forms.Select(attrs=W),
-            'classroom': forms.TextInput(attrs=W),
-            'start_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
-            'end_time': forms.TimeInput(attrs={**W, 'type': 'time'}),
-            'is_active': forms.CheckboxInput(attrs=WCB),
-        }
-
-
 class SessionAdminForm(forms.ModelForm):
     class Meta:
         model = Session
         fields = [
-            'student', 'teacher', 'language', 'date', 'start_time', 'end_time',
+            'students', 'teacher', 'language', 'date', 'start_time', 'end_time',
             'duree_minutes', 'type_seance', 'status', 'meeting_link',
             'theme_cours', 'comp_oral', 'comp_comprehension', 'comp_ecrit',
             'comp_grammaire', 'comp_vocabulaire',
@@ -477,7 +456,7 @@ class SessionAdminForm(forms.ModelForm):
             'notes', 'feedback',
         ]
         widgets = {
-            'student': forms.Select(attrs=W),
+            'students': forms.SelectMultiple(attrs=W),
             'teacher': forms.Select(attrs=W),
             'language': forms.Select(attrs=W),
             'date': forms.DateInput(attrs={**W, 'type': 'date'}),

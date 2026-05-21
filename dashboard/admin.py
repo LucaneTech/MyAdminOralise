@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    CustomUser, Student, Teacher, Schedule,
+    CustomUser, Student, Teacher,
     Resource, Request, Language, Session, Payment, Certificate,
     Evaluation, Notification, Comment, Profile, PaiementFormateur
 )
@@ -62,13 +62,13 @@ class TeacherAdmin(admin.ModelAdmin):
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('student', 'teacher', 'language', 'date', 'type_seance', 'status', 'statut_validation', 'fiche_completee')
+    list_display = ('teacher', 'language', 'date', 'type_seance', 'status', 'statut_validation', 'fiche_completee')
     list_filter = ('status', 'statut_validation', 'type_seance', 'language', 'date', 'teacher')
-    search_fields = ('student__user__first_name', 'student__user__last_name', 'teacher__user__first_name', 'teacher__user__last_name', 'theme_cours')
+    search_fields = ('teacher__user__first_name', 'teacher__user__last_name', 'theme_cours')
     date_hierarchy = 'date'
     fieldsets = (
         ("Identification", {
-            "fields": ("student", "teacher", "language", "date", "start_time", "end_time", "duree_minutes", "type_seance", "status", "meeting_link"),
+            "fields": ("students", "teacher", "language", "date", "start_time", "end_time", "duree_minutes", "type_seance", "status", "meeting_link"),
         }),
         ("Contenu pédagogique", {
             "fields": ("theme_cours", "comp_oral", "comp_comprehension", "comp_ecrit", "comp_grammaire", "comp_vocabulaire"),
@@ -137,12 +137,6 @@ class RequestAdmin(admin.ModelAdmin):
     list_filter = ('student', 'request_type', 'status')
     fields = ('student', 'request_type', 'teacher', 'subject', 'description', 'attachment', 'status', 'response')
     readonly_fields = ('created_at', 'updated_at')
-
-
-@admin.register(Schedule)
-class ScheduleAdmin(admin.ModelAdmin):
-    list_display = ('day', 'teacher', 'language', 'start_time', 'end_time', 'classroom','student')
-    list_filter = ('day', 'teacher', 'language','student')
 
 
 @admin.register(Comment)

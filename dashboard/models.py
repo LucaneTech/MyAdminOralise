@@ -183,13 +183,13 @@ class Student(models.Model):
     
     @property
     def recent_sessions(self):
-        return Session.objects.filter(student=self).order_by('-date')[:5]
-    
+        return Session.objects.filter(students=self).order_by('-date')[:5]
+
     @property
     def upcoming_sessions(self):
         today = timezone.now().date()
         return Session.objects.filter(
-            student=self,
+            students=self,
             date__gte=today,
             status='scheduled'
         ).order_by('date', 'start_time')
@@ -291,79 +291,6 @@ class Teacher(models.Model):
     def __str__(self):
         return self.user.get_full_name()
 
-
-# Emploi du temps
-class Schedule(models.Model): 
-    DAY_CHOICES = [
-        ('Lundi', 'Lundi'),
-        ('Mardi', 'Mardi'),
-        ('Mercredi', 'Mercredi'),
-        ('Jeudi', 'Jeudi'),
-        ('Vendredi', 'Vendredi'),
-        ('Samedi', 'Samedi'),
-         ('Dimanche', 'Dimanche'),
-    ]
-
-    day = models.CharField(
-        max_length=10, 
-        choices=DAY_CHOICES,
-        verbose_name="jour"
-    )
-   
-    language = models.ForeignKey(
-        Language, 
-        on_delete=models.CASCADE,
-        verbose_name="languages"
-    )
-    student = models.ForeignKey(
-        Student, 
-        on_delete=models.CASCADE,  
-        blank=True,
-        verbose_name="étudiant"
-    )
-    teacher = models.ForeignKey(
-        Teacher, 
-        on_delete=models.CASCADE, 
-       
-        blank=True,
-        verbose_name="enseignant"
-    )
-    classroom = models.CharField(
-        max_length=30, 
-        blank=True, 
-        null=True,
-        verbose_name="salle de cours"
-    )
-    start_time = models.TimeField(
-        verbose_name="heure de début"
-    )
-    end_time = models.TimeField(
-        verbose_name="heure de fin"
-    )
-   
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name="actif"
-    )
-    created_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name="date de création"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="date de mise à jour"
-    )
-
-    class Meta:
-        ordering = ['day', 'start_time']
-        unique_together = ['day', 'language', 'teacher', 'student' ,'start_time']
-        verbose_name = "emploi du temps"
-        verbose_name_plural = "emplois du temps"
-
-    def __str__(self):
-        return f"{self.language.name} - {self.day} ({self.start_time} - {self.end_time})"
-    
-  
 
 # Devoirs
 class Assignment(models.Model):
@@ -493,12 +420,6 @@ class Session(models.Model):
     ]
 
     # --- Identification ---
-    student = models.ForeignKey(
-        Student,
-        on_delete=models.CASCADE,
-        related_name='sessions',
-        verbose_name="étudiant"
-    )
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.CASCADE,
@@ -507,7 +428,7 @@ class Session(models.Model):
     )
     students = models.ManyToManyField(
         Student,
-        related_name='sessions_m2m',
+        related_name='sessions',
         blank=True,
         verbose_name="étudiants"
     )
@@ -660,7 +581,7 @@ class Session(models.Model):
         return comps
 
     def __str__(self):
-        return f"{self.student} - {self.language} - {self.date} ({self.get_status_display()})"
+        return f"{self.teacher} - {self.language} - {self.date} ({self.get_status_display()})"
 
 # Paiements
 class Payment(models.Model):
@@ -1180,12 +1101,13 @@ class PaiementFormateur(models.Model):
         )
         ca_total = 0
         for s in sessions:
-            if s.student and s.duration_hours:
+            first_student = s.students.first()
+            if first_student and s.duration_hours:
                 paid = Payment.objects.filter(
-                    student=s.student,
+                    student=first_student,
                     status='paid'
                 ).aggregate(total=Sum('amount'))['total'] or 0
-                hours_total = s.student.total_hours_purchased or 1
+                hours_total = first_student.total_hours_purchased or 1
                 ca_total += float(paid) * (s.duration_hours / hours_total)
         self.montant_calcule = round(ca_total * 0.55, 2)
         return self.montant_calcule

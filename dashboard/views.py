@@ -27,7 +27,6 @@ from dashboard.models import (
     Teacher,
     Profile,
     Language,
-    Schedule,
     Resource,
     Request,
     Assignment,
@@ -2958,12 +2957,12 @@ def certificate_detail_student(request, cert_id):
 # ═════════════════════════════════════════════════════════════
 from .forms import (
     AdminUserCreateForm, AdminUserEditForm, AdminResetPasswordForm,
-    StudentAdminForm, TeacherAdminForm, LanguageForm, ScheduleAdminForm,
+    StudentAdminForm, TeacherAdminForm, LanguageForm,
     SessionAdminForm, PaymentAdminForm, EvaluationAdminForm,
     ResourceAdminForm, RequestAdminForm, NotificationAdminForm,
     AssignmentAdminForm,
 )
-from dashboard.models import Schedule, Evaluation, Assignment, Submission
+from dashboard.models import Evaluation, Assignment, Submission
 from django.contrib.auth.hashers import make_password
 
 
