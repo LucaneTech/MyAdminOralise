@@ -178,8 +178,13 @@ class Student(models.Model):
         verbose_name_plural = "étudiants"
 
     @property
+    def computed_hours_used(self):
+        sessions = Session.objects.filter(students=self, status='completed')
+        return round(sum(s.duration_hours for s in sessions), 1)
+
+    @property
     def hours_remaining(self):
-        return self.total_hours_purchased - self.total_hours_used
+        return self.total_hours_purchased - self.computed_hours_used
     
     @property
     def recent_sessions(self):
@@ -267,7 +272,7 @@ class Teacher(models.Model):
 
     @property
     def total_students(self):
-        return Student.objects.filter(current_teacher=self).count()
+        return Student.objects.filter(current_teachers=self).count()
     
     @property
     def today_sessions(self):
@@ -950,6 +955,7 @@ class Notification(models.Model):
         ('payment_due', 'Paiement dû'),
         ('certificate_ready', 'Certificat disponible'),
         ('evaluation_ready', 'Évaluation disponible'),
+        ('evaluation_request', 'Demande d\'évaluation'),
         ('system', 'Système')
     ]
     

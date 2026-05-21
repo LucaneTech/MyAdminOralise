@@ -46,28 +46,30 @@ def store_old_session_status(sender, instance, **kwargs):
         instance._old_status = None
 
 
-@receiver(post_save, sender=Session)
-def deduct_student_hours_on_completion(sender, instance, **kwargs):
-   
-    if (
-        instance._old_status != 'completed'
-        and instance.status == 'completed'
-    ):
-        student = instance.student
-        duration = instance.duration_hours 
-
-       
-        if student.hours_remaining < duration:
-            raise ValidationError(
-                f"{student} n'a plus assez d'heures disponibles."
-            )
-        
-        student.total_hours_used += duration
-        student.save(update_fields=['total_hours_used'])
-
-        logger.info(
-            f"{duration}h déduites pour {student} (Session {instance.id})"
-        )
+# NOTE: This signal is disabled because Session now uses M2M students field.
+# It will be rewritten in Task 6 to handle multiple students properly.
+# @receiver(post_save, sender=Session)
+# def deduct_student_hours_on_completion(sender, instance, **kwargs):
+#
+#     if (
+#         instance._old_status != 'completed'
+#         and instance.status == 'completed'
+#     ):
+#         student = instance.student
+#         duration = instance.duration_hours
+#
+#
+#         if student.hours_remaining < duration:
+#             raise ValidationError(
+#                 f"{student} n'a plus assez d'heures disponibles."
+#             )
+#
+#         student.total_hours_used += duration
+#         student.save(update_fields=['total_hours_used'])
+#
+#         logger.info(
+#             f"{duration}h déduites pour {student} (Session {instance.id})"
+#         )
 
 
 
