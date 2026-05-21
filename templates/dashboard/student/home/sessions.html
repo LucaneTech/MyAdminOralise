@@ -1,137 +1,99 @@
-{% extends 'dashboard/student/layouts/base.html' %}
+{% extends "dashboard/student/layouts/base.html" %}
+{% load static %}
+{% load lucide %}
 
-{% block title %} Mes séances {% endblock title %}
-
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Séances{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-6 col-7">
-          <h6 class="h2 text-white d-inline-block mb-0">Mes séances</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item active" aria-current="page">Séances</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="bg-white rounded-md shadow-xl p-4">
+  <div id="calendar"></div>
 </div>
 
-<div class="container-fluid mt--6">
-  <!-- Filtres -->
-  <div class="row mb-4">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-body">
-          <form method="get" class="row">
-            <div class="col-md-3">
-              <label for="status">Statut</label>
-              <select name="status" id="status" class="form-control">
-                <option value="">Tous les statuts</option>
-                <option value="scheduled" {% if filters.status == 'scheduled' %}selected{% endif %}>Prévue</option>
-                <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Terminée</option>
-                <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Annulée</option>
-                <option value="rescheduled" {% if filters.status == 'rescheduled' %}selected{% endif %}>Reportée</option>
-                <option value="absent" {% if filters.status == 'absent' %}selected{% endif %}>Absence</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="date">Date</label>
-              <input type="date" name="date" id="date" class="form-control" value="{{ filters.date }}">
-            </div>
-            <div class="col-md-3">
-              <label>&nbsp;</label>
-              <button type="submit" class="btn btn-primary btn-block">
-                <i class="ni ni-zoom-split-in"></i> Filtrer
-              </button>
-            </div>
-            <div class="col-md-3">
-              <label>&nbsp;</label>
-              <a href="{% url 'student_sessions' %}" class="btn btn-secondary btn-block">
-                <i class="ni ni-refresh"></i> Réinitialiser
-              </a>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Liste des séances</h3>
-            </div>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-items-center table-flush">
-            <thead class="thead-light">
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Heure</th>
-                <th scope="col">Langue</th>
-                <th scope="col">Enseignant</th>
-                <th scope="col">Durée</th>
-                <th scope="col">Statut</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for session in sessions %}
-              <tr>
-                <th scope="row">
-                  {{ session.date|date:"d/m/Y" }}
-                </th>
-                <td>
-                  {{ session.start_time|time:"H:i" }} - {{ session.end_time|time:"H:i" }}
-                </td>
-                <td>
-                  {{ session.language.name }}
-                </td>
-                <td>
-                  {{ session.teacher.user.get_full_name }}
-                </td>
-                <td>
-                  {{ session.duration_hours|floatformat:1 }}h
-                </td>
-                <td>
-                  <span class="badge badge-{% if session.status == 'scheduled' %}primary{% elif session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}warning{% endif %}">
-                    {{ session.get_status_display }}
-                  </span>
-                </td>
-                <td>
-                  <a href="{% url 'session_detail' session.id %}" class="btn btn-sm btn-info">
-                    <i class="ni ni-ruler-pencil"></i> Détails
-                  </a>
-                  {% if session.meeting_link and session.status == 'scheduled' %}
-                  <a href="{{ session.meeting_link }}" target="_blank" class="btn btn-sm btn-success">
-                    <i class="ni ni-video-camera-2"></i> Rejoindre
-                  </a>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="7" class="text-center">Aucune séance trouvée</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+<div id="session-modal-backdrop"
+     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="display:none">
+  <div id="session-modal-panel"
+       class="bg-white rounded-md shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div id="session-modal-content" class="p-6"></div>
   </div>
 </div>
-{% endblock content %}
+{% endblock %}
 
-{% block javascripts %}{% endblock javascripts %} 
+{% block extra_js %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+const smBackdrop = document.getElementById('session-modal-backdrop');
+const smPanel    = document.getElementById('session-modal-panel');
+const smContent  = document.getElementById('session-modal-content');
+
+function openSessionModal(html) {
+  smContent.innerHTML = html;
+  smBackdrop.style.display = 'flex';
+  gsap.fromTo(smBackdrop, {opacity:0}, {opacity:1, duration:0.2});
+  gsap.fromTo(smPanel, {y:60, opacity:0}, {y:0, opacity:1, duration:0.3, ease:'power2.out'});
+}
+function closeSessionModal() {
+  gsap.to(smPanel, {y:40, opacity:0, duration:0.2, ease:'power2.in'});
+  gsap.to(smBackdrop, {opacity:0, duration:0.2,
+    onComplete: () => { smBackdrop.style.display='none'; smContent.innerHTML=''; }
+  });
+}
+smBackdrop.addEventListener('click', e => { if(e.target===smBackdrop) closeSessionModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSessionModal(); });
+
+function sessionDetailHtml(data) {
+  const stList = (data.extendedProps.students||[]).join(', ') || '—';
+  const statusColors = {
+    scheduled:'bg-blue-100 text-blue-700',
+    completed:'bg-green-100 text-green-700',
+    cancelled:'bg-red-100 text-red-700',
+    rescheduled:'bg-amber-100 text-amber-700',
+    absent:'bg-orange-100 text-orange-700',
+  };
+  const sc = statusColors[data.extendedProps.status] || 'bg-gray-100 text-gray-700';
+  return `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">Détail séance</h2>
+      <button onclick="closeSessionModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+    </div>
+    <div class="space-y-3 text-sm">
+      <div class="flex justify-between"><span class="text-gray-500">Langue</span><span class="font-medium">${data.extendedProps.language}</span></div>
+      <div class="flex justify-between"><span class="text-gray-500">Formateur</span><span class="font-medium">${data.extendedProps.teacher}</span></div>
+      <div class="flex justify-between"><span class="text-gray-500">Étudiants</span><span class="font-medium">${stList}</span></div>
+      <div class="flex justify-between"><span class="text-gray-500">Statut</span>
+        <span class="px-2 py-0.5 rounded-md text-xs font-semibold ${sc}">${data.extendedProps.status}</span>
+      </div>
+    </div>
+    <div class="mt-5">
+      <button onclick="closeSessionModal()"
+              class="w-full py-2 bg-[#d9a505] text-white text-sm font-medium rounded-md hover:opacity-90 transition">
+        Fermer
+      </button>
+    </div>
+  `;
+}
+
+let calendar;
+document.addEventListener('DOMContentLoaded', function() {
+  calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'timeGridWeek',
+    locale: 'fr',
+    height: 'auto',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    slotMinTime: '07:00:00',
+    slotMaxTime: '21:00:00',
+    events: '/api/sessions/',
+    editable: false,
+    selectable: false,
+    eventClick: function(info) {
+      openSessionModal(sessionDetailHtml(info.event));
+    }
+  });
+  calendar.render();
+});
+</script>
+{% endblock %}
