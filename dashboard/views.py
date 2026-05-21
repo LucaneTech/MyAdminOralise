@@ -81,7 +81,7 @@ def dashboard_view(request, username=None):
             raise Http404("Cette page est réservée aux étudiants.")
 
         student = Student.objects.filter(user=requested_user).first()
-        total_sessions = Session.objects.filter(student=student).count()
+        total_sessions = Session.objects.filter(students=student).count()
         context = {
             "total_sessions": total_sessions,
             "profile": profile,
@@ -106,23 +106,23 @@ def dashboard_view(request, username=None):
 
         # Planning personnel (séances à venir)
         upcoming_sessions = Session.objects.filter(
-            student=student, date__gte=today, status="scheduled"
+            students=student, date__gte=today, status="scheduled"
         ).order_by("date", "start_time")
         context["upcoming_sessions"] = upcoming_sessions
 
         # Historique des séances (faites / reportées)
         completed_sessions = Session.objects.filter(
-            student=student, status="completed"
+            students=student, status="completed"
         ).order_by("-date")[:10]
         context["completed_sessions"] = completed_sessions
 
         rescheduled_sessions = Session.objects.filter(
-            student=student, status="rescheduled"
+            students=student, status="rescheduled"
         ).order_by("-date")[:5]
         context["rescheduled_sessions"] = rescheduled_sessions
 
         # Séances du jour
-        today_sessions = Session.objects.filter(student=student, date=today).order_by(
+        today_sessions = Session.objects.filter(students=student, date=today).order_by(
             "start_time"
         )
         context["today_sessions"] = today_sessions
@@ -146,9 +146,9 @@ def dashboard_view(request, username=None):
         context["recent_evaluations"] = recent_evaluations
 
         # Statistiques de progression
-        total_sessions = Session.objects.filter(student=student).count()
+        total_sessions = Session.objects.filter(students=student).count()
         completed_count = Session.objects.filter(
-            student=student, status="completed"
+            students=student, status="completed"
         ).count()
         
 
@@ -315,7 +315,7 @@ def profile_view(request):
 
     if user.role == "student":
         student = get_object_or_404(Student, user=user)
-        total_sessions = Session.objects.filter(student=student).count()
+        total_sessions = Session.objects.filter(students=student).count()
         context = {
             "student": student,
             "total_sessions": total_sessions,
@@ -1085,14 +1085,14 @@ def teacher_student_detail(request, student_id):
     )
 
     # Récupération des données associées
-    recent_sessions = Session.objects.filter(student=student).order_by(
+    recent_sessions = Session.objects.filter(students=student).order_by(
         "-date", "-start_time"
     )[:10]
 
     # Statistiques
-    total_sessions = Session.objects.filter(student=student).count()
+    total_sessions = Session.objects.filter(students=student).count()
     completed_sessions = Session.objects.filter(
-        student=student, status="completed"
+        students=student, status="completed"
     ).count()
 
  
@@ -1354,7 +1354,7 @@ def session_detail_view(request, session_id):
     """Vue détaillée d'une séance avec possibilité de feedback"""
     session = get_object_or_404(Session, id=session_id)
     # Vérifier que l'utilisateur a accès à cette séance
-    if request.user.role == "student" and session.student.user != request.user:
+    if request.user.role == "student" and not session.students.filter(user=request.user).exists():
         raise Http404("Accès non autorisé")
     elif request.user.role == "teacher" and session.teacher.user != request.user:
         raise Http404("Accès non autorisé")
@@ -1397,12 +1397,14 @@ def session_status_update(request, session_id):
             session.save()
 
             # Créer une notification pour l'étudiant
-            Notification.objects.create(
-                user=session.student.user,
-                notification_type="session_reminder",
-                title=f"Statut de séance mis à jour",
-                message=f"Votre séance de {session.language.name} du {session.date} est maintenant {session.get_status_display()}",
-            )
+            first_student = session.students.first()
+            if first_student:
+                Notification.objects.create(
+                    user=first_student.user,
+                    notification_type="session_reminder",
+                    title=f"Statut de séance mis à jour",
+                    message=f"Votre séance de {session.language.name} du {session.date} est maintenant {session.get_status_display()}",
+                )
 
             return JsonResponse(
                 {"success": True, "message": "Statut mis à jour avec succès"}
@@ -1785,7 +1787,7 @@ def student_sessions_view(request):
     status_filter = request.GET.get("status")
     date_filter = request.GET.get("date")
 
-    sessions = Session.objects.filter(student=student)
+    sessions = Session.objects.filter(students=student)
 
     if status_filter:
         sessions = sessions.filter(status=status_filter)
@@ -1811,529 +1813,6 @@ def student_sessions_view(request):
 def test_template_tags(request):
     """Vue de test pour vérifier que les template tags fonctionnent"""
     return render(request, "dashboard/teacher/home/test_template_tags.html", {})
-
-
-
-
-##Schedule views
-
-#for student
-@login_required
-def schedule_view(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=user)
-    context = {
-        "profile": profile,
-        "user": user,
-        "username": user.username
-    }
-
-    if user.role == "student":
-        student = get_object_or_404(Student, user=user)
-        # Récupérer les schedules liés aux compétences de l'étudiant
-        schedule = Schedule.objects.filter(student=student ).order_by(
-            "day", "start_time"
-        )
-        context["schedule"] = schedule
-        return render(request, "dashboard/student/home/schedule.html", context)
-    else:
-        return render(request, "404.html", context)
-
-
-
-
-#for teacher
-@login_required
-def teacher_schedule_view(request):
-    """Vue principale de l'emploi du temps"""
-    if request.user.role != "teacher":
-        messages.error(request, "Accès réservé aux enseignants.")
-        return redirect('dashboard')
-    
-    teacher = get_object_or_404(Teacher, user=request.user)
-    
-    # Calcul de la semaine actuelle
-    today = date.today()
-    week_number = int(request.GET.get('week', 0))
-    week_start = today - timedelta(days=today.weekday()) + timedelta(weeks=week_number)
-    week_end = week_start + timedelta(days=6)
-    
-    # Jours de la semaine
-    week_days = []
-    for i in range(7):  # Lundi à Dimanche
-        day_date = week_start + timedelta(days=i)
-        week_days.append({
-            'name': Schedule.DAY_CHOICES[i][0],
-            'date': day_date,
-            'is_today': day_date == today,
-            'column': i + 2
-        })
-    
-   
-    hours = []
-    for hour in range(0, 24):  #
-        hours.append({
-            'value': f"{hour:02d}:00",
-            'display': f"{hour:02d}:00",
-            'grid_row': hour - 7  # Commence à 1 pour 8h
-        })
-    
-    # Récupérer les emplois du temps 
-    schedules = Schedule.objects.filter(
-        teacher=teacher,
-        is_active=True
-    ).select_related('language', 'student', 'student__user')
-    
-    # Préparer les données pour le template
-    processed_schedules = []
-    for schedule in schedules:
-        # Calculer la position dans la grille
-        start_hour = schedule.start_time.hour
-        start_minute = schedule.start_time.minute
-        end_hour = schedule.end_time.hour
-        end_minute = schedule.end_time.minute
-        
-        # Calcul des positions en pixels (chaque heure = 60px)
-        # Position top: (heure - 8) * 60 + minutes
-        top_position = ((start_hour) * 60) + start_minute
-        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
-        
-        # Ajustements pour les limites
-        if top_position < 0:
-            height_position += top_position
-            top_position = 0
-        
-        # Limite maximum (8h-20h = 12h * 60px = 720px)
-        max_position = 720
-        if top_position + height_position > max_position:
-            height_position = max_position - top_position
-        
-        # Trouver la colonne du jour
-        day_column = next((day['column'] for day in week_days if day['name'] == schedule.day), 2)
-        
-        # Couleur unique pour chaque langue
-        language_colors = {
-            'Anglais': '#4285f4',
-            'Français': '#ea4335',
-            
-        }
-        
-        color = language_colors.get(schedule.language.name, '#008080')
-        
-        processed_schedules.append({
-            'id': schedule.id,
-            'language': schedule.language,
-            'student': schedule.student,
-            'start_time': schedule.start_time,
-            'end_time': schedule.end_time,
-            'day': schedule.day,
-            'classroom': schedule.classroom,
-            'is_active': schedule.is_active,
-            'top_position': top_position,
-            'height_position': height_position,
-            'day_column': day_column,
-            'language_color': color,
-            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
-        })
-    
-    # Statistiques
-    total_courses = Schedule.objects.filter(teacher=teacher).count()
-    today_courses = Schedule.objects.filter(
-        teacher=teacher,
-        day=today.strftime('%A'),
-        is_active=True
-    ).count()
-    
-    # Cours de cette semaine
-    this_week_courses = Schedule.objects.filter(
-        teacher=teacher,
-        is_active=True,
-        day__in=[day['name'] for day in week_days]
-    ).count()
-    
-    # Prochains cours (pour sidebar)
-    upcoming_courses = Schedule.objects.filter(
-        teacher=teacher,
-        is_active=True,
-        day__in=[day['name'] for day in week_days]
-    ).order_by('day', 'start_time')[:5]
-    
-    context = {
-        'teacher': teacher,
-        'today': today,
-        'current_week_number': week_number,
-        'week_start': week_start,
-        'week_end': week_end,
-        'week_days': week_days,
-        'hours': hours,
-        'schedules': processed_schedules,
-        'total_courses': total_courses,
-        'today_courses': today_courses,
-        'this_week_courses': this_week_courses,
-        'upcoming_courses': upcoming_courses,
-        'languages': teacher.languages.all(),
-        'languages_count': teacher.languages.count(),
-        'students': Student.objects.filter(current_teachers=teacher).select_related('user'),
-        'day_choices': Schedule.DAY_CHOICES,
-        'grid_start_hour': 8,
-        'grid_end_hour': 20,
-    }
-    
-    return render(request, 'dashboard/teacher/home/schedule.html', context)
-
-
-@login_required
-def add_schedule(request):
-   
-    if request.user.role != "teacher":
-        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
-    
-    if request.method == 'POST':
-        try:
-            teacher = get_object_or_404(Teacher, user=request.user)
-            
-            schedule = Schedule.objects.create(
-                teacher=teacher,
-                day=request.POST.get('day'),
-                language_id=request.POST.get('language'),
-                student_id=request.POST.get('student') or None,
-                classroom=request.POST.get('classroom', ''),
-                start_time=request.POST.get('start_time'),
-                end_time=request.POST.get('end_time'),
-                is_active=request.POST.get('is_active', 'true') == 'true'
-            )
-            
-            messages.success(request, 'Cours ajouté avec succès!')
-            return JsonResponse({'success': True, 'schedule_id': schedule.id})
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
-
-
-
-#edit view schedule after creating
-@login_required
-def edit_schedule(request, schedule_id):
-    if request.user.role != "teacher":
-        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
-    
-    teacher = get_object_or_404(Teacher, user=request.user)
-    schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
-    
-    if request.method == 'POST':
-        try:
-            schedule.day = request.POST.get('day', schedule.day)
-            schedule.language_id = request.POST.get('language', schedule.language_id)
-            schedule.student_id = request.POST.get('student') or None
-            schedule.classroom = request.POST.get('classroom', schedule.classroom)
-            schedule.start_time = request.POST.get('start_time', schedule.start_time)
-            schedule.end_time = request.POST.get('end_time', schedule.end_time)
-            schedule.is_active = request.POST.get('is_active', 'true') == 'true'
-            schedule.save()
-            
-            messages.success(request, 'Cours modifié avec succès!')
-            return JsonResponse({
-                'success': True,
-                'message': 'Cours modifié avec succès!',
-                'schedule_id': schedule.id
-                                 })
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    # Pour GET, retourner les données du cours
-    return JsonResponse({
-        'success': True,
-        'schedule': {
-            'id': schedule.id,
-            'day': schedule.day,
-            'language_id': schedule.language_id,
-            'student_id': schedule.student_id,
-            'classroom': schedule.classroom,
-            'start_time': schedule.start_time.strftime('%H:%M'),
-            'end_time': schedule.end_time.strftime('%H:%M'),
-            'is_active': schedule.is_active,
-        }
-    })
-
-@login_required
-def delete_schedule(request, schedule_id):
-    
-    if request.user.role != "teacher":
-        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
-    
-    teacher = get_object_or_404(Teacher, user=request.user)
-    schedule = get_object_or_404(Schedule, id=schedule_id, teacher=teacher)
-    
-    if request.method == 'POST':
-        try:
-            schedule.delete()
-            messages.success(request, 'Cours supprimé avec succès!')
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
-
-@login_required
-def load_schedule_week(request):
-    """Charger une semaine spécifique via AJAX"""
-    if request.user.role != "teacher":
-        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
-    
-    teacher = get_object_or_404(Teacher, user=request.user)
-    week_number = int(request.GET.get('week', 0))
-    
-    # Calcul de la semaine
-    today = date.today()
-    week_start = today - timedelta(days=today.weekday()) + timedelta(weeks=week_number)
-    week_end = week_start + timedelta(days=6)
-    
-    # Jours de la semaine
-    week_days = []
-    for i in range(7):
-        day_date = week_start + timedelta(days=i)
-        week_days.append({
-            'name': Schedule.DAY_CHOICES[i][0],
-            'date': day_date,
-            'is_today': day_date == today,
-            'column': i + 2
-        })
-    
-    # Heures (8h à 20h)
-    hours = []
-    for hour in range(8, 21):
-        hours.append({
-            'value': f"{hour:02d}:00",
-            'display': f"{hour:02d}:00",
-            'grid_row': hour - 7
-        })
-    
-    # Récupérer les emplois du temps de cette semaine
-    schedules = Schedule.objects.filter(
-        teacher=teacher,
-        is_active=True,
-        day__in=[day['name'] for day in week_days]
-    ).select_related('language', 'student', 'student__user')
-    
-    # Préparer les données
-    processed_schedules = []
-    for schedule in schedules:
-        start_hour = schedule.start_time.hour
-        start_minute = schedule.start_time.minute
-        end_hour = schedule.end_time.hour
-        end_minute = schedule.end_time.minute
-        
-        # Calcul des positions en pixels
-        top_position = ((start_hour - 8) * 60) + start_minute
-        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
-        
-        # Ajustements pour les limites
-        if top_position < 0:
-            height_position += top_position
-            top_position = 0
-        
-        max_position = 720
-        if top_position + height_position > max_position:
-            height_position = max_position - top_position
-        
-        # Couleurs
-        language_colors = {
-            'Anglais': '#4285f4',
-            'Français': '#ea4335',
-            'Espagnol': '#fbbc04',
-            'Allemand': '#34a853',
-            'Chinois': '#673ab7',
-            'Arabe': '#ff6d00',
-        }
-        
-        color = language_colors.get(schedule.language.name, '#4285f4')
-        
-        processed_schedules.append({
-            'id': schedule.id,
-            'language': schedule.language,
-            'student': schedule.student,
-            'start_time': schedule.start_time,
-            'end_time': schedule.end_time,
-            'day': schedule.day,
-            'classroom': schedule.classroom,
-            'is_active': schedule.is_active,
-            'top_position': top_position,
-            'height_position': height_position,
-            'language_color': color,
-            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
-        })
-    
-    # Générer le HTML
-    context = {
-        'week_days': week_days,
-        'hours': hours,
-        'schedules': processed_schedules,
-        'grid_start_hour': 8,
-        'grid_end_hour': 20,
-    }
-    
-    # Rendre seulement la partie du calendrier
-    rendered_html = render_to_string('dashboard/teacher/home/schedule.html', context)
-    
-    return JsonResponse({
-        'success': True,
-        'week_number': week_number,
-        'html': rendered_html,
-        'week_start': week_start.strftime('%d %b'),
-        'week_end': week_end.strftime('%d %b %Y'),
-    })
-
-
-@login_required
-def filter_schedule(request):
-    """Filtrer l'emploi du temps"""
-    if request.user.role != "teacher":
-        return JsonResponse({'success': False, 'error': 'Accès non autorisé'})
-    
-    teacher = get_object_or_404(Teacher, user=request.user)
-    
-    # Construire les filtres
-    filters = Q(teacher=teacher, is_active=True)
-    
-    language_id = request.POST.get('language')
-    student_id = request.POST.get('student')
-    status = request.POST.get('status')
-    
-    if language_id:
-        filters &= Q(language_id=language_id)
-    
-    if student_id:
-        filters &= Q(student_id=student_id)
-    
-    if status == 'active':
-        filters &= Q(is_active=True)
-    elif status == 'inactive':
-        filters &= Q(is_active=False)
-    
-    # Récupérer les emplois du temps filtrés
-    schedules = Schedule.objects.filter(filters).select_related(
-        'language', 'student', 'student__user'
-    )
-    
-    # Calcul de la semaine actuelle pour le contexte
-    today = date.today()
-    week_number = 0  # Semaine courante
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-    
-    # Jours de la semaine
-    week_days = []
-    for i in range(7):
-        day_date = week_start + timedelta(days=i)
-        week_days.append({
-            'name': Schedule.DAY_CHOICES[i][0],
-            'date': day_date,
-            'is_today': day_date == today,
-            'column': i + 2
-        })
-    
-    # Heures
-    hours = []
-    for hour in range(8, 21):
-        hours.append({
-            'value': f"{hour:02d}:00",
-            'display': f"{hour:02d}:00",
-            'grid_row': hour - 7
-        })
-    
-    # Préparer les données
-    processed_schedules = []
-    for schedule in schedules:
-        start_hour = schedule.start_time.hour
-        start_minute = schedule.start_time.minute
-        end_hour = schedule.end_time.hour
-        end_minute = schedule.end_time.minute
-        
-        # Calcul des positions
-        top_position = ((start_hour - 8) * 60) + start_minute
-        height_position = ((end_hour - start_hour) * 60) + (end_minute - start_minute)
-        
-        # Ajustements
-        if top_position < 0:
-            height_position += top_position
-            top_position = 0
-        
-        max_position = 720
-        if top_position + height_position > max_position:
-            height_position = max_position - top_position
-        
-        # Couleurs
-        language_colors = {
-            'Anglais': '#4285f4',
-            'Français': '#ea4335',
-            'Espagnol': '#fbbc04',
-            'Allemand': '#34a853',
-            'Chinois': '#673ab7',
-            'Arabe': '#ff6d00',
-        }
-        
-        color = language_colors.get(schedule.language.name, '#4285f4')
-        
-        processed_schedules.append({
-            'id': schedule.id,
-            'language': schedule.language,
-            'student': schedule.student,
-            'start_time': schedule.start_time,
-            'end_time': schedule.end_time,
-            'day': schedule.day,
-            'classroom': schedule.classroom,
-            'is_active': schedule.is_active,
-            'top_position': top_position,
-            'height_position': height_position,
-            'language_color': color,
-            'duration_hours': f"{(end_hour - start_hour) + (end_minute - start_minute)/60:.1f}",
-        })
-    
-    # Générer le HTML
-    context = {
-        'week_days': week_days,
-        'hours': hours,
-        'schedules': processed_schedules,
-        'grid_start_hour': 8,
-        'grid_end_hour': 20,
-    }
-    
-    rendered_html = render_to_string('dashboard/teacher/includes/calendar_grid.html', context)
-    
-    return JsonResponse({
-        'success': True,
-        'html': rendered_html
-    })
-
-
-@login_required
-def quick_add_schedule(request):
- 
-    if request.user.role != "teacher":
-        messages.error(request, "Accès non autorisé.")
-        return redirect('teacher_schedule')
-    
-    if request.method == 'POST':
-        try:
-            teacher = get_object_or_404(Teacher, user=request.user)
-            Schedule.objects.create(
-                teacher=teacher,
-                day=request.POST['day'],
-                language_id=request.POST['language'],
-                student_id=request.POST.get('student'),
-                start_time=request.POST['start_time'],
-                end_time=request.POST['end_time'],
-                is_active=True
-            )
-            
-            messages.success(request, "Cours ajouté avec succès!")
-        except Exception as e:
-            messages.error(request, f"Erreur: {str(e)}")
-    
-    return redirect('teacher_schedule')
 
 
 
@@ -2554,7 +2033,7 @@ def student_detail_view(request, student_id):
     total_paid = payments.aggregate(total=Sum('amount'))['total'] or 0
     # Sessions
     upcoming_sessions = Session.objects.filter(
-        student=student, 
+        students=student,
         status='scheduled',
         date__gte=timezone.now().date()
     ).order_by('date', 'start_time')[:5]
@@ -2617,7 +2096,7 @@ def fiche_pedagogique_detail(request, session_id):
             raise Http404
     elif request.user.role == 'student':
         student = get_object_or_404(Student, user=request.user)
-        if session.student != student:
+        if not session.students.filter(id=student.id).exists():
             raise Http404
 
     return render(request, 'dashboard/teacher/home/fiche_pedagogique_detail.html', {
@@ -2633,8 +2112,8 @@ def fiche_pedagogique_detail(request, session_id):
 def admin_sessions_list(request):
     """Liste toutes les séances avec filtres de validation."""
     sessions = Session.objects.select_related(
-        'student__user', 'teacher__user', 'language'
-    ).order_by('-date')
+        'teacher__user', 'language'
+    ).prefetch_related('students__user').order_by('-date')
 
     statut = request.GET.get('statut_validation', '')
     teacher_id = request.GET.get('teacher', '')
@@ -2721,7 +2200,7 @@ def reporting_formateur(request, teacher_id=None):
     student_stats = []
     students_en_difficulte = []
     for s in students:
-        s_sessions = sessions_qs.filter(student=s)
+        s_sessions = sessions_qs.filter(students=s)
         avg_participation = s_sessions.aggregate(Avg('participation'))['participation__avg']
         avg_comprehension = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg']
         avg_engagement = s_sessions.aggregate(Avg('engagement'))['engagement__avg']
@@ -3256,66 +2735,6 @@ def admin_language_delete(request, lang_id):
     return render(request, 'dashboard/admin/home/confirm_delete.html', {
         'objet': lang, 'back_url': 'admin_languages_list', 'section_active': 'languages',
         'titre': f'Supprimer {lang.name}',
-    })
-
-
-# ═══════════════════════════════════════════════════════════════
-#  5. GESTION DES EMPLOIS DU TEMPS
-# ═══════════════════════════════════════════════════════════════
-
-@admin_required
-def admin_schedules_list(request):
-    teacher_id = request.GET.get('teacher', '')
-    schedules = Schedule.objects.select_related('language', 'student__user', 'teacher__user').order_by('day', 'start_time')
-    if teacher_id:
-        schedules = schedules.filter(teacher_id=teacher_id)
-    return render(request, 'dashboard/admin/home/schedules_list.html', {
-        'schedules': schedules, 'teachers': Teacher.objects.all(),
-        'teacher_filter': teacher_id, 'section_active': 'schedules',
-    })
-
-
-@admin_required
-def admin_schedule_create(request):
-    if request.method == 'POST':
-        form = ScheduleAdminForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Emploi du temps créé.")
-            return redirect('admin_schedules_list')
-    else:
-        form = ScheduleAdminForm()
-    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
-        'Ajouter un créneau', 'schedules', 'admin_schedules_list', form=form,
-    ))
-
-
-@admin_required
-def admin_schedule_edit(request, sched_id):
-    sched = get_object_or_404(Schedule, id=sched_id)
-    if request.method == 'POST':
-        form = ScheduleAdminForm(request.POST, instance=sched)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Créneau mis à jour.")
-            return redirect('admin_schedules_list')
-    else:
-        form = ScheduleAdminForm(instance=sched)
-    return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
-        'Modifier le créneau', 'schedules', 'admin_schedules_list', form=form,
-    ))
-
-
-@admin_required
-def admin_schedule_delete(request, sched_id):
-    sched = get_object_or_404(Schedule, id=sched_id)
-    if request.method == 'POST':
-        sched.delete()
-        messages.success(request, "Créneau supprimé.")
-        return redirect('admin_schedules_list')
-    return render(request, 'dashboard/admin/home/confirm_delete.html', {
-        'objet': sched, 'back_url': 'admin_schedules_list', 'section_active': 'schedules',
-        'titre': f'Supprimer le créneau {sched}',
     })
 
 
