@@ -1,8 +1,63 @@
-{% load compress %}
-{%compress js%}
-  <script src="/static/assets/vendor/jquery/dist/jquery.min.js"></script>
-  <script src="/static/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="/static/assets/vendor/js-cookie/js.cookie.js"></script>
-  <script src="/static/assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
-  <script src="/static/assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
-{%endcompress%}
+<script>
+// ── GSAP Modal ──────────────────────────────────────────────
+const modalBackdrop = document.getElementById('modal-backdrop');
+const modalPanel = document.getElementById('modal-panel');
+const modalContent = document.getElementById('modal-content');
+
+function openModal(html) {
+  modalContent.innerHTML = html;
+  modalBackdrop.style.display = 'flex';
+  gsap.fromTo(modalBackdrop, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+  gsap.fromTo(modalPanel, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' });
+  const first = modalPanel.querySelector('input, select, textarea');
+  if (first) first.focus();
+}
+
+function closeModal() {
+  gsap.to(modalPanel, { y: 40, opacity: 0, duration: 0.2, ease: 'power2.in' });
+  gsap.to(modalBackdrop, {
+    opacity: 0, duration: 0.2,
+    onComplete: () => { modalBackdrop.style.display = 'none'; modalContent.innerHTML = ''; }
+  });
+}
+
+if (modalBackdrop) {
+  modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Notifications polling ────────────────────────────────────
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+function pollNotifications() {
+  fetch('/api/notifications/unread/', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      const badge = document.getElementById('notif-badge');
+      if (badge) {
+        badge.textContent = data.count;
+        badge.classList.toggle('hidden', data.count === 0);
+      }
+    })
+    .catch(() => {});
+}
+
+pollNotifications();
+setInterval(pollNotifications, 30000);
+
+// Fermer le panneau notif au clic extérieur
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.add('hidden');
+  }
+});
+</script>

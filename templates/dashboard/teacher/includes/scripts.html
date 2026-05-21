@@ -1,51 +1,85 @@
-<!--   Core   -->
-<script src="/static/assets/vendor/jquery/dist/jquery.min.js"></script>
-<script src="/static/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/static/assets/vendor/js-cookie/js.cookie.js"></script>
-<script src="/static/assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
-<script src="/static/assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
-<!-- Optional JS -->
-<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
-<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
-<!-- Argon JS -->
-<script src="/static/assets/js/argon.js?v=1.2.0"></script>
-
-<!-- Custom Scripts -->
 <script>
-    // Initialisation de la barre de défilement personnalisée
-    $('.scrollbar-inner').scrollbar();
+// ── GSAP Modal ──────────────────────────────────────────────
+const modalBackdrop = document.getElementById('modal-backdrop');
+const modalPanel = document.getElementById('modal-panel');
+const modalContent = document.getElementById('modal-content');
 
-    // Gestion du menu mobile
-    $('.sidenav-toggler').on('click', function() {
-        $('body').toggleClass('nav-open');
+function openModal(html) {
+  modalContent.innerHTML = html;
+  modalBackdrop.style.display = 'flex';
+  gsap.fromTo(modalBackdrop, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+  gsap.fromTo(modalPanel, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' });
+  const first = modalPanel.querySelector('input, select, textarea');
+  if (first) first.focus();
+}
+
+function closeModal() {
+  gsap.to(modalPanel, { y: 40, opacity: 0, duration: 0.2, ease: 'power2.in' });
+  gsap.to(modalBackdrop, {
+    opacity: 0, duration: 0.2,
+    onComplete: () => { modalBackdrop.style.display = 'none'; modalContent.innerHTML = ''; }
+  });
+}
+
+function openSessionModal(sessionId) {
+  fetch(`/api/sessions/${sessionId}/`)
+    .then(r => r.json())
+    .then(data => {
+      openModal(buildSessionForm(data));
+    })
+    .catch(() => {
+      openModal('<p class="text-sm text-red-500 text-center py-4">Erreur lors du chargement de la séance.</p>');
     });
+}
 
-    // Fermeture du menu mobile lors du clic en dehors
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.navbar-collapse, .sidenav-toggler').length) {
-            $('body').removeClass('nav-open');
-        }
-    });
+function buildSessionForm(data) {
+  return `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-800">${data ? 'Modifier la séance' : 'Créer une séance'}</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <p class="text-sm text-gray-500">Utilisez le formulaire dédié pour cette action.</p>
+    ${data ? `<a href="/teacher/sessions/" class="mt-4 inline-block px-4 py-2 bg-[#033050] text-white rounded-md text-sm">Voir les séances</a>` : ''}
+  `;
+}
 
-    // Gestion des notifications
-    $('.dropdown-menu').on('click', function(e) {
-        e.stopPropagation();
-    });
+if (modalBackdrop) {
+  modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-    // Animation des cartes
-    $('.card').hover(
-        function() { $(this).addClass('shadow-lg'); },
-        function() { $(this).removeClass('shadow-lg'); }
-    );
+// ── Notifications polling ────────────────────────────────────
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+  } else {
+    panel.classList.add('hidden');
+  }
+}
 
-    // Gestion des formulaires
-    $('form').on('submit', function() {
-        $(this).find('button[type="submit"]').prop('disabled', true);
-    });
+function pollNotifications() {
+  fetch('/api/notifications/unread/', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      const badge = document.getElementById('notif-badge');
+      if (badge) {
+        badge.textContent = data.count;
+        badge.classList.toggle('hidden', data.count === 0);
+      }
+    })
+    .catch(() => {});
+}
 
-    // Initialisation des tooltips
-    $('[data-toggle="tooltip"]').tooltip();
+pollNotifications();
+setInterval(pollNotifications, 30000);
 
-    // Initialisation des popovers
-    $('[data-toggle="popover"]').popover();
-</script> 
+// Fermer le panneau notif au clic extérieur
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.classList.add('hidden');
+  }
+});
+</script>

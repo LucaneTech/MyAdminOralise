@@ -1,80 +1,45 @@
 {% load static %}
-{% load i18n %}
-{% load compress %}
-<!-- Topnav -->
-<nav class="navbar navbar-top navbar-expand navbar-dark bg-primary border-bottom">
-    <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <!-- Search form -->
-            
-            
-            <!-- Navbar links -->
-            <ul class="navbar-nav align-items-center ml-md-auto">
-                <li class="nav-item d-xl-none">
-                    <!-- Sidenav toggler -->
-                    <div class="pr-3 sidenav-toggler sidenav-toggler-dark" data-action="sidenav-pin" data-target="#sidenav-main">
-                        <div class="sidenav-toggler-inner">
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                        </div>
-                    </div>
-                </li>
-                
-                <li class="nav-item d-sm-none">
-                    <a class="nav-link" href="#" data-action="search-show" data-target="#navbar-search-main">
-                        <i class="ni ni-zoom-split-in"></i>
-                    </a>
-                </li>
-                
-                <!-- Dark Mode Toggle -->
-                <li class="nav-item">
-                    <a class="nav-link" href="#" id="darkModeToggle">
-                        <i class="fas fa-moon"></i>
-                    </a>
-                </li>
-                
-                
+{% load lucide %}
+<header class="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
+  <div class="flex items-center justify-between px-6 py-3">
+    <h1 class="text-base font-semibold text-gray-700">{{ page_title|default:"Dashboard" }}</h1>
 
-                
-            </ul>
-            
-            <!-- User -->
-            <ul class="navbar-nav align-items-center ml-auto ml-md-0">
-                <li class="nav-item dropdown">
-                    <a class="nav-link pr-0" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <div class="media align-items-center">
-                            <span class="">
-                                <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
-                 border-radius: 50%;
-                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062);
-                 ">
-                            </span>
-                            <div class="media-body ml-2 d-none d-lg-block">
-                                <span class="mb-0 text-sm font-weight-bold text-white">{{ request.user.first_name }} {{ request.user.last_name }}</span>
-                            </div>
-                        </div>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right">
-                        <div class="dropdown-header noti-title">
-                            <h6 class="text-overflow m-0">Bienvenue!</h6>
-                        </div>
-                        <a href="{% url 'profile_view' %}" class="dropdown-item">
-                            <i class="ni ni-single-02"></i>
-                            <span>Mon profil</span>
-                        </a>
-                        <a href="{% url 'settings_view' %}" class="dropdown-item">
-                            <i class="ni ni-settings-gear-65"></i>
-                            <span>Paramètres</span>
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="{% url 'account_logout' %}" class="dropdown-item">
-                            <i class="ni ni-user-run"></i>
-                            <span>Déconnexion</span>
-                        </a>
-                    </div>
-                </li>
-            </ul>
+    <div class="flex items-center gap-4">
+      <!-- Notifications -->
+      <div class="relative">
+        <button id="notif-btn" onclick="toggleNotifPanel()"
+                class="relative p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors">
+          {% lucide "bell" class="w-5 h-5" %}
+          <span id="notif-badge"
+                class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">
+            0
+          </span>
+        </button>
+        <!-- Panneau notifications -->
+        <div id="notif-panel"
+             class="hidden absolute right-0 mt-2 w-80 bg-white rounded-md shadow-xl border border-gray-100 overflow-hidden z-50">
+          <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-700">Notifications</span>
+            <a href="{% url 'notifications_mark_all_read' %}" class="text-xs text-[#033050] hover:underline">Tout marquer lu</a>
+          </div>
+          <div id="notif-list" class="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+            <p class="px-4 py-6 text-sm text-gray-400 text-center">Chargement…</p>
+          </div>
+          <a href="{% url 'notifications_view' %}"
+             class="block px-4 py-3 text-xs text-center text-[#033050] hover:bg-gray-50 font-medium">
+            Voir tout
+          </a>
         </div>
+      </div>
+
+      <!-- Profil -->
+      <a href="{% url 'profile_view' %}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <img src="{{ request.user.profile_picture_url }}" alt="avatar"
+             class="w-8 h-8 rounded-md object-cover ring-2 ring-[#033050]/30">
+        <span class="text-sm font-medium text-gray-700 hidden md:block">
+          {{ request.user.get_full_name|default:request.user.username }}
+        </span>
+      </a>
     </div>
-</nav> 
+  </div>
+</header>
