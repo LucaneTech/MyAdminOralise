@@ -188,46 +188,30 @@ class ResourceForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['language', 'date', 'start_time', 'end_time', 'status', 'students', 'meeting_link']
+        fields = ['students', 'language', 'date', 'start_time', 'end_time',
+                  'type_seance', 'status', 'meeting_link']
         widgets = {
-            'date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'placeholder': 'Sélectionnez une date'
-            }),
-            'start_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'form-control',
-                'placeholder': 'Heure de début'
-            }),
-            'end_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'form-control',
-                'placeholder': 'Heure de fin'
-            }),
-            'language': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'status': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'students': forms.SelectMultiple(attrs={
-                'class': 'form-control'
-            }),
-            'meeting_link': forms.URLInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'https://meet.google.com/...'
-            }),
+            'students': forms.SelectMultiple(attrs={'class': 'form-control', 'size': '5'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'type_seance': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'meeting_link': forms.URLInput(attrs={'class': 'form-control',
+                                                   'placeholder': 'https://meet.google.com/...'}),
         }
 
     def __init__(self, *args, **kwargs):
-        # Récupérer l'enseignant pour filtrer les étudiants
         self.teacher = kwargs.pop('teacher', None)
-        self.session_instance = kwargs.get('instance', None)
-        super(SessionForm, self).__init__(*args, **kwargs)
-
+        super().__init__(*args, **kwargs)
         if self.teacher:
             self.fields['language'].queryset = self.teacher.languages.all()
+            self.fields['students'].queryset = Student.objects.filter(
+                current_teachers=self.teacher
+            )
+        else:
+            self.fields['students'].queryset = Student.objects.all()
 
 
 class FichePedagogiqueForm(forms.ModelForm):
