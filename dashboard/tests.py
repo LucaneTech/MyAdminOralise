@@ -43,3 +43,37 @@ class StudentHoursTest(TestCase):
 
     def test_hours_remaining(self):
         self.assertAlmostEqual(self.student.hours_remaining, 9.0, places=1)
+
+
+class SessionNotificationSignalTest(TestCase):
+    def setUp(self):
+        self.tu = make_user('teacher3', 'teacher')
+        self.teacher = Teacher.objects.get(user=self.tu)
+        self.su = make_user('student3', 'student')
+        self.student = Student.objects.get(user=self.su)
+        lang = Language.objects.create(name='Français', code='fr')
+        self.session = Session.objects.create(
+            teacher=self.teacher, language=lang,
+            date='2026-05-01', start_time='10:00', end_time='11:00',
+            status='scheduled'
+        )
+        self.session.students.add(self.student)
+
+    def test_notification_created_on_completion(self):
+        self.session.status = 'completed'
+        self.session.save()
+        notifs = Notification.objects.filter(
+            user=self.student.user,
+            notification_type='evaluation_request'
+        )
+        self.assertEqual(notifs.count(), 1)
+
+    def test_no_duplicate_notification(self):
+        self.session.status = 'completed'
+        self.session.save()
+        self.session.save()  # second save — no duplicate
+        notifs = Notification.objects.filter(
+            user=self.student.user,
+            notification_type='evaluation_request'
+        )
+        self.assertEqual(notifs.count(), 1)
