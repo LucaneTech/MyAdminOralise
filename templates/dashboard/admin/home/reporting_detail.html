@@ -1,0 +1,187 @@
+{% extends "dashboard/admin/layouts/base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Reporting — {{ teacher.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="flex items-center gap-2 mb-5 text-sm">
+  <a href="{% url 'admin_reporting_list' %}"
+     class="flex items-center gap-1.5 text-gray-500 hover:text-[#033050] transition font-medium">
+    {% lucide "arrow-left" class="w-3.5 h-3.5" %}
+    Reporting
+  </a>
+  <span class="text-gray-300">/</span>
+  <span class="text-gray-800 font-semibold">{{ teacher.user.get_full_name }}</span>
+</div>
+
+<!-- Header formateur + filtre -->
+<div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5 mb-6 flex flex-wrap items-center justify-between gap-4">
+  <div class="flex items-center gap-4">
+    <img src="{{ teacher.user.profile_picture_url }}" alt="avatar"
+         class="w-12 h-12 rounded-sm object-cover border border-gray-100 shrink-0">
+    <div>
+      <h1 class="text-lg font-bold text-gray-900">{{ teacher.user.get_full_name }}</h1>
+      <p class="text-sm text-gray-400">{{ teacher.user.email }}</p>
+    </div>
+  </div>
+  <form method="get" class="flex items-end gap-3">
+    <div>
+      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">Du</label>
+      <input type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}"
+             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/20 focus:border-[#033050] transition">
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">au</label>
+      <input type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}"
+             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/20 focus:border-[#033050] transition">
+    </div>
+    <button type="submit"
+            class="px-4 py-2 bg-[#033050] text-white text-sm font-semibold rounded-sm hover:bg-[#033050]/90 transition">
+      Analyser
+    </button>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Séances réalisées</p>
+    <p class="text-3xl font-bold text-gray-900">{{ total_sessions }}</p>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Séances validées</p>
+    <p class="text-3xl font-bold text-emerald-600">{{ sessions_validees }}</p>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Étudiants suivis</p>
+    <p class="text-3xl font-bold text-gray-900">{{ student_stats|length }}</p>
+  </div>
+</div>
+
+<!-- Main grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+  <!-- Table étudiants -->
+  <div class="lg:col-span-2">
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Suivi individuel des étudiants</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
+              <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-16">Séances</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Participation</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Compréhension</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for stat in student_stats %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 font-semibold text-gray-800">{{ stat.student }}</td>
+              <td class="px-5 py-3 text-center text-gray-500 text-xs tabular-nums">{{ stat.nb_sessions }}</td>
+              <td class="px-5 py-3">
+                {% if stat.avg_participation %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all
+                      {% if stat.avg_participation >= 3 %}bg-emerald-500
+                      {% elif stat.avg_participation >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_participation 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_participation }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+              <td class="px-5 py-3">
+                {% if stat.avg_comprehension %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all
+                      {% if stat.avg_comprehension >= 3 %}bg-emerald-500
+                      {% elif stat.avg_comprehension >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_comprehension 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_comprehension }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+              <td class="px-5 py-3">
+                {% if stat.avg_engagement %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all
+                      {% if stat.avg_engagement >= 3 %}bg-emerald-500
+                      {% elif stat.avg_engagement >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_engagement 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_engagement }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-5 py-14 text-center text-sm text-gray-400">
+                Aucune donnée sur cette période.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side panels -->
+  <div class="space-y-4">
+    {% if students_en_difficulte %}
+    <div class="bg-white rounded-sm shadow-sm border border-red-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-red-100 bg-red-50 flex items-center gap-2">
+        {% lucide "alert-triangle" class="w-4 h-4 text-red-500 shrink-0" %}
+        <h2 class="text-sm font-semibold text-red-700">Étudiants en difficulté</h2>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        {% for s in students_en_difficulte %}
+        <li class="px-5 py-3 text-sm text-gray-700 flex items-center gap-2">
+          {% lucide "user" class="w-3.5 h-3.5 text-gray-300 shrink-0" %}
+          {{ s }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Points faibles récurrents</h2>
+      </div>
+      <div class="p-5 space-y-3">
+        {% for comp, count in comp_faibles.items %}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-semibold text-gray-600">{{ comp }}</span>
+            <span class="text-xs font-bold text-gray-400 tabular-nums">{{ count }}</span>
+          </div>
+          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            {% if total_sessions %}
+            <div class="h-full bg-[#033050]/50 rounded-full"
+                 style="width:{% widthratio count total_sessions 100 %}%"></div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
