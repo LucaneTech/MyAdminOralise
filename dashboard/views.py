@@ -3023,12 +3023,12 @@ def admin_session_scope_edit(request, session_id):
         if form.is_valid():
             apply_series_edit(session, scope, form.cleaned_data)
             messages.success(request, "Modification appliquée.")
-        return redirect('admin_sessions_list')
-    post_data = request.GET.copy()
-    form = SessionAdminForm(post_data, instance=session)
-    form.is_valid()
+            return redirect('admin_sessions_list')
+    else:
+        scope = None
+        form = SessionAdminForm(instance=session)
     return render(request, 'dashboard/admin/home/session_scope_choice.html', {
-        'session': session, 'form': form,
+        'session': session, 'form': form, 'scope': scope,
         'section_active': 'sessions', 'titre': 'Portée de la modification',
     })
 
