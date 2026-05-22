@@ -82,13 +82,6 @@ class Profile(models.Model):
         default=" ",
         verbose_name="à propos"
     )
-    theme_preference = models.CharField(
-        max_length=10, 
-        choices=[('light', 'Light'), ('dark', 'Dark')], 
-        default='light',
-        verbose_name="préférence de thème"
-    )
-
     class Meta:
         verbose_name = "profil"
         verbose_name_plural = "profils"
@@ -550,6 +543,16 @@ class Session(models.Model):
         verbose_name="feedback"
     )
 
+    # --- Série récurrente ---
+    series = models.ForeignKey(
+        'SessionSeries', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='occurrences',
+        verbose_name="série récurrente"
+    )
+    series_index = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="index dans la série"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="date de création"
@@ -587,6 +590,49 @@ class Session(models.Model):
 
     def __str__(self):
         return f"{self.teacher} - {self.language} - {self.date} ({self.get_status_display()})"
+
+
+# Séances récurrentes — série
+class SessionSeries(models.Model):
+    DAY_CHOICES = [
+        (0, 'Lundi'), (1, 'Mardi'), (2, 'Mercredi'),
+        (3, 'Jeudi'), (4, 'Vendredi'), (5, 'Samedi'), (6, 'Dimanche'),
+    ]
+    teacher = models.ForeignKey(
+        'Teacher', on_delete=models.CASCADE, related_name='session_series',
+        verbose_name="formateur"
+    )
+    language = models.ForeignKey(
+        'Language', on_delete=models.CASCADE, verbose_name="langue"
+    )
+    students = models.ManyToManyField(
+        'Student', blank=True, related_name='session_series',
+        verbose_name="étudiants"
+    )
+    day_of_week = models.IntegerField(choices=DAY_CHOICES, verbose_name="jour de la semaine")
+    start_time = models.TimeField(verbose_name="heure de début")
+    end_time = models.TimeField(verbose_name="heure de fin")
+    recurrence_start = models.DateField(verbose_name="début de la série")
+    recurrence_end = models.DateField(
+        null=True, blank=True, verbose_name="fin de la série (vide = 12 mois)"
+    )
+    type_seance = models.CharField(
+        max_length=20,
+        choices=[('individuelle', 'Individuelle'), ('groupe', 'Groupe')],
+        default='individuelle', verbose_name="type de séance"
+    )
+    meeting_link = models.URLField(blank=True, null=True, verbose_name="lien de réunion")
+    notes = models.TextField(blank=True, verbose_name="notes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "série de séances"
+        verbose_name_plural = "séries de séances"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.teacher} — {self.get_day_of_week_display()} {self.start_time}"
+
 
 # Paiements
 class Payment(models.Model):
