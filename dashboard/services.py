@@ -4,7 +4,6 @@ from dashboard.models import Session, SessionSeries
 
 def generate_series_occurrences(series: SessionSeries) -> list:
     """Génère toutes les occurrences Session d'une SessionSeries."""
-    from datetime import date as _date
     end = series.recurrence_end or (series.recurrence_start + timedelta(days=365))
     current = series.recurrence_start
     # Avancer jusqu'au bon jour de semaine (0=lundi, Python weekday() convention)
@@ -45,15 +44,16 @@ def apply_series_edit(session: Session, scope: str, cleaned_data: dict):
     propagatable = {k: v for k, v in cleaned_data.items() if k in _SCHEDULE_FIELDS}
     students = cleaned_data.get('students')
 
-    if scope == 'this':
-        for k, v in cleaned_data.items():
-            if k != 'students':
-                setattr(session, k, v)
+    if not session.series_id or scope == 'this':
+        # No series or explicit single-session scope
+        for k, v in propagatable.items():
+            setattr(session, k, v)
         session.save()
         if students is not None:
             session.students.set(students)
+        return
 
-    elif scope == 'this_and_future':
+    if scope == 'this_and_future':
         qs = Session.objects.filter(
             series=session.series,
             series_index__gte=session.series_index
@@ -81,6 +81,9 @@ def apply_series_delete(session: Session, scope: str):
     """
     scope: 'this' | 'this_and_future' | 'all'
     """
+    if not session.series_id:
+        session.delete()
+        return
     if scope == 'this':
         session.delete()
     elif scope == 'this_and_future':

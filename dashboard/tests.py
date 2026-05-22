@@ -189,3 +189,26 @@ class SessionSeriesServiceTest(TestCase):
         from dashboard.models import Session
         self.assertEqual(Session.objects.filter(series=series).count(), 0)
         self.assertFalse(SessionSeries.objects.filter(pk=series.pk).exists())
+
+    def test_apply_edit_this_and_future_does_not_change_date(self):
+        from datetime import time as _time
+        start = date(2026, 6, 1)
+        end = date(2026, 6, 22)
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        original_dates = [s.date for s in sessions]
+        # Edit start_time for index>=1
+        apply_series_edit(sessions[1], 'this_and_future', {
+            'start_time': _time(14, 0),
+            'end_time': _time(15, 0),
+        })
+        from dashboard.models import Session
+        # Dates unchanged
+        updated = list(Session.objects.filter(series=series).order_by('series_index'))
+        for i, s in enumerate(updated):
+            self.assertEqual(s.date, original_dates[i])
+        # Time updated for index>=1 only
+        self.assertEqual(updated[0].start_time, _time(10, 0))  # unchanged
+        self.assertEqual(updated[1].start_time, _time(14, 0))  # changed
+        self.assertEqual(updated[2].start_time, _time(14, 0))  # changed
+        self.assertEqual(updated[3].start_time, _time(14, 0))  # changed
