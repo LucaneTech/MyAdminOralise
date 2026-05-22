@@ -16,6 +16,6 @@ def teacher_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if not hasattr(request.user, 'teacher'):
             messages.error(request, "Accès réservé aux enseignants.")
-            return redirect('login')
+            return redirect('account_login')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
