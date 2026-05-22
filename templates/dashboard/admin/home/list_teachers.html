@@ -1,282 +1,133 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
 {% load static %}
 {% load lucide %}
-{% block title %} Dashboard {% endblock title %}
-
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}
-<style>
-    td .dropdown {
-    position: relative;
-}
-
-td .dropdown .dropdown-menu {
-    position: absolute;
-    transform: translateY(0) !important;
-    top: -30px !important;
-    margin-top: 0;
-}
-</style>
-{% endblock stylesheets %}
+{% block title %}Formateurs{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-6">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h5 class="h3 mb-0">Gestion des enseignants</h5>
-                            <p class="text-sm mb-0 text-muted">
-                                {{ total_teachers }} enseignants enregistrés
-                            </p>
-                        </div>
-                        <div class="col text-right">
-                            <button onclick="loadModal('{% url 'admin_teacher_create' %}')" class="flex items-center gap-2 px-4 py-2 bg-[#26b2bd] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">{% lucide "plus" class="w-4 h-4" %} Ajouter</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistiques globales -->
-    <div class="row mt-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Enseignants actifs</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_teachers }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
-                                <i class="ni ni-circle-08"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Étudiants assignés</h5>
-                            <span class="h2 font-weight-bold mb-0">
-                                {% with total=teachers|slice:":5" %}
-                                {{ total|length }}
-                                {% endwith %}
-                            </span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                <i class="ni ni-single-02"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des enseignants -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Liste des enseignants</h3>
-                        </div>
-                        <div class="col text-right">
-                            <div class="input-group input-group-sm" style="max-width: 300px;">
-                                <input type="text" class="form-control" placeholder="Rechercher un enseignant...">
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary" type="button">
-                                        <i class="ni ni-zoom-split-in"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Enseignant</th>
-                                <th scope="col">Langues</th>
-                                <th scope="col">Étudiants</th>
-                                <th scope="col">Séances</th>
-                                <th scope="col">Statut</th>
-                                <th scope="col">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for teacher in teachers %}
-                            <tr>
-                                <th scope="row">
-                                    <div class="media align-items-center">
-                                        <a href="#" class="avatar rounded-circle mr-3">
-                                            <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
-                 border-radius: 50%;
-                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
-                                        </a>
-                                        <div class="media-body">
-                                            <span class="name mb-0 text-sm">{{ teacher.user.full_name }}</span>
-                                            <br>
-                                            <small class="text-muted">{{ teacher.user.email }}</small>
-                                        </div>
-                                    </div>
-                                </th>
-                                <td>
-                                    <div class="d-flex flex-wrap">
-    {% if teacher.languages.all|length == 0 %}
-        <span class="badge badge-secondary mr-1 mb-1">Aucune langue disponible</span>
-    {% else %}
-        {% for language in teacher.languages.all|slice:":3" %}
-            <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
-        {% endfor %}
-        
-        {% if teacher.languages.count > 3 %}
-            <span class="badge badge-secondary">+{{ teacher.languages.count|add:"-3" }}</span>
-        {% endif %}
-    {% endif %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Gestion des formateurs</h1>
+    <p class="text-sm text-gray-500 mt-0.5">{{ total_teachers }} formateur{{ total_teachers|pluralize }} enregistré{{ total_teachers|pluralize }}</p>
+  </div>
+  <button onclick="loadModal('{% url 'admin_teacher_create' %}')"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-sm hover:bg-amber-500 transition">
+    {% lucide "user-plus" class="w-3.5 h-3.5" %} Ajouter
+  </button>
 </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="mr-2">{{ teacher.total_students_count }}</span>
-                                        <div>
-                                            <i class="ni ni-single-02 text-primary"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column">
-                                        <small class="text-success">
-                                            <i class="ni ni-check-bold"></i> {{ teacher.completed_sessions_count }} terminées
-                                        </small>
-                                        <small class="text-warning">
-                                            <i class="ni ni-calendar-grid-58"></i> {{ teacher.active_sessions_count }} à venir
-                                        </small>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if teacher.statut == 'disponible' %}
-                                    <span class="badge badge-success">
-                                        <i class="ni ni-check-bold"></i> Disponible
-                                    </span>
-                                    {% elif  teacher.statut == 'conge'%}
-                                    <span class="badge badge-danger">
-                                        <i class="ni ni-fat-remove"></i> En congé
-                                    </span>
 
-                                    {% elif  teacher.statut == 'plein'%}
-                                    <span class="badge badge-primary">
-                                        <i class="ni ni-fat-remove"></i> Plein
-                                    </span>
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center">{% lucide "users" class="w-5 h-5 text-amber-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_teachers }}</p><p class="text-xs text-gray-500">Total formateurs</p></div>
+  </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-emerald-100 flex items-center justify-center">{% lucide "check-circle" class="w-5 h-5 text-emerald-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ teachers|length }}</p><p class="text-xs text-gray-500">Sur cette page</p></div>
+  </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-sky-100 flex items-center justify-center">{% lucide "calendar" class="w-5 h-5 text-sky-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">—</p><p class="text-xs text-gray-500">Séances ce mois</p></div>
+  </div>
+</div>
 
-                                    {% elif  teacher.statut == 'inactif'%}
-                                    <span class="badge badge-danger">
-                                        <i class="ni ni-fat-remove"></i> Inactif
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-neutral dropdown-toggle" type="button" 
-                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                            Actions
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="{% url 'teacher_detail' teacher.id %}">
-                                                <i class="ni ni-zoom-split-in text-info"></i> Voir détails
-                                            </a>
-                                            <a class="dropdown-item" href="{% url 'admin_teacher_edit' teacher.id %}">
-                                                <i class="fas fa-edit text-warning"></i> Modifier
-                                            </a>
-                                            <a class="dropdown-item" href="{% url 'admin_reporting_formateur' teacher.id %}">
-                                                <i class="fas fa-chart-bar text-info"></i> Reporting
-                                            </a>
-                                            <a class="dropdown-item" href="mailto:{{ teacher.user.email }}">
-                                                <i class="ni ni-send text-primary"></i> Contacter
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item text-danger" href="{% url 'admin_teacher_delete' teacher.id %}">
-                                                <i class="fas fa-trash text-danger"></i> Supprimer
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="ni ni-single-02 display-4"></i>
-                                        <p class="mt-2">Aucun enseignant enregistré</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer py-4">
-                    <nav aria-label="Page navigation">
-                        {% if page_obj.has_other_pages %}
-                        <ul class="pagination justify-content-end mb-0">
-                            {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="ni ni-bold-left"></i>
-                                </a>
-                            </li>
-                            {% endif %}
-                            
-                            {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-                            
-                            {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="ni ni-bold-right"></i>
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                        {% endif %}
-                    </nav>
-                </div>
+<!-- Table -->
+<div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Formateur</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Langues</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Étudiants</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Séances</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for teacher in teachers %}
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-sm bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">
+                {{ teacher.user.first_name|first|upper }}{{ teacher.user.last_name|first|upper }}
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">{{ teacher.user.get_full_name }}</p>
+                <p class="text-xs text-gray-400">{{ teacher.user.email }}</p>
+              </div>
             </div>
-        </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap gap-1">
+              {% for lang in teacher.languages.all|slice:":2" %}
+              <span class="text-xs font-medium bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-sm border border-amber-200">{{ lang.name }}</span>
+              {% empty %}
+              <span class="text-xs text-gray-400">—</span>
+              {% endfor %}
+              {% if teacher.languages.count > 2 %}<span class="text-xs text-gray-400">+{{ teacher.languages.count|add:"-2" }}</span>{% endif %}
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-sm font-semibold text-gray-900">{{ teacher.total_students_count }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <p class="text-xs text-emerald-700 font-medium">{{ teacher.completed_sessions_count }} terminées</p>
+            <p class="text-xs text-sky-700">{{ teacher.active_sessions_count }} à venir</p>
+          </td>
+          <td class="px-4 py-3">
+            {% if teacher.statut == 'disponible' %}<span class="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-sm">Disponible</span>
+            {% elif teacher.statut == 'conge' %}<span class="text-xs font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-sm">En congé</span>
+            {% elif teacher.statut == 'plein' %}<span class="text-xs font-semibold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-sm">Complet</span>
+            {% elif teacher.statut == 'inactif' %}<span class="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm">Inactif</span>
+            {% else %}<span class="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm">{{ teacher.statut }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <a href="{% url 'teacher_detail' teacher.id %}"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-sky-100 text-sky-700 text-xs font-semibold rounded-sm hover:bg-sky-200 transition">
+                {% lucide "eye" class="w-3.5 h-3.5" %}
+              </a>
+              <button onclick="loadModal('{% url 'admin_teacher_edit' teacher.id %}')"
+                      class="inline-flex items-center px-2.5 py-1.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-sm hover:bg-amber-200 transition">
+                {% lucide "pencil" class="w-3.5 h-3.5" %}
+              </button>
+              <a href="{% url 'admin_reporting_detail' teacher.id %}"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-sm hover:bg-violet-200 transition">
+                {% lucide "bar-chart-2" class="w-3.5 h-3.5" %}
+              </a>
+              <a href="{% url 'admin_teacher_delete' teacher.id %}"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-red-100 text-red-700 text-xs font-semibold rounded-sm hover:bg-red-200 transition"
+                 onclick="return confirm('Supprimer ce formateur ?')">
+                {% lucide "trash-2" class="w-3.5 h-3.5" %}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-12 text-center">
+            {% lucide "users" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
+            <p class="text-sm text-gray-400">Aucun formateur enregistré</p>
+            <button onclick="loadModal('{% url 'admin_teacher_create' %}')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-sm hover:bg-amber-500 transition">
+              {% lucide "plus" class="w-3.5 h-3.5" %} Ajouter le premier formateur
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+    <p class="text-xs text-gray-500">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</p>
+    <div class="flex gap-1">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">‹</a>{% endif %}
+      <span class="px-2.5 py-1.5 text-xs bg-amber-600 text-white rounded-sm">{{ page_obj.number }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">›</a>{% endif %}
     </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block javascripts %}
-<script>
-
-
-// jQuery fonctionne directement sur une collection
-$('.beta').click(() =>{
-    alert('Fonction en cours de développement!!!')
-})
-</script>
-
-{% endblock javascripts %}

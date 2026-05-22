@@ -1,82 +1,124 @@
 {% load static %}
 {% load lucide %}
-<aside class="fixed top-0 left-0 h-screen w-64 bg-[#26b2bd] text-white flex flex-col z-40 shadow-xl">
+{% load tailwind_tags %}
+<aside class="fixed top-0 left-0 h-screen w-64 bg-[#056f77] text-white flex flex-col z-100 shadow-2xl">
   <!-- Logo -->
-  <div class="flex items-center gap-3 px-6 py-5 border-b border-white/20">
-    <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-8 h-8">
-    <span class="text-lg font-semibold tracking-wide">Oralise</span>
+  <div class="flex items-start pl-5 py-5 border-b border-white/10">
+      <img src="{% static 'assets/img/brand/white.png' %}" alt="Oralise" class="object-cover w-32 h-auto">
   </div>
 
   <!-- Nav -->
-  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
     <a href="{% url 'admin_dashboard' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-white/20{% endif %}">
-      {% lucide "layout-dashboard" class="w-4 h-4 shrink-0" %} Tableau de bord
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-emerald-600/30 border-l-2 border-emerald-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-emerald-500/20 flex items-center justify-center shrink-0">
+        {% lucide "layout-dashboard" class="w-3.5 h-3.5 text-emerald-400" %}
+      </span>
+      <span class="text-white/90">Tableau de bord</span>
     </a>
     <a href="{% url 'admin_sessions_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'seances' in request.path %}bg-white/20{% endif %}">
-      {% lucide "calendar" class="w-4 h-4 shrink-0" %} Séances
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'seances' in request.path %}bg-sky-600/20 border-l-2 border-sky-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-sky-500/20 flex items-center justify-center shrink-0">
+        {% lucide "calendar" class="w-3.5 h-3.5 text-sky-400" %}
+      </span>
+      <span class="text-white/90">Séances</span>
     </a>
     <a href="{% url 'admin_students' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'students' in request.path %}bg-white/20{% endif %}">
-      {% lucide "graduation-cap" class="w-4 h-4 shrink-0" %} Étudiants
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'students' in request.path %}bg-violet-600/20 border-l-2 border-violet-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-violet-500/20 flex items-center justify-center shrink-0">
+        {% lucide "graduation-cap" class="w-3.5 h-3.5 text-violet-400" %}
+      </span>
+      <span class="text-white/90">Étudiants</span>
     </a>
     <a href="{% url 'admin_teachers' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'teachers' in request.path %}bg-white/20{% endif %}">
-      {% lucide "users" class="w-4 h-4 shrink-0" %} Formateurs
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'teachers' in request.path %}bg-amber-600/20 border-l-2 border-amber-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-amber-500/20 flex items-center justify-center shrink-0">
+        {% lucide "users" class="w-3.5 h-3.5 text-amber-400" %}
+      </span>
+      <span class="text-white/90">Formateurs</span>
     </a>
     <a href="{% url 'admin_payments_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'paiements' in request.path %}bg-white/20{% endif %}">
-      {% lucide "credit-card" class="w-4 h-4 shrink-0" %} Paiements
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'paiements' in request.path and 'formateurs' not in request.path %}bg-green-600/20 border-l-2 border-green-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-green-500/20 flex items-center justify-center shrink-0">
+        {% lucide "credit-card" class="w-3.5 h-3.5 text-green-400" %}
+      </span>
+      <span class="text-white/90">Paiements</span>
     </a>
     <a href="{% url 'admin_certificates_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'certificats' in request.path %}bg-white/20{% endif %}">
-      {% lucide "award" class="w-4 h-4 shrink-0" %} Certificats
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'certificats' in request.path %}bg-yellow-600/20 border-l-2 border-yellow-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-yellow-500/20 flex items-center justify-center shrink-0">
+        {% lucide "award" class="w-3.5 h-3.5 text-yellow-400" %}
+      </span>
+      <span class="text-white/90">Certificats</span>
     </a>
     <a href="{% url 'admin_evaluations_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'evaluations' in request.path %}bg-white/20{% endif %}">
-      {% lucide "bar-chart-2" class="w-4 h-4 shrink-0" %} Évaluations
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'evaluations' in request.path %}bg-pink-600/20 border-l-2 border-pink-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-pink-500/20 flex items-center justify-center shrink-0">
+        {% lucide "bar-chart-2" class="w-3.5 h-3.5 text-pink-400" %}
+      </span>
+      <span class="text-white/90">Évaluations</span>
     </a>
     <a href="{% url 'admin_languages_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'langues' in request.path %}bg-white/20{% endif %}">
-      {% lucide "globe" class="w-4 h-4 shrink-0" %} Langues
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'langues' in request.path %}bg-cyan-600/20 border-l-2 border-cyan-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-cyan-500/20 flex items-center justify-center shrink-0">
+        {% lucide "globe" class="w-3.5 h-3.5 text-cyan-400" %}
+      </span>
+      <span class="text-white/90">Langues</span>
     </a>
     <a href="{% url 'admin_resources_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'ressources' in request.path %}bg-white/20{% endif %}">
-      {% lucide "folder-open" class="w-4 h-4 shrink-0" %} Ressources
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'ressources' in request.path %}bg-orange-600/20 border-l-2 border-orange-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-orange-500/20 flex items-center justify-center shrink-0">
+        {% lucide "folder-open" class="w-3.5 h-3.5 text-orange-400" %}
+      </span>
+      <span class="text-white/90">Ressources</span>
     </a>
     <a href="{% url 'admin_requests_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'demandes' in request.path %}bg-white/20{% endif %}">
-      {% lucide "mail" class="w-4 h-4 shrink-0" %} Demandes
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'demandes' in request.path %}bg-red-600/20 border-l-2 border-red-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-red-500/20 flex items-center justify-center shrink-0">
+        {% lucide "mail" class="w-3.5 h-3.5 text-red-400" %}
+      </span>
+      <span class="text-white/90">Demandes</span>
     </a>
     <a href="{% url 'admin_users_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'utilisateurs' in request.path %}bg-white/20{% endif %}">
-      {% lucide "user-cog" class="w-4 h-4 shrink-0" %} Utilisateurs
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'utilisateurs' in request.path %}bg-slate-600/30 border-l-2 border-slate-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-slate-500/20 flex items-center justify-center shrink-0">
+        {% lucide "user-cog" class="w-3.5 h-3.5 text-slate-300" %}
+      </span>
+      <span class="text-white/90">Utilisateurs</span>
     </a>
     <a href="{% url 'paiements_formateurs_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'paiements-formateurs' in request.path %}bg-white/20{% endif %}">
-      {% lucide "banknote" class="w-4 h-4 shrink-0" %} Paiements formateurs
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'paiements-formateurs' in request.path %}bg-teal-600/20 border-l-2 border-teal-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-teal-500/20 flex items-center justify-center shrink-0">
+        {% lucide "banknote" class="w-3.5 h-3.5 text-teal-400" %}
+      </span>
+      <span class="text-white/90">Paiem. formateurs</span>
     </a>
     <a href="{% url 'admin_assignments_list' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'devoirs' in request.path %}bg-white/20{% endif %}">
-      {% lucide "book-open" class="w-4 h-4 shrink-0" %} Devoirs
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'devoirs' in request.path %}bg-indigo-600/20 border-l-2 border-indigo-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-indigo-500/20 flex items-center justify-center shrink-0">
+        {% lucide "book-open" class="w-3.5 h-3.5 text-indigo-400" %}
+      </span>
+      <span class="text-white/90">Devoirs</span>
     </a>
-    <a href="{% url 'reporting_formateur' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-white/15 {% if 'reporting' in request.path %}bg-white/20{% endif %}">
-      {% lucide "trending-up" class="w-4 h-4 shrink-0" %} Reporting
+    <a href="{% url 'admin_reporting_list' %}"
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'reporting' in request.path %}bg-lime-600/20 border-l-2 border-lime-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-lime-500/20 flex items-center justify-center shrink-0">
+        {% lucide "trending-up" class="w-3.5 h-3.5 text-lime-400" %}
+      </span>
+      <span class="text-white/90">Reporting</span>
     </a>
   </nav>
 
   <!-- User -->
-  <div class="border-t border-white/20 px-4 py-4">
+  <div class="border-t border-white/10 px-4 py-4">
     <div class="flex items-center gap-3">
-      <img src="{{ request.user.profile_picture_url }}" alt="avatar" class="w-8 h-8 rounded-md object-cover">
+      <img src="{{ request.user.profile_picture_url }}" alt="avatar" class="w-8 h-8 rounded-sm object-cover ring-1 ring-white/20">
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
-        <p class="text-xs text-white/60 truncate">Admin</p>
+        <p class="text-sm font-semibold truncate text-white">{{ request.user.get_full_name|default:request.user.username }}</p>
+        <p class="text-xs text-white/40 truncate">Administrateur</p>
       </div>
-      <a href="{% url 'account_logout' %}" title="Déconnexion">
-        {% lucide "log-out" class="w-4 h-4 text-white/70 hover:text-white" %}
+      <a href="{% url 'account_logout' %}" title="Déconnexion" class="w-7 h-7 rounded-sm bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition">
+        {% lucide "log-out" class="w-3.5 h-3.5 text-white/50 hover:text-red-400" %}
       </a>
     </div>
   </div>
