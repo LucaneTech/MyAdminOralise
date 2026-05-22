@@ -1,75 +1,69 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
 {% block title %}{{ titre }}{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">{{ titre }}</h6>
-        </div>
-        <div class="col text-right">
-          <a href="{% url 'admin_students' %}" class="btn btn-sm btn-light">
-            <i class="fas fa-arrow-left mr-1"></i>Retour
-          </a>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center gap-3 mb-6">
+  <a href="{% url 'admin_students' %}" aria-label="Retour aux étudiants" class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-sm hover:bg-gray-50 transition text-gray-500">
+    {% lucide "arrow-left" class="w-4 h-4" %}
+  </a>
+  <div>
+    <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Étudiants → {{ titre }}</p>
+    <h1 class="text-lg font-bold text-gray-900 mt-0.5">{{ titre }}</h1>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  {% if messages %}{% for msg in messages %}
-  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
-  {% endfor %}{% endif %}
+{% if messages %}{% for msg in messages %}
+<div class="mb-4 px-4 py-3 rounded-sm text-sm font-medium
+  {% if msg.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+  {% elif msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+  {% else %}bg-sky-50 text-sky-700 border border-sky-200{% endif %}">{{ msg }}</div>
+{% endfor %}{% endif %}
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="row">
-      <!-- Compte utilisateur -->
-      <div class="col-lg-6">
-        <div class="card shadow mb-4">
-          <div class="card-header"><h5 class="mb-0"><i class="fas fa-user mr-2"></i>Compte utilisateur</h5></div>
-          <div class="card-body">
-            {% for field in user_form %}
-            <div class="form-group">
-              <label class="form-control-label" for="{{ field.id_for_label }}">
-                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
-              </label>
-              {{ field }}
-              {% if field.errors %}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}{% endif %}
-            </div>
-            {% endfor %}
-          </div>
-        </div>
+<form method="post">
+  {% csrf_token %}
+  <div class="space-y-4">
+
+    {% if user_form %}
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+        {% lucide "user" class="w-4 h-4 text-violet-500" %}
+        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Compte utilisateur</span>
       </div>
-
-      <!-- Profil étudiant -->
-      <div class="col-lg-6">
-        <div class="card shadow mb-4">
-          <div class="card-header"><h5 class="mb-0"><i class="ni ni-hat-3 mr-2"></i>Profil étudiant</h5></div>
-          <div class="card-body">
-            {% for field in student_form %}
-            <div class="form-group">
-              <label class="form-control-label" for="{{ field.id_for_label }}">
-                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
-              </label>
-              {{ field }}
-              {% if field.errors %}{% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}{% endif %}
-            </div>
-            {% endfor %}
-          </div>
+      <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in user_form %}
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+          {{ field }}
+          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
         </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+        {% lucide "graduation-cap" class="w-4 h-4 text-violet-500" %}
+        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Profil étudiant</span>
+      </div>
+      <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in student_form %}
+        <div {% if field.html_name in 'current_teachers,objectif_formation' %}class="md:col-span-2"{% endif %}>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+          {{ field }}
+          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        {% endfor %}
       </div>
     </div>
 
-    <div class="text-right mb-5">
-      <a href="{% url 'admin_students' %}" class="btn btn-secondary mr-2">Annuler</a>
-      <button type="submit" class="btn" style="background-color:#147a81;color:white;">
-        <i class="fas fa-save mr-1"></i>Enregistrer
-      </button>
-    </div>
-  </form>
-</div>
+  </div>
+  <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 py-4 flex justify-between items-center mt-6">
+    <a href="{% url 'admin_students' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">Annuler</a>
+    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#056f77] text-white text-sm font-semibold rounded-sm hover:bg-[#045f66] transition">
+      {% lucide "save" class="w-4 h-4" %} Enregistrer
+    </button>
+  </div>
+</form>
 {% endblock %}
