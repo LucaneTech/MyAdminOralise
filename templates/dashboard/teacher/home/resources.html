@@ -1,165 +1,102 @@
 {% extends "dashboard/teacher/layouts/base.html" %}
 {% load static %}
+{% load lucide %}
 
 {% block title %}Ressources pédagogiques{% endblock %}
 
-{% block stylesheets %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .resource-card {
-        transition: transform 0.2s;
-        border: 1px solid #e9ecef;
-    }
-    .resource-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .modal-lg {
-        max-width: 800px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="header bg-primary pb-6">
-    <div class="container-fluid">
-        <div class="header-body">
-            <div class="row align-items-center py-4">
-                <div class="col-lg-6 col-7">
-                    <h1 class="text-white">Ressources pédagogiques</h1>
-                </div>
-                <div class="col-lg-6 col-5 text-right">
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#createResourceModal">
-                        <i class="fas fa-plus mr-2"></i>Nouvelle ressource
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Ressources pédagogiques</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Gérez vos ressources</p>
+  </div>
+  <a href="{% url 'resource_create' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#26b2bd] text-white text-xs font-semibold rounded-sm hover:opacity-90 transition">
+    {% lucide "plus" class="w-3.5 h-3.5" %} Ajouter
+  </a>
 </div>
 
-<div class="container-fluid mt--6">
-    <!-- Liste des ressources -->
-    <div class="row">
-        {% if resources %}
-            {% for resource in resources %}
-            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                <div class="card resource-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge badge-{% if resource.resource_type == 'document' %}primary{% elif resource.resource_type == 'video' %}danger{% else %}success{% endif %}">
-                                {{ resource.get_resource_type_display }}
-                            </span>
-                            {% if not resource.is_visible %}
-                                <span class="badge badge-warning">Masquée</span>
-                            {% endif %}
-
-                            {% if resource.languages.exists %}
-    {% for lang in resource.languages.all %}
-        {% with lang.name|lower as lname %}
-            {% if lname == "français" or lname == "francais" %}
-                <span class="badge badge-info">{{ lang.name }}</span>
-            {% elif lname == "anglais" %}
-                <span class="badge badge-primary">{{ lang.name }}</span>
-            {% endif %}
-        {% endwith %}
-    {% endfor %}
-{% endif %}
-
-
-                            
-                        </div>
-                        
-                        <h5 class="card-title mb-2">{{ resource.title|truncatechars:40 }}</h5>
-                        <p class="card-text small text-muted mb-3">{{ resource.description|truncatewords:15 }}</p>
-                        
-                        <div class="small text-muted mb-3">
-                            <i class="fas fa-calendar mr-1"></i>{{ resource.created_at|date:"d/m/Y" }}
-                            {% if resource.valid_until %}
-                                <br><i class="fas fa-clock mr-1"></i>Expire le {{ resource.valid_until|date:"d/m/Y" }}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="btn-group btn-group-sm w-100" role="group">
-                            {% if resource.file %}
-                            <a href="{{ resource.file.url }}" class="btn btn-primary" download title="Télécharger">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            {% endif %}
-                            {% if resource.url %}
-                            <a href="{{ resource.url }}" class="btn btn-info" target="_blank" title="Ouvrir le lien">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
-                            {% endif %}
-                            <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#editResourceModal{{ resource.id }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteResourceModal{{ resource.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    {% if resource.students.exists %}
-                    <div class="card-footer bg-success py-2 small">
-                        
-                        {% for student in resource.students.all|slice:":3" %}
-                           <div  class="text-white ">
-                            <span><i class="fas fa-user-graduate mr-1"></i> {{ student.user.first_name }}{% if not forloop.last %}, {% endif %}</span>
-                           
-                           </div>
-                        {% endfor %}
-                        
-                        {% if resource.students.count > 3 %}...{% endif %}
-                    </div>
-                    {% endif %}
-
-                    
-                </div>
-            </div>
-            
-            <!-- Modals pour chaque ressource (édition et suppression) -->
-            {% include 'dashboard/teacher/includes/resource_edit_modal.html' with resource=resource %}
-            
-            {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">Aucune ressource</h4>
-                        <p class="text-muted mb-4">Commencez par créer votre première ressource.</p>
-                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#createResourceModal">
-                            <i class="fas fa-plus mr-2"></i>Créer une ressource
-                        </button>
-                    </div>
-                </div>
-            </div>
+{% if resources %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+  {% for resource in resources %}
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    <div class="p-4 flex-1">
+      <div class="flex flex-wrap items-start gap-1 mb-3">
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+          {% if resource.resource_type == 'document' %}bg-[#033050]/10 text-[#033050]
+          {% elif resource.resource_type == 'video' %}bg-red-100 text-red-700
+          {% else %}bg-green-100 text-green-700{% endif %}">
+          {{ resource.get_resource_type_display }}
+        </span>
+        {% if not resource.is_visible %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">Masquée</span>
         {% endif %}
+        {% if resource.languages.exists %}
+          {% for lang in resource.languages.all %}
+          {% with lang.name|lower as lname %}
+          {% if lname == "français" or lname == "francais" %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">{{ lang.name }}</span>
+          {% elif lname == "anglais" %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#033050]/10 text-[#033050]">{{ lang.name }}</span>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <h3 class="text-sm font-semibold text-gray-800 mb-1">{{ resource.title|truncatechars:40 }}</h3>
+      <p class="text-xs text-gray-500 mb-3">{{ resource.description|truncatewords:15 }}</p>
+
+      <div class="text-xs text-gray-400 mb-4">
+        {{ resource.created_at|date:"d/m/Y" }}
+        {% if resource.valid_until %}
+        <br>Expire le {{ resource.valid_until|date:"d/m/Y" }}
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-1 flex-wrap">
+        {% if resource.file %}
+        <a href="{{ resource.file.url }}" download class="inline-flex items-center gap-1.5 px-2 py-1 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+          Télécharger
+        </a>
+        {% endif %}
+        {% if resource.url %}
+        <a href="{{ resource.url }}" target="_blank" class="inline-flex items-center gap-1.5 px-2 py-1 bg-sky-500 text-white text-xs font-semibold rounded-md hover:bg-sky-600 transition">
+          Ouvrir
+        </a>
+        {% endif %}
+        <a href="{% url 'resource_edit' resource.id %}" class="inline-flex items-center justify-center w-7 h-7 border border-gray-200 rounded-sm hover:bg-gray-50 transition text-gray-500">
+          {% lucide "pencil" class="w-3.5 h-3.5" %}
+        </a>
+        <form method="post" action="{% url 'resource_delete' resource.id %}" class="inline">
+          {% csrf_token %}
+          <button type="submit"
+                  onclick="return confirm('Supprimer cette ressource ?')"
+                  class="inline-flex items-center justify-center w-7 h-7 border border-red-200 rounded-sm hover:bg-red-50 transition text-red-500">
+            {% lucide "trash-2" class="w-3.5 h-3.5" %}
+          </button>
+        </form>
+      </div>
     </div>
+
+    {% if resource.students.exists %}
+    <div class="px-4 py-2 bg-green-50 border-t border-green-100 text-xs text-green-700">
+      {% for student in resource.students.all|slice:":3" %}
+      {{ student.user.first_name }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+      {% if resource.students.count > 3 %}…{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
 </div>
 
-<!-- Modal de création (un seul pour toutes les ressources) -->
-{% include 'dashboard/teacher/includes/resource_create_modal.html' with form=create_form %}
-
-{% endblock %}
-
-{% block javascripts %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-$(document).ready(function() {
-    // Initialisation de Select2 pour tous les champs multiples
-    $('.select2-multiple').select2({
-        theme: 'bootstrap4',
-        width: '100%',
-        dropdownParent: $('.modal')
-    });
-    
-    // Mise à jour du label du fichier
-    $('input[type="file"]').on('change', function() {
-        var fileName = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label').html(fileName || 'Choisir un fichier...');
-    });
-});
-</script>
+{% else %}
+<div class="bg-white rounded-md border border-gray-100 shadow-sm py-16 text-center">
+  <p class="text-sm font-medium text-gray-500">Aucune ressource</p>
+  <p class="text-xs text-gray-400 mt-1">Commencez par créer votre première ressource.</p>
+  <a href="{% url 'resource_create' %}" class="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 bg-[#26b2bd] text-white text-xs font-semibold rounded-sm hover:opacity-90 transition">
+    {% lucide "plus" class="w-3.5 h-3.5" %} Créer une ressource
+  </a>
+</div>
+{% endif %}
 {% endblock %}

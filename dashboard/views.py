@@ -487,59 +487,41 @@ def teacher_resources_dashboard(request):
 
 @login_required
 def resource_create(request):
-    """Traitement de la création d'une ressource"""
-    if request.method != 'POST':
-        return redirect('teacher_resources_dashboard')
-    
-    user = request.user
-    if user.role != "teacher":
-        messages.error(request, "Accès non autorisé")
+    if request.user.role != 'teacher':
         return redirect('dashboard')
-
-    
-    # Création du formulaire avec l'enseignant
-    form = ResourceForm(request.POST, request.FILES)
-    
-    if form.is_valid():
-        # CORRECTION IMPORTANTE : sauvegarder avec commit=False pour ajouter le teacher
-        resource = form.save(commit=False)
-        resource.save()
-        
-        # Sauvegarder les relations ManyToMany (students, languages)
-        form.save_m2m()
-        
-        messages.success(request, "Ressource créée avec succès!")
+    teacher = get_object_or_404(Teacher, user=request.user)
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES, teacher=teacher)
+        if form.is_valid():
+            resource = form.save(commit=False)
+            resource.save()
+            form.save_m2m()
+            messages.success(request, "Ressource créée.")
+            return redirect('teacher_resources_dashboard')
     else:
-        # Afficher les erreurs du formulaire pour le debug
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f"Erreur - {field}: {error}")
-    
-    return redirect('teacher_resources_dashboard')
+        form = ResourceForm(teacher=teacher)
+    return render(request, 'dashboard/teacher/home/resource_form.html', {
+        'form': form, 'titre': 'Nouvelle ressource',
+    })
 
 
 @login_required
 def resource_edit(request, resource_id):
-    """Traitement de la modification d'une ressource"""
-    if request.method != 'POST':
-        return redirect('teacher_resources_dashboard')
-    
-    user = request.user
-    if user.role != "teacher":
-        messages.error(request, "Accès non autorisé")
+    if request.user.role != 'teacher':
         return redirect('dashboard')
-    
-    teacher = get_object_or_404(Teacher, user=user)
-    resource = get_object_or_404(Resource, id=resource_id, teachers=teacher)
-    
-    form = ResourceForm(request.POST, request.FILES, instance=resource, teacher=teacher)
-    if form.is_valid():
-        form.save()
-        messages.success(request, "Ressource modifiée avec succès!")
+    resource = get_object_or_404(Resource, id=resource_id)
+    teacher = get_object_or_404(Teacher, user=request.user)
+    if request.method == 'POST':
+        form = ResourceForm(request.POST, request.FILES, instance=resource)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ressource mise à jour.")
+            return redirect('teacher_resources_dashboard')
     else:
-        messages.error(request, "Erreur lors de la modification.")
-    
-    return redirect('teacher_resources_dashboard')
+        form = ResourceForm(instance=resource, teacher=teacher)
+    return render(request, 'dashboard/teacher/home/resource_form.html', {
+        'form': form, 'resource': resource, 'titre': f'Modifier — {resource.title}',
+    })
 
 
 @login_required

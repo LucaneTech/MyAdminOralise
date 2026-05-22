@@ -1,164 +1,78 @@
 {% extends 'dashboard/teacher/layouts/base.html' %}
 
-{% block title %} Évaluations {% endblock title %}
-
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Évaluations{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-6 col-7">
-          <h6 class="h2 text-white d-inline-block mb-0">Évaluations</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item active" aria-current="page">Évaluations</li>
-            </ol>
-          </nav>
-        </div>
-        <div class="col-lg-6 col-5 text-right">
-          <a href="{% url 'teacher_evaluations_add' %}" class="btn btn-primary">
-            <i class="ni ni-fat-add"></i> Nouvelle évaluation
-          </a>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Évaluations</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Vos évaluations des étudiants</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'teacher_evaluations_add' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+      + Nouvelle évaluation
+    </a>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Mes évaluations</h3>
-            </div>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-items-center table-flush">
-            <thead class="thead-light">
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Étudiant</th>
-                <th scope="col">Langue</th>
-                <th scope="col">Type d'évaluation</th>
-                <th scope="col">Note</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for evaluation in evaluations %}
-              <tr>
-                <th scope="row">
-                  {{ evaluation.evaluation_date|date:"d/m/Y" }}
-                </th>
-                <td>
-                  {{ evaluation.student.user.get_full_name }}
-                </td>
-                <td>
-                  {{ evaluation.language.name }}
-                </td>
-                <td>
-                  {{ evaluation.get_evaluation_type_display }}
-                </td>
-                <td>
-                  <span class="badge badge-{% if evaluation.score >= 16 %}success{% elif evaluation.score >= 12 %}warning{% else %}danger{% endif %}">
-                    {{ evaluation.score }}/20
-                  </span>
-                </td>
-                <td>
-                  <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#viewEvaluationModal{{ evaluation.id }}">
-                      <i class="ni ni-ruler-pencil"></i> Voir détails
-                    </button>
-                    <a href="{% url 'evaluation_edit' evaluation.id %}" class="btn btn-sm btn-warning">
-                      <i class="ni ni-settings-gear-65"></i> Modifier
-                    </a>
-                  </div>
-                </td>
-              </tr>
-              
-              <!-- Modal pour voir les détails de l'évaluation -->
-              <div class="modal fade" id="viewEvaluationModal{{ evaluation.id }}" tabindex="-1" role="dialog" aria-labelledby="viewEvaluationModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="viewEvaluationModalLabel">Détails de l'évaluation</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <div class="form-group">
-                        <label><strong>Étudiant</strong></label>
-                        <p class="form-control-static">{{ evaluation.student.user.get_full_name }}</p>
-                      </div>
-                      <div class="form-group">
-                        <label><strong>Langue</strong></label>
-                        <p class="form-control-static">{{ evaluation.language.name }}</p>
-                      </div>
-                      <div class="form-group">
-                        <label><strong>Type d'évaluation</strong></label>
-                        <p class="form-control-static">{{ evaluation.get_evaluation_type_display }}</p>
-                      </div>
-                      <div class="form-group">
-                        <label><strong>Note</strong></label>
-                        <p class="form-control-static">
-                          <span class="badge badge-{% if evaluation.score >= 16 %}success{% elif evaluation.score >= 12 %}warning{% else %}danger{% endif %}">
-                            {{ evaluation.score }}/20
-                          </span>
-                        </p>
-                      </div>
-                      <div class="form-group">
-                        <label><strong>Commentaires</strong></label>
-                        <p class="form-control-static">{{ evaluation.comments|default:"Aucun commentaire" }}</p>
-                      </div>
-                      <div class="form-group">
-                        <label><strong>Date d'évaluation</strong></label>
-                        <p class="form-control-static">{{ evaluation.evaluation_date|date:"d/m/Y" }}</p>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <a href="{% url 'evaluation_edit' evaluation.id %}" class="btn btn-warning">
-                        <i class="ni ni-settings-gear-65"></i> Modifier
-                      </a>
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="text-center">
-                  <div class="py-4">
-                    <i class="ni ni-chart-bar-32 fa-3x text-muted mb-3"></i>
-                    <h4 class="text-muted">Aucune évaluation</h4>
-                    <p class="text-muted">Vous n'avez pas encore créé d'évaluations pour vos étudiants.</p>
-                    <a href="{% url 'teacher_evaluations_add' %}" class="btn btn-primary">
-                      <i class="ni ni-fat-add"></i> Créer votre première évaluation
-                    </a>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+<div class="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Mes évaluations</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Langue</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Note</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for evaluation in evaluations %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm text-gray-700">{{ evaluation.evaluation_date|date:"d/m/Y" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ evaluation.student.user.get_full_name }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ evaluation.language.name }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ evaluation.get_evaluation_type_display }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+              {% if evaluation.score >= 16 %}bg-green-100 text-green-700
+              {% elif evaluation.score >= 12 %}bg-yellow-100 text-yellow-700
+              {% else %}bg-red-100 text-red-700{% endif %}">
+              {{ evaluation.score }}/20
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <a href="{% url 'evaluation_edit' evaluation.id %}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-md hover:bg-yellow-600 transition">
+              Modifier
+            </a>
+          </td>
+        </tr>
+        {% if evaluation.comments %}
+        <tr class="bg-gray-50/60">
+          <td colspan="6" class="px-6 py-2 text-xs text-gray-500">
+            <span class="font-medium text-gray-600">Commentaires :</span> {{ evaluation.comments }}
+          </td>
+        </tr>
+        {% endif %}
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-16 text-center">
+            <p class="text-sm font-medium text-gray-500">Aucune évaluation</p>
+            <p class="text-xs text-gray-400 mt-1">Vous n'avez pas encore créé d'évaluations.</p>
+            <a href="{% url 'teacher_evaluations_add' %}" class="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+              Créer une évaluation
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
-{% endblock content %}
-
-{% block javascripts %}
-<script>
-$(document).ready(function() {
-    // Aucune validation nécessaire pour ce template simplifié
-});
-</script>
-{% endblock javascripts %} 
+{% endblock %}
