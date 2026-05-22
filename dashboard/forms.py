@@ -1,13 +1,19 @@
 from time import timezone
 from django import forms
 from dashboard.models import (
-    Profile, CustomUser, Resource, Session, Student, Language,
+    Profile, CustomUser, Resource, Session, SessionSeries, Student, Language,
     Certificate, PaiementFormateur, Teacher, Payment,
     Evaluation, Request, Notification, Assignment, Comment,
 )
 from allauth.account.forms import LoginForm, SignupForm, ResetPasswordForm
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import SetPasswordForm
+
+TW_INPUT = 'w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/30 focus:border-[#26b2bd] transition'
+TW_TEXTAREA = 'w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/30 focus:border-[#26b2bd] transition resize-y'
+TW_SELECT = 'w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/30 focus:border-[#26b2bd] transition bg-white'
+TW_FILE = 'block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#26b2bd]/10 file:text-[#26b2bd] hover:file:opacity-80'
+TW_CHECKBOX = 'rounded border-gray-300 text-[#26b2bd] focus:ring-[#26b2bd]'
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -32,7 +38,7 @@ class CustomLoginForm(LoginForm):
         super(CustomLoginForm, self).__init__(*args, **kwargs)
         self.fields['login'].widget = forms.TextInput(attrs={'placeholder': 'Entrez votre Email'})
         self.fields['password'].widget = forms.PasswordInput(attrs={'placeholder': 'Entrez votre mot de passe'})
-        self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        self.fields['remember'].widget = forms.CheckboxInput(attrs={'class': TW_CHECKBOX})
 
     def clean(self):
         cleaned_data = super(CustomLoginForm, self).clean()
@@ -70,7 +76,7 @@ class CustomSignupForm(SignupForm):
         super(CustomSignupForm, self).__init__(*args, **kwargs)
         self.fields['username'].widget = forms.TextInput(attrs={'placeholder': "Entrez votre nom d'utilisateur"})
         self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email'})
-        self.fields['role'] = forms.ChoiceField(choices=self.ROLE_CHOICES, widget=forms.Select(attrs={'class': 'dropdown'}))
+        self.fields['role'] = forms.ChoiceField(choices=self.ROLE_CHOICES, widget=forms.Select(attrs={'class': TW_SELECT}))
         self.fields['password1'].widget = forms.PasswordInput(attrs={'placeholder': 'Mot de passe'})
         self.fields['password2'].widget = forms.PasswordInput(attrs={'placeholder': 'Confirmer mot de passe'})
 
@@ -85,7 +91,7 @@ class CustomSignupForm(SignupForm):
 class CustomResetPasswordForm(ResetPasswordForm):
     def __init__(self, *args, **kwargs):
         super(CustomResetPasswordForm, self).__init__(*args, **kwargs)
-        self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email', 'class': 'custom-input'})
+        self.fields['email'].widget = forms.EmailInput(attrs={'placeholder': 'Entrez votre Email', 'class': TW_INPUT})
         
   
 
@@ -98,39 +104,39 @@ class ResourceForm(forms.ModelForm):
         ]
         widgets = {
             'title': forms.TextInput(attrs={
-                'class': 'form-control',
+                'class': TW_INPUT,
                 'placeholder': 'Titre de la ressource'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': TW_TEXTAREA,
                 'rows': 4,
                 'placeholder': 'Description détaillée de la ressource...'
             }),
             'resource_type': forms.Select(attrs={
-                'class': 'form-control'
+                'class': TW_SELECT
             }),
             'file': forms.ClearableFileInput(attrs={
-                'class': 'form-control-file'
+                'class': TW_FILE
             }),
             'url': forms.URLInput(attrs={
-                'class': 'form-control',
+                'class': TW_INPUT,
                 'placeholder': 'https://exemple.com'
             }),
             'students': forms.SelectMultiple(attrs={
-                'class': 'form-control select2-multiple',
+                'class': TW_SELECT,
                 'data-placeholder': 'Sélectionnez des étudiants...'
             }),
-            'teachers':forms.TextInput(),
+            'teachers': forms.TextInput(attrs={'class': TW_INPUT}),
             'languages': forms.SelectMultiple(attrs={
-                'class': 'form-control select2-multiple',
+                'class': TW_SELECT,
                 'data-placeholder': 'Sélectionnez des langues...'
             }),
             'valid_until': forms.DateTimeInput(attrs={
-                'class': 'form-control',
+                'class': TW_INPUT,
                 'type': 'datetime-local'
             }),
             'is_visible': forms.CheckboxInput(attrs={
-                'class': 'custom-control-input'
+                'class': TW_CHECKBOX
             }),
         }
     
@@ -154,7 +160,7 @@ class ResourceForm(forms.ModelForm):
         # Ajouter des classes CSS supplémentaires
         for field_name, field in self.fields.items():
             if 'class' not in field.widget.attrs:
-                field.widget.attrs['class'] = 'form-control'
+                field.widget.attrs['class'] = TW_INPUT
     
     def clean(self):
         cleaned_data = super().clean()
@@ -191,14 +197,14 @@ class SessionForm(forms.ModelForm):
         fields = ['students', 'language', 'date', 'start_time', 'end_time',
                   'type_seance', 'status', 'meeting_link']
         widgets = {
-            'students': forms.SelectMultiple(attrs={'class': 'form-control', 'size': '5'}),
-            'language': forms.Select(attrs={'class': 'form-control'}),
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-            'type_seance': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'meeting_link': forms.URLInput(attrs={'class': 'form-control',
+            'students': forms.SelectMultiple(attrs={'class': TW_SELECT, 'size': '5'}),
+            'language': forms.Select(attrs={'class': TW_SELECT}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': TW_INPUT}),
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': TW_INPUT}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'class': TW_INPUT}),
+            'type_seance': forms.Select(attrs={'class': TW_SELECT}),
+            'status': forms.Select(attrs={'class': TW_SELECT}),
+            'meeting_link': forms.URLInput(attrs={'class': TW_INPUT,
                                                    'placeholder': 'https://meet.google.com/...'}),
         }
 
@@ -227,16 +233,16 @@ class FichePedagogiqueForm(forms.ModelForm):
             'seance_realisee', 'fiche_completee',
         ]
         widgets = {
-            'duree_minutes': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 60'}),
-            'type_seance': forms.Select(attrs={'class': 'form-control'}),
-            'theme_cours': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Thème abordé'}),
-            'participation': forms.Select(attrs={'class': 'form-control'}),
-            'comprehension_score': forms.Select(attrs={'class': 'form-control'}),
-            'engagement': forms.Select(attrs={'class': 'form-control'}),
-            'difficultes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'observations_formateur': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'prochaine_etape': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'description_devoir': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'duree_minutes': forms.NumberInput(attrs={'class': TW_INPUT, 'placeholder': 'Ex: 60'}),
+            'type_seance': forms.Select(attrs={'class': TW_SELECT}),
+            'theme_cours': forms.TextInput(attrs={'class': TW_INPUT, 'placeholder': 'Thème abordé'}),
+            'participation': forms.Select(attrs={'class': TW_SELECT}),
+            'comprehension_score': forms.Select(attrs={'class': TW_SELECT}),
+            'engagement': forms.Select(attrs={'class': TW_SELECT}),
+            'difficultes': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
+            'observations_formateur': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
+            'prochaine_etape': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
+            'description_devoir': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 2}),
         }
         labels = {
             'duree_minutes': 'Durée (minutes)',
@@ -270,14 +276,14 @@ class CertificateForm(forms.ModelForm):
             'duree_formation', 'competences_validees', 'appreciation_pedagogique',
         ]
         widgets = {
-            'student': forms.Select(attrs={'class': 'form-control'}),
-            'language': forms.Select(attrs={'class': 'form-control'}),
-            'level': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: B2'}),
-            'certificate_file': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
-            'duree_formation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 5 mois'}),
-            'competences_validees': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,
+            'student': forms.Select(attrs={'class': TW_SELECT}),
+            'language': forms.Select(attrs={'class': TW_SELECT}),
+            'level': forms.TextInput(attrs={'class': TW_INPUT, 'placeholder': 'Ex: B2'}),
+            'certificate_file': forms.ClearableFileInput(attrs={'class': TW_FILE}),
+            'duree_formation': forms.TextInput(attrs={'class': TW_INPUT, 'placeholder': 'Ex: 5 mois'}),
+            'competences_validees': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 4,
                 'placeholder': 'Compréhension orale\nExpression orale\nInteraction'}),
-            'appreciation_pedagogique': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'appreciation_pedagogique': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
         }
         labels = {
             'student': 'Étudiant',
@@ -297,13 +303,13 @@ class PaiementFormateurForm(forms.ModelForm):
         model = PaiementFormateur
         fields = ['formateur', 'montant', 'periode_debut', 'periode_fin', 'commentaire', 'statut', 'date_paiement']
         widgets = {
-            'formateur': forms.Select(attrs={'class': 'form-control'}),
-            'montant': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'periode_debut': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'periode_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'commentaire': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'statut': forms.Select(attrs={'class': 'form-control'}),
-            'date_paiement': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'formateur': forms.Select(attrs={'class': TW_SELECT}),
+            'montant': forms.NumberInput(attrs={'class': TW_INPUT, 'step': '0.01'}),
+            'periode_debut': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'periode_fin': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'commentaire': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
+            'statut': forms.Select(attrs={'class': TW_SELECT}),
+            'date_paiement': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
         }
         labels = {
             'formateur': 'Formateur',
@@ -324,9 +330,9 @@ class PaiementFormateurForm(forms.ModelForm):
 #  FORMULAIRES ADMIN — GESTION COMPLÈTE
 # ─────────────────────────────────────────────────────────────
 
-W = {'class': 'form-control'}
-WTA = {'class': 'form-control', 'rows': 3}
-WCB = {'class': 'custom-control-input'}
+W = {'class': TW_INPUT}
+WTA = {'class': TW_TEXTAREA, 'rows': 3}
+WCB = {'class': TW_CHECKBOX}
 
 
 class AdminUserCreateForm(forms.ModelForm):
@@ -502,7 +508,7 @@ class ResourceAdminForm(forms.ModelForm):
             'title': forms.TextInput(attrs=W),
             'description': forms.Textarea(attrs=WTA),
             'resource_type': forms.Select(attrs=W),
-            'file': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'file': forms.ClearableFileInput(attrs={'class': TW_FILE}),
             'url': forms.URLInput(attrs=W),
             'teachers': forms.Select(attrs=W),
             'students': forms.SelectMultiple(attrs=W),
@@ -518,7 +524,7 @@ class RequestAdminForm(forms.ModelForm):
         fields = ['status', 'response']
         widgets = {
             'status': forms.Select(attrs=W),
-            'response': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'response': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 5}),
         }
 
 
@@ -545,4 +551,28 @@ class AssignmentAdminForm(forms.ModelForm):
             'type': forms.Select(attrs=W),
             'status': forms.Select(attrs=W),
             'due_date': forms.DateTimeInput(attrs={**W, 'type': 'datetime-local'}),
+        }
+
+
+class SessionSeriesAdminForm(forms.ModelForm):
+    class Meta:
+        model = SessionSeries
+        fields = [
+            'teacher', 'language', 'students',
+            'day_of_week', 'start_time', 'end_time',
+            'recurrence_start', 'recurrence_end',
+            'type_seance', 'meeting_link', 'notes',
+        ]
+        widgets = {
+            'teacher': forms.Select(attrs={'class': TW_SELECT}),
+            'language': forms.Select(attrs={'class': TW_SELECT}),
+            'students': forms.SelectMultiple(attrs={'class': TW_SELECT + ' h-32'}),
+            'day_of_week': forms.Select(attrs={'class': TW_SELECT}),
+            'start_time': forms.TimeInput(attrs={'class': TW_INPUT, 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'class': TW_INPUT, 'type': 'time'}),
+            'recurrence_start': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'recurrence_end': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'type_seance': forms.Select(attrs={'class': TW_SELECT}),
+            'meeting_link': forms.URLInput(attrs={'class': TW_INPUT}),
+            'notes': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
         }
