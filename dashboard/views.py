@@ -3035,7 +3035,12 @@ def admin_session_scope_edit(request, session_id):
 
 @admin_required
 def admin_session_series_list(request):
-    series_list = SessionSeries.objects.select_related('teacher', 'language').order_by('-created_at')
+    series_list = (
+        SessionSeries.objects
+        .select_related('teacher', 'language')
+        .annotate(occurrences_count=Count('occurrences'))
+        .order_by('-created_at')
+    )
     return render(request, 'dashboard/admin/home/session_series_list.html', {
         'series_list': series_list, 'section_active': 'sessions', 'titre': 'Séries récurrentes',
     })

@@ -191,16 +191,16 @@ function switchTab(tab) {
     single.classList.remove('hidden');
     recurring.classList.add('hidden');
     tabSingle.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
-    tabSingle.classList.remove('text-gray-500');
+    tabSingle.classList.remove('text-gray-500', 'hover:text-gray-700');
     tabRecurring.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
-    tabRecurring.classList.add('text-gray-500');
+    tabRecurring.classList.add('text-gray-500', 'hover:text-gray-700');
   } else {
     single.classList.add('hidden');
     recurring.classList.remove('hidden');
     tabRecurring.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
-    tabRecurring.classList.remove('text-gray-500');
+    tabRecurring.classList.remove('text-gray-500', 'hover:text-gray-700');
     tabSingle.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
-    tabSingle.classList.add('text-gray-500');
+    tabSingle.classList.add('text-gray-500', 'hover:text-gray-700');
   }
 }
 </script>

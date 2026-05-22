@@ -24,7 +24,7 @@
         <th class="px-4 py-3"></th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-50">
+    <tbody class="divide-y divide-gray-100">
       {% for s in series_list %}
       <tr class="hover:bg-gray-50/50 transition-colors">
         <td class="px-4 py-3 font-medium text-gray-800">{{ s.teacher }}</td>
@@ -34,7 +34,7 @@
           {{ s.recurrence_start }} → {% if s.recurrence_end %}{{ s.recurrence_end }}{% else %}<span class="text-gray-400">∞ 12 mois</span>{% endif %}
         </td>
         <td class="px-4 py-3">
-          <span class="px-2 py-0.5 text-xs font-semibold bg-sky-50 text-sky-700 rounded-sm">{{ s.occurrences.count }} séances</span>
+          <span class="px-2 py-0.5 text-xs font-semibold bg-sky-50 text-sky-700 rounded-sm">{{ s.occurrences_count }} séances</span>
         </td>
         <td class="px-4 py-3 text-right">
           <a href="{% url 'admin_session_series_delete' s.id %}"

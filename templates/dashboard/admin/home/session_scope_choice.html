@@ -14,7 +14,13 @@
     <form method="post">
       {% csrf_token %}
       {% for field in form %}
-        <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|default:'' }}">
+        {% if field.field.widget.allow_multiple_selected %}
+          {% for v in field.value %}
+            <input type="hidden" name="{{ field.html_name }}" value="{{ v }}">
+          {% endfor %}
+        {% else %}
+          <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|default:'' }}">
+        {% endif %}
       {% endfor %}
       <div class="p-5 space-y-3">
         <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-sm cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-[#26b2bd] has-[:checked]:bg-[#26b2bd]/5">
