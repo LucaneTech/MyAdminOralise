@@ -1,173 +1,188 @@
 {% extends 'dashboard/teacher/layouts/base.html' %}
-{% block title %}Reporting pédagogique{% endblock %}
+{% load lucide %}
+
+{% block title %}Mon reporting{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">Reporting pédagogique</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item active">Reporting</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
+<!-- Header -->
+<div class="mb-6">
+  <h1 class="text-xl font-bold text-gray-900">Mon reporting pédagogique</h1>
+  <p class="text-sm text-gray-400 mt-0.5">
+    Analyse de votre activité — {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}
+  </p>
+</div>
+
+<!-- Filtre période -->
+<div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-6">
+  <form method="get" class="flex flex-wrap items-end gap-3">
+    <div>
+      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">Du</label>
+      <input type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}"
+             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition">
     </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">au</label>
+      <input type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}"
+             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition">
+    </div>
+    <button type="submit"
+            class="px-5 py-2 bg-[#0c1e35] text-white text-sm font-semibold rounded-sm hover:bg-[#0c1e35]/90 transition flex items-center gap-2">
+      {% lucide "search" class="w-3.5 h-3.5" %}
+      Analyser
+    </button>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Séances réalisées</p>
+      <span class="w-8 h-8 rounded-sm bg-sky-50 flex items-center justify-center shrink-0">
+        {% lucide "calendar-check" class="w-4 h-4 text-sky-500" %}
+      </span>
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ total_sessions }}</p>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Séances validées</p>
+      <span class="w-8 h-8 rounded-sm bg-emerald-50 flex items-center justify-center shrink-0">
+        {% lucide "check-circle" class="w-4 h-4 text-emerald-500" %}
+      </span>
+    </div>
+    <p class="text-3xl font-bold text-emerald-600">{{ sessions_validees }}</p>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+    <div class="flex items-center justify-between mb-3">
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Étudiants suivis</p>
+      <span class="w-8 h-8 rounded-sm bg-violet-50 flex items-center justify-center shrink-0">
+        {% lucide "graduation-cap" class="w-4 h-4 text-violet-500" %}
+      </span>
+    </div>
+    <p class="text-3xl font-bold text-gray-900">{{ student_stats|length }}</p>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
+<!-- Main grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-  <!-- Filtres -->
-  <div class="card mb-4">
-    <div class="card-header"><h5 class="mb-0"><i class="fas fa-filter mr-2"></i>Période d'analyse</h5></div>
-    <div class="card-body">
-      <form method="get" class="row align-items-end">
-        {% if teachers %}
-        <div class="col-md-3 form-group mb-0">
-          <label>Formateur</label>
-          <select name="teacher" class="form-control">
-            <option value="">Tous</option>
-            {% for t in teachers %}
-            <option value="{{ t.id }}" {% if teacher and teacher.id == t.id %}selected{% endif %}>{{ t }}</option>
+  <!-- Table étudiants -->
+  <div class="lg:col-span-2">
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Suivi individuel des étudiants</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
+              <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-16">Séances</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Participation</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Compréhension</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for stat in student_stats %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 font-semibold text-gray-800">{{ stat.student }}</td>
+              <td class="px-5 py-3 text-center text-gray-500 text-xs tabular-nums">{{ stat.nb_sessions }}</td>
+              <td class="px-5 py-3">
+                {% if stat.avg_participation %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full
+                      {% if stat.avg_participation >= 3 %}bg-emerald-500
+                      {% elif stat.avg_participation >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_participation 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_participation }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+              <td class="px-5 py-3">
+                {% if stat.avg_comprehension %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full
+                      {% if stat.avg_comprehension >= 3 %}bg-emerald-500
+                      {% elif stat.avg_comprehension >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_comprehension 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_comprehension }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+              <td class="px-5 py-3">
+                {% if stat.avg_engagement %}
+                <div class="flex items-center gap-2 min-w-[100px]">
+                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full
+                      {% if stat.avg_engagement >= 3 %}bg-emerald-500
+                      {% elif stat.avg_engagement >= 2 %}bg-amber-400
+                      {% else %}bg-red-400{% endif %}"
+                         style="width:{% widthratio stat.avg_engagement 4 100 %}%"></div>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_engagement }}</span>
+                </div>
+                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-5 py-14 text-center text-sm text-gray-400">
+                Aucune donnée sur cette période.
+              </td>
+            </tr>
             {% endfor %}
-          </select>
-        </div>
-        {% endif %}
-        <div class="col-md-3 form-group mb-0">
-          <label>Date début</label>
-          <input type="date" name="date_debut" class="form-control" value="{{ date_debut|date:'Y-m-d' }}">
-        </div>
-        <div class="col-md-3 form-group mb-0">
-          <label>Date fin</label>
-          <input type="date" name="date_fin" class="form-control" value="{{ date_fin|date:'Y-m-d' }}">
-        </div>
-        <div class="col-md-2 form-group mb-0">
-          <button type="submit" class="btn btn-block" style="background-color:#147a81;color:white;">
-            <i class="fas fa-search mr-1"></i>Analyser
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <div class="card card-stats">
-        <div class="card-body">
-          <div class="row">
-            <div class="col"><p class="text-muted text-uppercase mb-0">Séances réalisées</p><h4 class="mb-0">{{ total_sessions }}</h4></div>
-            <div class="col-auto"><div class="icon icon-shape bg-primary text-white rounded-circle shadow"><i class="fas fa-chalkboard-teacher"></i></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card card-stats">
-        <div class="card-body">
-          <div class="row">
-            <div class="col"><p class="text-muted text-uppercase mb-0">Séances validées</p><h4 class="mb-0">{{ sessions_validees }}</h4></div>
-            <div class="col-auto"><div class="icon icon-shape bg-success text-white rounded-circle shadow"><i class="fas fa-check-circle"></i></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card card-stats">
-        <div class="card-body">
-          <div class="row">
-            <div class="col"><p class="text-muted text-uppercase mb-0">Étudiants suivis</p><h4 class="mb-0">{{ student_stats|length }}</h4></div>
-            <div class="col-auto"><div class="icon icon-shape bg-info text-white rounded-circle shadow"><i class="fas fa-user-graduate"></i></div></div>
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <div class="row">
-    <!-- Tableau étudiants -->
-    <div class="col-lg-8">
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Suivi des étudiants</h5></div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table align-items-center table-flush">
-              <thead class="thead-light">
-                <tr>
-                  <th>Étudiant</th>
-                  <th>Séances</th>
-                  <th>Participation</th>
-                  <th>Compréhension</th>
-                  <th>Engagement</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for stat in student_stats %}
-                <tr>
-                  <td>{{ stat.student }}</td>
-                  <td>{{ stat.nb_sessions }}</td>
-                  <td>
-                    {% if stat.avg_participation %}
-                    <span class="badge badge-{% if stat.avg_participation >= 3 %}success{% elif stat.avg_participation >= 2 %}warning{% else %}danger{% endif %}">
-                      {{ stat.avg_participation }}/4
-                    </span>
-                    {% else %}-{% endif %}
-                  </td>
-                  <td>
-                    {% if stat.avg_comprehension %}
-                    <span class="badge badge-{% if stat.avg_comprehension >= 3 %}success{% elif stat.avg_comprehension >= 2 %}warning{% else %}danger{% endif %}">
-                      {{ stat.avg_comprehension }}/4
-                    </span>
-                    {% else %}-{% endif %}
-                  </td>
-                  <td>
-                    {% if stat.avg_engagement %}
-                    <span class="badge badge-{% if stat.avg_engagement >= 3 %}success{% elif stat.avg_engagement >= 2 %}warning{% else %}danger{% endif %}">
-                      {{ stat.avg_engagement }}/4
-                    </span>
-                    {% else %}-{% endif %}
-                  </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Aucune donnée pour cette période.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <!-- Side panels -->
+  <div class="space-y-4">
+    {% if students_en_difficulte %}
+    <div class="bg-white rounded-sm shadow-sm border border-red-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-red-100 bg-red-50 flex items-center gap-2">
+        {% lucide "alert-triangle" class="w-4 h-4 text-red-500 shrink-0" %}
+        <h2 class="text-sm font-semibold text-red-700">Étudiants en difficulté</h2>
       </div>
+      <ul class="divide-y divide-gray-100">
+        {% for s in students_en_difficulte %}
+        <li class="px-5 py-3 text-sm text-gray-700 flex items-center gap-2">
+          {% lucide "user" class="w-3.5 h-3.5 text-gray-300 shrink-0" %}
+          {{ s }}
+        </li>
+        {% endfor %}
+      </ul>
     </div>
+    {% endif %}
 
-    <!-- Alertes & Compétences -->
-    <div class="col-lg-4">
-      <!-- Étudiants en difficulté -->
-      {% if students_en_difficulte %}
-      <div class="card mb-4 border-danger">
-        <div class="card-header bg-danger text-white"><h5 class="mb-0"><i class="fas fa-exclamation-triangle mr-2"></i>Étudiants en difficulté</h5></div>
-        <ul class="list-group list-group-flush">
-          {% for s in students_en_difficulte %}
-          <li class="list-group-item">{{ s }}</li>
-          {% endfor %}
-        </ul>
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Points faibles récurrents</h2>
       </div>
-      {% endif %}
-
-      <!-- Points faibles récurrents -->
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Points faibles récurrents</h5></div>
-        <div class="card-body">
-          {% for comp, count in comp_faibles.items %}
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="text-capitalize">{{ comp }}</span>
-            <span class="badge badge-pill badge-primary">{{ count }}</span>
+      <div class="p-5 space-y-3">
+        {% for comp, count in comp_faibles.items %}
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-semibold text-gray-600">{{ comp }}</span>
+            <span class="text-xs font-bold text-gray-400 tabular-nums">{{ count }}</span>
           </div>
-          {% endfor %}
+          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            {% if total_sessions %}
+            <div class="h-full bg-[#0c1e35]/50 rounded-full"
+                 style="width:{% widthratio count total_sessions 100 %}%"></div>
+            {% endif %}
+          </div>
         </div>
+        {% endfor %}
       </div>
     </div>
   </div>
