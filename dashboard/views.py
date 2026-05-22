@@ -348,6 +348,19 @@ def profile_view(request):
             "sessions_this_month": sessions_this_month,
         })
         return render(request, "dashboard/teacher/home/profile.html", context)
+
+    elif user.role == "admin":
+        total_students = Student.objects.count()
+        total_teachers = Teacher.objects.count()
+        total_sessions_count = Session.objects.count()
+        revenue = Payment.objects.filter(status='paid').aggregate(total=Sum('amount'))['total'] or 0
+        context.update({
+            "total_students": total_students,
+            "total_teachers": total_teachers,
+            "total_sessions": total_sessions_count,
+            "revenue": revenue,
+        })
+        return render(request, "dashboard/admin/home/admin_profile.html", context)
     
 
 
@@ -841,35 +854,23 @@ def settings_view(request):
     profile = get_object_or_404(Profile, user=user)
 
     if request.method == "POST":
-        # Traitement des paramètres
-        theme = request.POST.get("theme", "light")
         language = request.POST.get("language", "fr")
         notifications = request.POST.get("notifications", "all")
         email_notifications = request.POST.get("email_notifications", "true")
 
-        # Sauvegarder le thème dans la base de données
-        profile.theme_preference = theme
-        profile.save()
-
-        # Sauvegarder les autres préférences dans la session
         request.session["language"] = language
         request.session["notifications"] = notifications
         request.session["email_notifications"] = email_notifications
 
-        # Rediriger vers la même page
         return redirect("settings_view")
 
-    # Récupérer les paramètres actuels
     context = {
         "profile": profile,
         "user": user,
         "username": user.username,
-        "current_theme": profile.theme_preference,
         "current_language": request.session.get("language", "fr"),
         "current_notifications": request.session.get("notifications", "all"),
-        "current_email_notifications": request.session.get(
-            "email_notifications", "true"
-        ),
+        "current_email_notifications": request.session.get("email_notifications", "true"),
     }
 
     return render(request, "dashboard/student/home/settings.html", context)
@@ -1827,11 +1828,13 @@ def test_template_tags(request):
 
 @admin_required
 def admin_dashboard(request):
+    import json as _json
+    from datetime import date as _date
     # Statistiques principales
     total_teachers = Teacher.objects.count()
     total_students = Student.objects.count()
     total_languages = Language.objects.filter(is_active=True).count()
-    
+
     # Séances
     today = timezone.now().date()
     completed_sessions = Session.objects.filter(status='completed').count()
@@ -1905,6 +1908,32 @@ def admin_dashboard(request):
         'teacher__user', 'language'
     ).order_by('-date', '-start_time')[:8]
 
+    # ── Graphes : séances sur 6 mois ─────────────────────────────
+    labels = []
+    completed_data = []
+    scheduled_data = []
+    for i in range(5, -1, -1):
+        ref = today.replace(day=1)
+        # rewind i months
+        m = ref.month - i
+        y = ref.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        first_day = _date(y, m, 1)
+        # last day of month
+        if m == 12:
+            last_day = _date(y + 1, 1, 1)
+        else:
+            last_day = _date(y, m + 1, 1)
+        labels.append(first_day.strftime('%b %Y'))
+        completed_data.append(
+            Session.objects.filter(status='completed', date__gte=first_day, date__lt=last_day).count()
+        )
+        scheduled_data.append(
+            Session.objects.filter(status='scheduled', date__gte=first_day, date__lt=last_day).count()
+        )
+
     context = {
         'total_teachers': total_teachers,
         'total_students': total_students,
@@ -1933,6 +1962,10 @@ def admin_dashboard(request):
         'sessions_today': sessions_today_count,
         'revenue_total': revenue_total,
         'recent_sessions': recent_sessions,
+        # Graphes
+        'sessions_labels': _json.dumps(labels),
+        'sessions_completed_data': _json.dumps(completed_data),
+        'sessions_scheduled_data': _json.dumps(scheduled_data),
     }
 
     return render(request, 'dashboard/admin/home/index.html', context)
@@ -2170,22 +2203,12 @@ def admin_valider_session(request, session_id):
 
 
 # ─────────────────────────────────────────────────────────────
-#  REPORTING BI-HEBDOMADAIRE (admin / formateur)
+#  REPORTING PÉDAGOGIQUE
 # ─────────────────────────────────────────────────────────────
 
 @login_required
-def reporting_formateur(request, teacher_id=None):
-    """Synthèse pédagogique dynamique pour une période donnée."""
-    if request.user.role == 'admin':
-        if teacher_id:
-            teacher = get_object_or_404(Teacher, id=teacher_id)
-        else:
-            teacher = None
-        teachers = Teacher.objects.all()
-    elif request.user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=request.user)
-        teachers = None
-    else:
+def admin_reporting_list(request):
+    if request.user.role != 'admin':
         raise Http404
 
     today = timezone.now().date()
@@ -2201,22 +2224,90 @@ def reporting_formateur(request, teacher_id=None):
         date_debut = date_debut_default
         date_fin = date_fin_default
 
-    sessions_qs = Session.objects.filter(
+    all_sessions = Session.objects.filter(
         date__gte=date_debut,
         date__lte=date_fin,
         seance_realisee=True,
     )
-    if teacher:
-        sessions_qs = sessions_qs.filter(teacher=teacher)
+
+    teachers_stats = []
+    for t in Teacher.objects.all().select_related('user'):
+        t_sessions = all_sessions.filter(teacher=t)
+        nb = t_sessions.count()
+        if nb == 0:
+            continue
+        nb_validees = t_sessions.filter(statut_validation='validee').count()
+        student_ids = t_sessions.values_list('students', flat=True).distinct()
+        nb_students = student_ids.count()
+
+        nb_en_difficulte = 0
+        for s in Student.objects.filter(id__in=student_ids):
+            s_sessions = t_sessions.filter(students=s)
+            avg_p = s_sessions.aggregate(Avg('participation'))['participation__avg'] or 0
+            avg_c = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg'] or 0
+            avg_e = s_sessions.aggregate(Avg('engagement'))['engagement__avg'] or 0
+            if (avg_p + avg_c + avg_e) > 0 and (avg_p + avg_c + avg_e) / 3 < 2.5:
+                nb_en_difficulte += 1
+
+        comp_counts = {
+            'Oral': t_sessions.filter(comp_oral=True).count(),
+            'Compréhension': t_sessions.filter(comp_comprehension=True).count(),
+            'Écrit': t_sessions.filter(comp_ecrit=True).count(),
+            'Grammaire': t_sessions.filter(comp_grammaire=True).count(),
+            'Vocabulaire': t_sessions.filter(comp_vocabulaire=True).count(),
+        }
+        top_comp = max(comp_counts, key=comp_counts.get) if any(comp_counts.values()) else None
+
+        teachers_stats.append({
+            'teacher': t,
+            'nb_sessions': nb,
+            'nb_sessions_validees': nb_validees,
+            'nb_students': nb_students,
+            'nb_en_difficulte': nb_en_difficulte,
+            'top_comp_faible': top_comp,
+        })
+
+    return render(request, 'dashboard/admin/home/reporting.html', {
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'teachers_stats': teachers_stats,
+        'total_sessions_global': sum(s['nb_sessions'] for s in teachers_stats),
+        'total_teachers_actifs': len(teachers_stats),
+        'total_students_global': all_sessions.values_list('students', flat=True).distinct().count(),
+    })
+
+
+@login_required
+def admin_reporting_detail(request, teacher_id):
+    if request.user.role != 'admin':
+        raise Http404
+    teacher = get_object_or_404(Teacher, id=teacher_id)
+
+    today = timezone.now().date()
+    date_fin_default = today
+    date_debut_default = today - timedelta(days=14)
+
+    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
+    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
+    try:
+        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+    except ValueError:
+        date_debut = date_debut_default
+        date_fin = date_fin_default
+
+    sessions_qs = Session.objects.filter(
+        teacher=teacher,
+        date__gte=date_debut,
+        date__lte=date_fin,
+        seance_realisee=True,
+    )
 
     total_sessions = sessions_qs.count()
     sessions_validees = sessions_qs.filter(statut_validation='validee').count()
-
-    # Étudiants suivis
-    student_ids = sessions_qs.values_list('student_id', flat=True).distinct()
+    student_ids = sessions_qs.values_list('students', flat=True).distinct()
     students = Student.objects.filter(id__in=student_ids).select_related('user')
 
-    # Moyennes par étudiant
     student_stats = []
     students_en_difficulte = []
     for s in students:
@@ -2224,31 +2315,98 @@ def reporting_formateur(request, teacher_id=None):
         avg_participation = s_sessions.aggregate(Avg('participation'))['participation__avg']
         avg_comprehension = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg']
         avg_engagement = s_sessions.aggregate(Avg('engagement'))['engagement__avg']
-        nb = s_sessions.count()
         stat = {
             'student': s,
-            'nb_sessions': nb,
+            'nb_sessions': s_sessions.count(),
             'avg_participation': round(avg_participation, 1) if avg_participation else None,
             'avg_comprehension': round(avg_comprehension, 1) if avg_comprehension else None,
             'avg_engagement': round(avg_engagement, 1) if avg_engagement else None,
         }
         student_stats.append(stat)
-        score_moyen = (avg_participation or 0) + (avg_comprehension or 0) + (avg_engagement or 0)
-        if score_moyen > 0 and score_moyen / 3 < 2.5:
+        score = (avg_participation or 0) + (avg_comprehension or 0) + (avg_engagement or 0)
+        if score > 0 and score / 3 < 2.5:
             students_en_difficulte.append(s)
 
-    # Points faibles récurrents
     comp_faibles = {
-        'oral': sessions_qs.filter(comp_oral=True).count(),
-        'comprehension': sessions_qs.filter(comp_comprehension=True).count(),
-        'ecrit': sessions_qs.filter(comp_ecrit=True).count(),
-        'grammaire': sessions_qs.filter(comp_grammaire=True).count(),
-        'vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
+        'Oral': sessions_qs.filter(comp_oral=True).count(),
+        'Compréhension': sessions_qs.filter(comp_comprehension=True).count(),
+        'Écrit': sessions_qs.filter(comp_ecrit=True).count(),
+        'Grammaire': sessions_qs.filter(comp_grammaire=True).count(),
+        'Vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
+    }
+
+    return render(request, 'dashboard/admin/home/reporting_detail.html', {
+        'teacher': teacher,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'total_sessions': total_sessions,
+        'sessions_validees': sessions_validees,
+        'student_stats': student_stats,
+        'students_en_difficulte': students_en_difficulte,
+        'comp_faibles': comp_faibles,
+    })
+
+
+@login_required
+def teacher_reporting(request):
+    if request.user.role != 'teacher':
+        raise Http404
+    teacher = get_object_or_404(Teacher, user=request.user)
+
+    today = timezone.now().date()
+    date_fin_default = today
+    date_debut_default = today - timedelta(days=14)
+
+    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
+    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
+    try:
+        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+    except ValueError:
+        date_debut = date_debut_default
+        date_fin = date_fin_default
+
+    sessions_qs = Session.objects.filter(
+        teacher=teacher,
+        date__gte=date_debut,
+        date__lte=date_fin,
+        seance_realisee=True,
+    )
+
+    total_sessions = sessions_qs.count()
+    sessions_validees = sessions_qs.filter(statut_validation='validee').count()
+    student_ids = sessions_qs.values_list('students', flat=True).distinct()
+    students = Student.objects.filter(id__in=student_ids).select_related('user')
+
+    student_stats = []
+    students_en_difficulte = []
+    for s in students:
+        s_sessions = sessions_qs.filter(students=s)
+        avg_participation = s_sessions.aggregate(Avg('participation'))['participation__avg']
+        avg_comprehension = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg']
+        avg_engagement = s_sessions.aggregate(Avg('engagement'))['engagement__avg']
+        stat = {
+            'student': s,
+            'nb_sessions': s_sessions.count(),
+            'avg_participation': round(avg_participation, 1) if avg_participation else None,
+            'avg_comprehension': round(avg_comprehension, 1) if avg_comprehension else None,
+            'avg_engagement': round(avg_engagement, 1) if avg_engagement else None,
+        }
+        student_stats.append(stat)
+        score = (avg_participation or 0) + (avg_comprehension or 0) + (avg_engagement or 0)
+        if score > 0 and score / 3 < 2.5:
+            students_en_difficulte.append(s)
+
+    comp_faibles = {
+        'Oral': sessions_qs.filter(comp_oral=True).count(),
+        'Compréhension': sessions_qs.filter(comp_comprehension=True).count(),
+        'Écrit': sessions_qs.filter(comp_ecrit=True).count(),
+        'Grammaire': sessions_qs.filter(comp_grammaire=True).count(),
+        'Vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
     }
 
     return render(request, 'dashboard/teacher/home/reporting.html', {
         'teacher': teacher,
-        'teachers': teachers,
         'date_debut': date_debut,
         'date_fin': date_fin,
         'total_sessions': total_sessions,
@@ -2609,6 +2767,7 @@ def admin_student_create(request):
 def admin_student_edit(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     user = student.user
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         user_form = AdminUserEditForm(request.POST, instance=user)
         student_form = StudentAdminForm(request.POST, instance=student)
@@ -2616,7 +2775,12 @@ def admin_student_edit(request, student_id):
             user_form.save()
             student_form.save()
             messages.success(request, "Étudiant mis à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_students')})
             return redirect('student_detail', student_id=student.id)
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': user_form.errors | student_form.errors})
+        messages.error(request, "Veuillez corriger les erreurs.")
     else:
         user_form = AdminUserEditForm(instance=user)
         student_form = StudentAdminForm(instance=student)
@@ -2678,6 +2842,7 @@ def admin_teacher_create(request):
 def admin_teacher_edit(request, teacher_id):
     teacher = get_object_or_404(Teacher, id=teacher_id)
     user = teacher.user
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         user_form = AdminUserEditForm(request.POST, instance=user)
         teacher_form = TeacherAdminForm(request.POST, instance=teacher)
@@ -2685,7 +2850,12 @@ def admin_teacher_edit(request, teacher_id):
             user_form.save()
             teacher_form.save()
             messages.success(request, "Formateur mis à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_teachers')})
             return redirect('teacher_detail', teacher_id=teacher.id)
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': user_form.errors | teacher_form.errors})
+        messages.error(request, "Veuillez corriger les erreurs.")
     else:
         user_form = AdminUserEditForm(instance=user)
         teacher_form = TeacherAdminForm(instance=teacher)
@@ -2744,12 +2914,17 @@ def admin_language_create(request):
 @admin_required
 def admin_language_edit(request, lang_id):
     lang = get_object_or_404(Language, id=lang_id)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = LanguageForm(request.POST, instance=lang)
         if form.is_valid():
             form.save()
             messages.success(request, "Langue mise à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_languages_list')})
             return redirect('admin_languages_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = LanguageForm(instance=lang)
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -2844,6 +3019,7 @@ def admin_payments_list(request):
 
 @admin_required
 def admin_payment_create(request):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = PaymentAdminForm(request.POST)
         if form.is_valid():
@@ -2851,7 +3027,11 @@ def admin_payment_create(request):
             payment.invoice_number = f"INV-{timezone.now().strftime('%Y%m%d%H%M%S')}"
             payment.save()
             messages.success(request, "Paiement enregistré.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_payments_list')})
             return redirect('admin_payments_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = PaymentAdminForm()
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -2862,12 +3042,17 @@ def admin_payment_create(request):
 @admin_required
 def admin_payment_edit(request, payment_id):
     payment = get_object_or_404(Payment, id=payment_id)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = PaymentAdminForm(request.POST, instance=payment)
         if form.is_valid():
             form.save()
             messages.success(request, "Paiement mis à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_payments_list')})
             return redirect('admin_payments_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = PaymentAdminForm(instance=payment)
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -2908,12 +3093,17 @@ def admin_evaluations_list(request):
 
 @admin_required
 def admin_evaluation_create(request):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = EvaluationAdminForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Évaluation créée.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_evaluations_list')})
             return redirect('admin_evaluations_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = EvaluationAdminForm()
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -2924,12 +3114,17 @@ def admin_evaluation_create(request):
 @admin_required
 def admin_evaluation_edit(request, eval_id):
     ev = get_object_or_404(Evaluation, id=eval_id)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = EvaluationAdminForm(request.POST, instance=ev)
         if form.is_valid():
             form.save()
             messages.success(request, "Évaluation mise à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_evaluations_list')})
             return redirect('admin_evaluations_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = EvaluationAdminForm(instance=ev)
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -3112,12 +3307,17 @@ def admin_assignments_list(request):
 
 @admin_required
 def admin_assignment_create(request):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = AssignmentAdminForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Devoir créé.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_assignments_list')})
             return redirect('admin_assignments_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = AssignmentAdminForm()
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
@@ -3128,12 +3328,17 @@ def admin_assignment_create(request):
 @admin_required
 def admin_assignment_edit(request, assign_id):
     assign = get_object_or_404(Assignment, id=assign_id)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = AssignmentAdminForm(request.POST, instance=assign)
         if form.is_valid():
             form.save()
             messages.success(request, "Devoir mis à jour.")
+            if is_ajax:
+                return JsonResponse({'success': True, 'redirect': reverse('admin_assignments_list')})
             return redirect('admin_assignments_list')
+        if is_ajax:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = AssignmentAdminForm(instance=assign)
     return render(request, 'dashboard/admin/home/admin_form.html', _admin_ctx(
