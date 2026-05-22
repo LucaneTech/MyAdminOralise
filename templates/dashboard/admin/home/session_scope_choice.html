@@ -1,0 +1,49 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
+{% block title %}Portée de la modification{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto mt-8">
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+      {% lucide "calendar-range" class="w-5 h-5 text-[#26b2bd]" %}
+      <div>
+        <h1 class="text-sm font-semibold text-gray-800">Séance récurrente</h1>
+        <p class="text-xs text-gray-400 mt-0.5">Cette séance fait partie d'une série. Quelle portée souhaitez-vous appliquer ?</p>
+      </div>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|default:'' }}">
+      {% endfor %}
+      <div class="p-5 space-y-3">
+        <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-sm cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-[#26b2bd] has-[:checked]:bg-[#26b2bd]/5">
+          <input type="radio" name="scope" value="this" class="mt-0.5 text-[#26b2bd]" checked>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Seulement cette séance</p>
+            <p class="text-xs text-gray-400">Les autres séances de la série ne sont pas modifiées</p>
+          </div>
+        </label>
+        <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-sm cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-[#26b2bd] has-[:checked]:bg-[#26b2bd]/5">
+          <input type="radio" name="scope" value="this_and_future" class="mt-0.5 text-[#26b2bd]">
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Cette séance et les suivantes</p>
+            <p class="text-xs text-gray-400">Modifie cette séance et toutes les occurrences futures de la série</p>
+          </div>
+        </label>
+        <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-sm cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-[#26b2bd] has-[:checked]:bg-[#26b2bd]/5">
+          <input type="radio" name="scope" value="all" class="mt-0.5 text-[#26b2bd]">
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Toutes les séances de la série</p>
+            <p class="text-xs text-gray-400">Modifie toutes les occurrences passées et futures</p>
+          </div>
+        </label>
+      </div>
+      <div class="px-5 py-3 border-t border-gray-100 flex justify-end gap-3">
+        <a href="{% url 'admin_sessions_list' %}" class="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">Annuler</a>
+        <button type="submit" class="px-5 py-2 bg-[#056f77] text-white text-sm font-semibold rounded-sm hover:bg-[#045f66] transition">Confirmer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
