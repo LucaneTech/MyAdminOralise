@@ -37,7 +37,7 @@ from dashboard.models import (
     Comment,
     PaiementFormateur,
 )
-from .forms import ProfileUpdateForm, SessionForm, ResourceForm, FichePedagogiqueForm, CertificateForm, PaiementFormateurForm
+from .forms import ProfileUpdateForm, SessionForm, ResourceForm, FichePedagogiqueForm, CertificateForm, PaiementFormateurForm, AssignmentAdminForm
 import json
 
 
@@ -966,34 +966,61 @@ def teacher_courses(request):
 
 
 
+@teacher_required
 def teacher_assignments(request):
-    user = request.user
-    profile = get_object_or_404(Profile, user=user)
-    teacher = get_object_or_404(Teacher, user=user)
+    teacher = get_object_or_404(Teacher, user=request.user)
     languages = Language.objects.filter(teachers=teacher)
-    assignments = Assignment.objects.filter(language__in=languages)
+    assignments = Assignment.objects.filter(language__in=languages).order_by('-created_at')
+    return render(request, 'dashboard/teacher/home/assignments.html', {
+        'teacher': teacher, 'assignments': assignments, 'languages': languages,
+        'segment': 'assignments',
+    })
 
-    if request.method == "POST":
-        data = json.loads(request.body)
-        assignment = Assignment.objects.create(
-            title=data["title"],
-            description=data["description"],
-            language_id=data["language"],
-            type=data["type"],
-            due_date=data["due_date"],
-        )
-        return JsonResponse({"status": "success", "id": assignment.id})
 
-    context = {
-        "profile": profile,
-        "teacher": teacher,
-        "user": user,
-        "username": user.username,
-        "assignments": assignments,
-        "languages": languages,
-        "segment": "assignments",
-    }
-    return render(request, "dashboard/teacher/home/assignments.html", context)
+@teacher_required
+def teacher_assignment_create(request):
+    teacher = get_object_or_404(Teacher, user=request.user)
+    if request.method == 'POST':
+        form = AssignmentAdminForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Devoir créé.")
+            return redirect('teacher_assignments')
+    else:
+        form = AssignmentAdminForm()
+    return render(request, 'dashboard/teacher/home/assignment_form.html', {
+        'form': form, 'titre': 'Nouveau devoir',
+    })
+
+
+@teacher_required
+def teacher_assignment_edit(request, assign_id):
+    assignment = get_object_or_404(Assignment, id=assign_id)
+    if request.method == 'POST':
+        form = AssignmentAdminForm(request.POST, instance=assignment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Devoir mis à jour.")
+            return redirect('teacher_assignments')
+    else:
+        form = AssignmentAdminForm(instance=assignment)
+    return render(request, 'dashboard/teacher/home/assignment_form.html', {
+        'form': form, 'assignment': assignment,
+        'titre': f'Modifier — {assignment.title}',
+    })
+
+
+@teacher_required
+def teacher_assignment_delete(request, assign_id):
+    assignment = get_object_or_404(Assignment, id=assign_id)
+    if request.method == 'POST':
+        assignment.delete()
+        messages.success(request, "Devoir supprimé.")
+        return redirect('teacher_assignments')
+    return render(request, 'dashboard/teacher/home/assignment_form.html', {
+        'assignment': assignment, 'confirming_delete': True,
+        'titre': f'Supprimer — {assignment.title}',
+    })
 
 
 @login_required
