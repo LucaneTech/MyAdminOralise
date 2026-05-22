@@ -2202,6 +2202,21 @@ def admin_valider_session(request, session_id):
     return redirect('admin_sessions_list')
 
 
+def _parse_date_range(request, default_days=14):
+    today = timezone.now().date()
+    date_debut_default = today - timedelta(days=default_days)
+    try:
+        date_debut = datetime.strptime(
+            request.GET.get('date_debut', str(date_debut_default)), '%Y-%m-%d'
+        ).date()
+        date_fin = datetime.strptime(
+            request.GET.get('date_fin', str(today)), '%Y-%m-%d'
+        ).date()
+    except ValueError:
+        date_debut, date_fin = date_debut_default, today
+    return date_debut, date_fin
+
+
 # ─────────────────────────────────────────────────────────────
 #  REPORTING PÉDAGOGIQUE
 # ─────────────────────────────────────────────────────────────
@@ -2211,18 +2226,7 @@ def admin_reporting_list(request):
     if request.user.role != 'admin':
         raise Http404
 
-    today = timezone.now().date()
-    date_fin_default = today
-    date_debut_default = today - timedelta(days=14)
-
-    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
-    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
-    try:
-        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
-        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
-    except ValueError:
-        date_debut = date_debut_default
-        date_fin = date_fin_default
+    date_debut, date_fin = _parse_date_range(request)
 
     all_sessions = Session.objects.filter(
         date__gte=date_debut,
@@ -2240,14 +2244,20 @@ def admin_reporting_list(request):
         student_ids = t_sessions.values_list('students', flat=True).distinct()
         nb_students = student_ids.count()
 
-        nb_en_difficulte = 0
-        for s in Student.objects.filter(id__in=student_ids):
-            s_sessions = t_sessions.filter(students=s)
-            avg_p = s_sessions.aggregate(Avg('participation'))['participation__avg'] or 0
-            avg_c = s_sessions.aggregate(Avg('comprehension_score'))['comprehension_score__avg'] or 0
-            avg_e = s_sessions.aggregate(Avg('engagement'))['engagement__avg'] or 0
-            if (avg_p + avg_c + avg_e) > 0 and (avg_p + avg_c + avg_e) / 3 < 2.5:
-                nb_en_difficulte += 1
+        student_avgs = (
+            t_sessions.filter(students__in=student_ids)
+            .values('students')
+            .annotate(
+                avg_p=Avg('participation'),
+                avg_c=Avg('comprehension_score'),
+                avg_e=Avg('engagement'),
+            )
+        )
+        nb_en_difficulte = sum(
+            1 for row in student_avgs
+            if (row['avg_p'] or 0) + (row['avg_c'] or 0) + (row['avg_e'] or 0) > 0
+            and ((row['avg_p'] or 0) + (row['avg_c'] or 0) + (row['avg_e'] or 0)) / 3 < 2.5
+        )
 
         comp_counts = {
             'Oral': t_sessions.filter(comp_oral=True).count(),
@@ -2283,18 +2293,7 @@ def admin_reporting_detail(request, teacher_id):
         raise Http404
     teacher = get_object_or_404(Teacher, id=teacher_id)
 
-    today = timezone.now().date()
-    date_fin_default = today
-    date_debut_default = today - timedelta(days=14)
-
-    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
-    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
-    try:
-        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
-        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
-    except ValueError:
-        date_debut = date_debut_default
-        date_fin = date_fin_default
+    date_debut, date_fin = _parse_date_range(request)
 
     sessions_qs = Session.objects.filter(
         teacher=teacher,
@@ -2353,18 +2352,7 @@ def teacher_reporting(request):
         raise Http404
     teacher = get_object_or_404(Teacher, user=request.user)
 
-    today = timezone.now().date()
-    date_fin_default = today
-    date_debut_default = today - timedelta(days=14)
-
-    date_debut_str = request.GET.get('date_debut', str(date_debut_default))
-    date_fin_str = request.GET.get('date_fin', str(date_fin_default))
-    try:
-        date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
-        date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
-    except ValueError:
-        date_debut = date_debut_default
-        date_fin = date_fin_default
+    date_debut, date_fin = _parse_date_range(request)
 
     sessions_qs = Session.objects.filter(
         teacher=teacher,
