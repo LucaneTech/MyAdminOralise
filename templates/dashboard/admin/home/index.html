@@ -5,57 +5,203 @@
 
 {% block title %}Tableau de bord{% endblock %}
 
+{% block extra_css %}
+
+{% endblock %}
+
 {% block content %}
-<!-- Stats cards -->
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiants</span>
-      {% lucide "graduation-cap" class="w-5 h-5 text-[#26b2bd]" %}
+<!-- ═══ BANNIÈRE ═══════════════════════════════════════════════ -->
+<div class="relative bg-[#056f77] min-h-[230px] overflow-visible rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-0 mb-0">
+  
+  <div class="relative z-10">
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Tableau de bord</h1>
+        <p class="text-white text-sm mt-1">Vue d'ensemble de toutes les activités — Oralise</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-white bg-white/5 px-3 py-1.5 rounded-sm border border-white/30">
+          {% now "l d F Y" %}
+        </span>
+        <a href="{% url 'admin_session_create' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-sm transition">
+          {% lucide "plus" class="w-3.5 h-3.5" %} Nouvelle séance
+        </a>
+      </div>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ total_students }}</p>
   </div>
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Formateurs</span>
-      {% lucide "users" class="w-5 h-5 text-[#26b2bd]" %}
+
+  <!-- Stat cards chevauchant la bannière -->
+  <div class="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 translate-y-8">
+    <!-- Total étudiants -->
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100 stat-card-float">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-violet-100 flex items-center justify-center">
+          {% lucide "graduation-cap" class="w-5 h-5 text-violet-600" %}
+        </div>
+        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm">{{ total_students }} total</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ total_students }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Étudiants inscrits</p>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ total_teachers }}</p>
-  </div>
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Séances aujourd'hui</span>
-      {% lucide "calendar" class="w-5 h-5 text-[#26b2bd]" %}
+    <!-- Total formateurs -->
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100 stat-card-float">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center">
+          {% lucide "users" class="w-5 h-5 text-amber-600" %}
+        </div>
+        <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-sm">Actifs: {{ active_teachers }}</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ total_teachers }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Formateurs</p>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ sessions_today }}</p>
-  </div>
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">CA total</span>
-      {% lucide "banknote" class="w-5 h-5 text-[#26b2bd]" %}
+    <!-- Montant payé par étudiants -->
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100 stat-card-float">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-green-100 flex items-center justify-center">
+          {% lucide "credit-card" class="w-5 h-5 text-green-600" %}
+        </div>
+        <span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-sm">CA</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ revenue_total|intcomma }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">MAD payés par étudiants</p>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ revenue_total|intcomma }} MAD</p>
+    <!-- Montant payé aux formateurs -->
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100 stat-card-float">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-teal-100 flex items-center justify-center">
+          {% lucide "banknote" class="w-5 h-5 text-teal-600" %}
+        </div>
+        <span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-sm">Versés</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ total_paiements_formateurs|intcomma }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">MAD payés aux formateurs</p>
+    </div>
   </div>
 </div>
 
-<!-- Sessions récentes + Actions rapides -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <div class="lg:col-span-2 bg-white rounded-md shadow-xl">
+<!-- Espace pour compenser le translate-y -->
+<div class="mt-14"></div>
+
+<!-- ═══ GRAPHES STATISTIQUES ══════════════════════════════════ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- Graphe séances par mois (line) -->
+  <div class="lg:col-span-2 bg-white rounded-sm shadow-sm border border-gray-100">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-gray-700">Séances récentes</h2>
-      <a href="{% url 'admin_sessions_list' %}" class="text-xs text-[#26b2bd] hover:underline">Voir le calendrier</a>
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">Séances — 6 derniers mois</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Complétées vs Planifiées</p>
+      </div>
+      <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-sm">{{ sessions_today }} séances aujourd'hui</span>
+    </div>
+    <div class="p-4">
+      <canvas id="sessionsChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Répartition paiements (doughnut) -->
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-800">Répartition financière</h2>
+      <p class="text-xs text-gray-400 mt-0.5">CA vs Charges formateurs</p>
+    </div>
+    <div class="p-4 flex flex-col items-center">
+      <canvas id="financeChart" height="180" style="max-height:180px"></canvas>
+      <div class="mt-4 space-y-2 w-full">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> CA étudiants</div>
+          <span class="font-semibold">{{ revenue_total|intcomma }} MAD</span>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-teal-400 inline-block"></span> Formateurs</div>
+          <span class="font-semibold">{{ total_paiements_formateurs|intcomma }} MAD</span>
+        </div>
+        <div class="flex items-center justify-between text-xs border-t pt-2 mt-2">
+          <span class="text-gray-500">Marge nette</span>
+          <span class="font-bold text-emerald-600">{{ marge_nette|floatformat:0 }} MAD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GRAPHE REVENUS MENSUELS ═══════════════════════════════ -->
+<div class="bg-white rounded-sm shadow-sm border border-gray-100 mt-6 mb-6">
+  <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div>
+      <h2 class="text-sm font-semibold text-gray-800">Revenus mensuels</h2>
+      <p class="text-xs text-gray-400 mt-0.5">CA paiements étudiants — 6 derniers mois</p>
+    </div>
+  </div>
+  <div class="p-4">
+    <canvas id="revenueChart" height="100"></canvas>
+  </div>
+</div>
+
+<!-- ═══ KPIs secondaires ═══════════════════════════════════════ -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-sm bg-sky-50 flex items-center justify-center shrink-0">
+      {% lucide "calendar-check" class="w-4 h-4 text-sky-600" %}
+    </div>
+    <div>
+      <p class="text-lg font-bold text-gray-900">{{ sessions_today }}</p>
+      <p class="text-xs text-gray-500">Séances aujourd'hui</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-sm bg-emerald-50 flex items-center justify-center shrink-0">
+      {% lucide "check-circle" class="w-4 h-4 text-emerald-600" %}
+    </div>
+    <div>
+      <p class="text-lg font-bold text-gray-900">{{ completed_sessions }}</p>
+      <p class="text-xs text-gray-500">Séances terminées</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-sm bg-orange-50 flex items-center justify-center shrink-0">
+      {% lucide "clock" class="w-4 h-4 text-orange-600" %}
+    </div>
+    <div>
+      <p class="text-lg font-bold text-gray-900">{{ total_heures_enseignees }}h</p>
+      <p class="text-xs text-gray-500">Heures enseignées</p>
+    </div>
+  </div>
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-sm bg-pink-50 flex items-center justify-center shrink-0">
+      {% lucide "alert-circle" class="w-4 h-4 text-pink-600" %}
+    </div>
+    <div>
+      <p class="text-lg font-bold text-gray-900">{{ pending_requests }}</p>
+      <p class="text-xs text-gray-500">Demandes en attente</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SÉANCES RÉCENTES + ACTIONS RAPIDES ════════════════════ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Séances récentes -->
+  <div class="lg:col-span-2 bg-white rounded-sm shadow-sm border border-gray-100">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-800">Séances récentes</h2>
+      <a href="{% url 'admin_sessions_list' %}" class="text-xs text-emerald-600 hover:underline font-medium">Voir tout →</a>
     </div>
     <div class="divide-y divide-gray-50">
       {% for session in recent_sessions %}
-      <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-        <div>
-          <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
-          <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
+      <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-sm bg-emerald-50 flex items-center justify-center shrink-0">
+            {% lucide "book" class="w-3.5 h-3.5 text-emerald-600" %}
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
+            <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
+          </div>
         </div>
-        <span class="px-2 py-0.5 text-xs font-semibold rounded-md
-          {% if session.status == 'completed' %}bg-green-100 text-green-700
+        <span class="px-2 py-0.5 text-xs font-semibold rounded-sm
+          {% if session.status == 'completed' %}bg-emerald-100 text-emerald-700
           {% elif session.status == 'cancelled' %}bg-red-100 text-red-700
-          {% else %}bg-blue-100 text-blue-700{% endif %}">
+          {% elif session.status == 'rescheduled' %}bg-orange-100 text-orange-700
+          {% else %}bg-sky-100 text-sky-700{% endif %}">
           {{ session.get_status_display }}
         </span>
       </div>
@@ -65,28 +211,158 @@
     </div>
   </div>
 
-  <div class="bg-white rounded-md shadow-xl">
+  <!-- Actions rapides -->
+  <div class="bg-white rounded-sm shadow-sm border border-gray-100">
     <div class="px-5 py-4 border-b border-gray-100">
-      <h2 class="text-sm font-semibold text-gray-700">Actions rapides</h2>
+      <h2 class="text-sm font-semibold text-gray-800">Actions rapides</h2>
     </div>
     <div class="p-4 space-y-2">
       <a href="{% url 'admin_student_create' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "user-plus" class="w-4 h-4 text-[#26b2bd]" %} Ajouter un étudiant
+         class="flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+        <div class="w-8 h-8 rounded-sm bg-violet-100 group-hover:bg-violet-200 flex items-center justify-center transition shrink-0">
+          {% lucide "user-plus" class="w-4 h-4 text-violet-600" %}
+        </div>
+        Ajouter un étudiant
       </a>
       <a href="{% url 'admin_teacher_create' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "user-plus" class="w-4 h-4 text-[#26b2bd]" %} Ajouter un formateur
+         class="flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+        <div class="w-8 h-8 rounded-sm bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition shrink-0">
+          {% lucide "user-plus" class="w-4 h-4 text-amber-600" %}
+        </div>
+        Ajouter un formateur
       </a>
       <a href="{% url 'admin_session_create' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "calendar-plus" class="w-4 h-4 text-[#26b2bd]" %} Créer une séance
+         class="flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+        <div class="w-8 h-8 rounded-sm bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center transition shrink-0">
+          {% lucide "calendar-plus" class="w-4 h-4 text-sky-600" %}
+        </div>
+        Créer une séance
       </a>
       <a href="{% url 'admin_payment_create' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "credit-card" class="w-4 h-4 text-[#26b2bd]" %} Enregistrer un paiement
+         class="flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+        <div class="w-8 h-8 rounded-sm bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition shrink-0">
+          {% lucide "credit-card" class="w-4 h-4 text-green-600" %}
+        </div>
+        Enregistrer un paiement
       </a>
+      <a href="{% url 'admin_certificates_list' %}"
+         class="flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+        <div class="w-8 h-8 rounded-sm bg-yellow-100 group-hover:bg-yellow-200 flex items-center justify-center transition shrink-0">
+          {% lucide "award" class="w-4 h-4 text-yellow-600" %}
+        </div>
+        Gérer les certificats
+      </a>
+    </div>
+
+    <!-- Mini stat validation fiches -->
+    <div class="mx-4 mb-4 p-3 bg-orange-50 rounded-sm border border-orange-100">
+      <div class="flex items-center gap-2 mb-1">
+        {% lucide "file-check" class="w-4 h-4 text-orange-500" %}
+        <span class="text-xs font-semibold text-orange-800">Fiches à valider</span>
+      </div>
+      <p class="text-xl font-bold text-orange-700">{{ sessions_en_attente_validation }}</p>
+      <a href="{% url 'admin_sessions_list' %}?statut_validation=en_attente" class="text-xs text-orange-600 hover:underline mt-1 inline-block">Voir les fiches →</a>
     </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  // ── Graphe séances (line chart) ───────────────────────────────
+  const sessionsCtx = document.getElementById('sessionsChart');
+  if (sessionsCtx) {
+    new Chart(sessionsCtx, {
+      type: 'line',
+      data: {
+        labels: {{ sessions_labels|safe }},
+        datasets: [
+          {
+            label: 'Complétées',
+            data: {{ sessions_completed_data|safe }},
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4,
+          },
+          {
+            label: 'Planifiées',
+            data: {{ sessions_scheduled_data|safe }},
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#38bdf8',
+            pointRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 } } },
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // ── Graphe financier (doughnut) ───────────────────────────────
+  const finCtx = document.getElementById('financeChart');
+  if (finCtx) {
+    const ca = {{ revenue_total|default:0 }};
+    const form = {{ total_paiements_formateurs|default:0 }};
+    const marge = Math.max(0, ca - form);
+    new Chart(finCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Formateurs', 'Marge nette'],
+        datasets: [{
+          data: [form, marge],
+          backgroundColor: ['#2dd4bf', '#10b981'],
+          borderWidth: 2,
+          borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: '70%',
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+  // ── Graphe revenus mensuels (bar chart) ──────────────────────
+  const revCtx = document.getElementById('revenueChart');
+  if (revCtx) {
+    new Chart(revCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ revenue_labels|safe }},
+        datasets: [{
+          label: 'Revenus (MAD)',
+          data: {{ revenue_data|safe }},
+          backgroundColor: 'rgba(16,185,129,0.15)',
+          borderColor: '#10b981',
+          borderWidth: 2,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 } } },
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}

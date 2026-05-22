@@ -1921,6 +1921,8 @@ def admin_dashboard(request):
     labels = []
     completed_data = []
     scheduled_data = []
+    revenue_data = []
+    new_students_data = []
     for i in range(5, -1, -1):
         ref = today.replace(day=1)
         # rewind i months
@@ -1942,6 +1944,17 @@ def admin_dashboard(request):
         scheduled_data.append(
             Session.objects.filter(status='scheduled', date__gte=first_day, date__lt=last_day).count()
         )
+        rev = Payment.objects.filter(
+            status='paid', payment_date__date__gte=first_day, payment_date__date__lt=last_day
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        revenue_data.append(float(rev))
+
+        ns = Student.objects.filter(
+            date_joined__gte=first_day, date_joined__lt=last_day
+        ).count()
+        new_students_data.append(ns)
+
+    marge_nette = float(revenue_total) - float(total_paiements_formateurs)
 
     context = {
         'total_teachers': total_teachers,
@@ -1975,6 +1988,11 @@ def admin_dashboard(request):
         'sessions_labels': _json.dumps(labels),
         'sessions_completed_data': _json.dumps(completed_data),
         'sessions_scheduled_data': _json.dumps(scheduled_data),
+        'marge_nette': round(marge_nette, 2),
+        'revenue_labels': _json.dumps(labels),
+        'revenue_data': _json.dumps(revenue_data),
+        'new_students_labels': _json.dumps(labels),
+        'new_students_data': _json.dumps(new_students_data),
     }
 
     return render(request, 'dashboard/admin/home/index.html', context)
