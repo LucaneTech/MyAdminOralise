@@ -2599,11 +2599,12 @@ def certificate_detail_student(request, cert_id):
 from .forms import (
     AdminUserCreateForm, AdminUserEditForm, AdminResetPasswordForm,
     StudentAdminForm, TeacherAdminForm, LanguageForm,
-    SessionAdminForm, PaymentAdminForm, EvaluationAdminForm,
+    SessionAdminForm, SessionSeriesAdminForm, PaymentAdminForm, EvaluationAdminForm,
     ResourceAdminForm, RequestAdminForm, NotificationAdminForm,
     AssignmentAdminForm,
 )
-from dashboard.models import Evaluation, Assignment, Submission
+from dashboard.models import Evaluation, Assignment, Submission, SessionSeries
+from dashboard.services import generate_series_occurrences, apply_series_edit, apply_series_delete
 from django.contrib.auth.hashers import make_password
 
 
@@ -2936,15 +2937,34 @@ def admin_language_delete(request, lang_id):
 @admin_required
 def admin_session_create(request):
     if request.method == 'POST':
-        form = SessionAdminForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Séance créée.")
-            return redirect('admin_sessions_list')
+        is_recurring = request.POST.get('is_recurring') == 'on'
+        if is_recurring:
+            form = SessionSeriesAdminForm(request.POST)
+            if form.is_valid():
+                series = form.save()
+                occurrences = generate_series_occurrences(series)
+                messages.success(request, f"Série créée — {len(occurrences)} séances générées.")
+                return redirect('admin_sessions_list')
+            return render(request, 'dashboard/admin/home/session_form.html', {
+                'form': SessionAdminForm(),
+                'series_form': form,
+                'titre': 'Créer une séance',
+                'section_active': 'sessions',
+                'is_recurring': True,
+            })
+        else:
+            form = SessionAdminForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Séance créée.")
+                return redirect('admin_sessions_list')
     else:
         form = SessionAdminForm()
     return render(request, 'dashboard/admin/home/session_form.html', {
-        'form': form, 'titre': 'Créer une séance', 'section_active': 'sessions',
+        'form': form,
+        'series_form': SessionSeriesAdminForm(),
+        'titre': 'Créer une séance',
+        'section_active': 'sessions',
     })
 
 
@@ -2952,16 +2972,24 @@ def admin_session_create(request):
 def admin_session_edit(request, session_id):
     session = get_object_or_404(Session, id=session_id)
     if request.method == 'POST':
+        scope = request.POST.get('_scope')
         form = SessionAdminForm(request.POST, instance=session)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Séance mise à jour.")
+            if scope and session.series_id:
+                apply_series_edit(session, scope, form.cleaned_data)
+                messages.success(request, f"Modification appliquée ({scope}).")
+            else:
+                form.save()
+                messages.success(request, "Séance mise à jour.")
             return redirect('admin_sessions_list')
     else:
         form = SessionAdminForm(instance=session)
     return render(request, 'dashboard/admin/home/session_form.html', {
-        'form': form, 'session': session,
-        'titre': f'Modifier séance — {session.date}', 'section_active': 'sessions',
+        'form': form,
+        'series_form': SessionSeriesAdminForm(),
+        'session': session,
+        'titre': f'Modifier séance — {session.date}',
+        'section_active': 'sessions',
     })
 
 
@@ -2969,12 +2997,64 @@ def admin_session_edit(request, session_id):
 def admin_session_delete(request, session_id):
     session = get_object_or_404(Session, id=session_id)
     if request.method == 'POST':
-        session.delete()
-        messages.success(request, "Séance supprimée.")
+        scope = request.POST.get('scope', 'this')
+        if session.series_id:
+            apply_series_delete(session, scope)
+            messages.success(request, "Suppression appliquée.")
+        else:
+            session.delete()
+            messages.success(request, "Séance supprimée.")
         return redirect('admin_sessions_list')
     return render(request, 'dashboard/admin/home/confirm_delete.html', {
-        'objet': session, 'back_url': 'admin_sessions_list', 'section_active': 'sessions',
+        'objet': session,
+        'back_url': 'admin_sessions_list',
+        'section_active': 'sessions',
         'titre': f'Supprimer la séance du {session.date}',
+        'is_series': bool(session.series_id),
+    })
+
+
+@admin_required
+def admin_session_scope_edit(request, session_id):
+    session = get_object_or_404(Session, id=session_id)
+    if request.method == 'POST':
+        scope = request.POST.get('scope', 'this')
+        form = SessionAdminForm(request.POST, instance=session)
+        if form.is_valid():
+            apply_series_edit(session, scope, form.cleaned_data)
+            messages.success(request, "Modification appliquée.")
+        return redirect('admin_sessions_list')
+    post_data = request.GET.copy()
+    form = SessionAdminForm(post_data, instance=session)
+    form.is_valid()
+    return render(request, 'dashboard/admin/home/session_scope_choice.html', {
+        'session': session, 'form': form,
+        'section_active': 'sessions', 'titre': 'Portée de la modification',
+    })
+
+
+@admin_required
+def admin_session_series_list(request):
+    series_list = SessionSeries.objects.select_related('teacher', 'language').order_by('-created_at')
+    return render(request, 'dashboard/admin/home/session_series_list.html', {
+        'series_list': series_list, 'section_active': 'sessions', 'titre': 'Séries récurrentes',
+    })
+
+
+@admin_required
+def admin_session_series_delete(request, series_id):
+    series = get_object_or_404(SessionSeries, id=series_id)
+    if request.method == 'POST':
+        series.occurrences.all().delete()
+        series.delete()
+        messages.success(request, "Série et toutes ses séances supprimées.")
+        return redirect('admin_session_series_list')
+    count = series.occurrences.count()
+    return render(request, 'dashboard/admin/home/confirm_delete.html', {
+        'objet': series,
+        'back_url': 'admin_session_series_list',
+        'section_active': 'sessions',
+        'titre': f'Supprimer la série — {count} séances seront effacées',
     })
 
 

@@ -212,3 +212,29 @@ class SessionSeriesServiceTest(TestCase):
         self.assertEqual(updated[1].start_time, _time(14, 0))  # changed
         self.assertEqual(updated[2].start_time, _time(14, 0))  # changed
         self.assertEqual(updated[3].start_time, _time(14, 0))  # changed
+
+
+class AdminSessionSeriesViewTest(TestCase):
+    def setUp(self):
+        self.admin_user = make_user('admin_sv', 'admin')
+        self.client = Client()
+        self.client.login(username='admin_sv', password='pass')
+        self.teacher = Teacher.objects.get(user=make_user('t_sv', 'teacher'))
+        self.lang = Language.objects.create(name='Allemand', code='de')
+
+    def test_create_series_generates_occurrences(self):
+        from django.urls import reverse
+        response = self.client.post(reverse('admin_session_create'), {
+            'is_recurring': 'on',
+            'teacher': self.teacher.pk,
+            'language': self.lang.pk,
+            'day_of_week': 0,
+            'start_time': '10:00',
+            'end_time': '11:00',
+            'recurrence_start': '2026-06-01',
+            'recurrence_end': '2026-06-22',
+            'type_seance': 'individuelle',
+        })
+        self.assertRedirects(response, reverse('admin_sessions_list'))
+        self.assertEqual(SessionSeries.objects.count(), 1)
+        self.assertEqual(Session.objects.filter(series__isnull=False).count(), 4)
