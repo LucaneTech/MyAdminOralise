@@ -123,3 +123,69 @@ class ReportingAccessTest(TestCase):
         r = self.client.get('/reporting/')
         # @teacher_required redirects non-teachers (302)
         self.assertEqual(r.status_code, 302)
+
+
+from dashboard.models import SessionSeries
+from dashboard.services import generate_series_occurrences, apply_series_edit, apply_series_delete
+from datetime import date, time
+
+
+class SessionSeriesServiceTest(TestCase):
+    def setUp(self):
+        self.tu = make_user('teacher_s', 'teacher')
+        self.teacher = Teacher.objects.get(user=self.tu)
+        self.lang = Language.objects.create(name='Espagnol', code='es')
+
+    def _make_series(self, start, end=None, dow=0):
+        return SessionSeries.objects.create(
+            teacher=self.teacher, language=self.lang,
+            day_of_week=dow,
+            start_time=time(10, 0), end_time=time(11, 0),
+            recurrence_start=start, recurrence_end=end,
+        )
+
+    def test_generate_4_weeks(self):
+        start = date(2026, 6, 1)   # lundi
+        end = date(2026, 6, 22)    # 4 lundis
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        self.assertEqual(len(sessions), 4)
+        for i, s in enumerate(sessions):
+            self.assertEqual(s.series_index, i)
+            self.assertEqual(s.date.weekday(), 0)
+
+    def test_generate_advances_to_correct_day(self):
+        # start date is Wednesday, series is Monday → first session on next Monday
+        start = date(2026, 6, 3)   # mercredi
+        end = date(2026, 6, 15)
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        self.assertEqual(sessions[0].date, date(2026, 6, 8))  # premier lundi
+
+    def test_apply_delete_this(self):
+        start = date(2026, 6, 1)
+        end = date(2026, 6, 22)
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        apply_series_delete(sessions[1], 'this')
+        from dashboard.models import Session
+        self.assertEqual(Session.objects.filter(series=series).count(), 3)
+
+    def test_apply_delete_this_and_future(self):
+        start = date(2026, 6, 1)
+        end = date(2026, 6, 22)
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        apply_series_delete(sessions[1], 'this_and_future')
+        from dashboard.models import Session
+        self.assertEqual(Session.objects.filter(series=series).count(), 1)
+
+    def test_apply_delete_all(self):
+        start = date(2026, 6, 1)
+        end = date(2026, 6, 22)
+        series = self._make_series(start, end, dow=0)
+        sessions = generate_series_occurrences(series)
+        apply_series_delete(sessions[0], 'all')
+        from dashboard.models import Session
+        self.assertEqual(Session.objects.filter(series=series).count(), 0)
+        self.assertFalse(SessionSeries.objects.filter(pk=series.pk).exists())
