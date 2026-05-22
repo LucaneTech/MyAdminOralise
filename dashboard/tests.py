@@ -93,14 +93,8 @@ class ReportingAccessTest(TestCase):
 
     def test_admin_reporting_list_ok_for_admin(self):
         self.client.login(username='admin_rep', password='pass')
-        try:
-            r = self.client.get('/administrateur/reporting/')
-            # Template may not exist yet (created in a later task);
-            # what matters is the view let the admin through (not 302/404).
-            self.assertNotEqual(r.status_code, 302)  # not redirected to login
-            self.assertNotEqual(r.status_code, 404)  # not permission denied
-        except Exception:
-            pass  # TemplateDoesNotExist — view reached, access granted
+        r = self.client.get('/administrateur/reporting/')
+        self.assertEqual(r.status_code, 200)
 
     def test_admin_reporting_list_blocked_for_teacher(self):
         self.client.login(username='teacher_rep', password='pass')
@@ -110,14 +104,8 @@ class ReportingAccessTest(TestCase):
 
     def test_admin_reporting_detail_ok_for_admin(self):
         self.client.login(username='admin_rep', password='pass')
-        try:
-            r = self.client.get(f'/administrateur/reporting/{self.teacher.id}/')
-            # Template may not exist yet (created in a later task);
-            # what matters is the view let the admin through (not 302/404).
-            self.assertNotEqual(r.status_code, 302)  # not redirected to login
-            self.assertNotEqual(r.status_code, 404)  # not permission denied
-        except Exception:
-            pass  # TemplateDoesNotExist — view reached, access granted
+        r = self.client.get(f'/administrateur/reporting/{self.teacher.id}/')
+        self.assertEqual(r.status_code, 200)
 
     def test_admin_reporting_detail_blocked_for_teacher(self):
         self.client.login(username='teacher_rep', password='pass')

@@ -15,7 +15,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.http import require_POST, require_GET
-
+from .decorators import teacher_required, admin_required, student_required
 
 from dashboard import models
 from dashboard.decorators import admin_required
@@ -2222,10 +2222,8 @@ def _parse_date_range(request, default_days=14):
 # ─────────────────────────────────────────────────────────────
 
 @login_required
+@admin_required
 def admin_reporting_list(request):
-    if request.user.role != 'admin':
-        raise Http404
-
     date_debut, date_fin = _parse_date_range(request)
 
     all_sessions = Session.objects.filter(
@@ -2288,9 +2286,8 @@ def admin_reporting_list(request):
 
 
 @login_required
+@admin_required
 def admin_reporting_detail(request, teacher_id):
-    if request.user.role != 'admin':
-        raise Http404
     teacher = get_object_or_404(Teacher, id=teacher_id)
 
     date_debut, date_fin = _parse_date_range(request)
@@ -2347,9 +2344,8 @@ def admin_reporting_detail(request, teacher_id):
 
 
 @login_required
+@teacher_required
 def teacher_reporting(request):
-    if request.user.role != 'teacher':
-        raise Http404
     teacher = get_object_or_404(Teacher, user=request.user)
 
     date_debut, date_fin = _parse_date_range(request)
@@ -2408,7 +2404,7 @@ def teacher_reporting(request):
 # ─────────────────────────────────────────────────────────────
 #  PAIEMENTS FORMATEURS (admin)
 # ─────────────────────────────────────────────────────────────
-
+@login_required
 @admin_required
 def paiements_formateurs_list(request):
     """Liste tous les paiements formateurs."""
@@ -2438,7 +2434,7 @@ def paiements_formateurs_list(request):
         'total_paye': total_paye,
     })
 
-
+@login_required
 @admin_required
 def paiement_formateur_create(request):
     """Créer un nouveau paiement formateur."""
@@ -2458,7 +2454,7 @@ def paiement_formateur_create(request):
         'titre': 'Créer un paiement',
     })
 
-
+@login_required
 @admin_required
 def paiement_formateur_edit(request, paiement_id):
     """Modifier un paiement formateur existant."""
@@ -2480,7 +2476,7 @@ def paiement_formateur_edit(request, paiement_id):
         'titre': 'Modifier le paiement',
     })
 
-
+@login_required
 @admin_required
 def paiement_formateur_delete(request, paiement_id):
     """Supprimer un paiement formateur."""
@@ -2516,7 +2512,7 @@ def mes_paiements_formateur(request):
 # ─────────────────────────────────────────────────────────────
 #  CERTIFICATS — vues améliorées
 # ─────────────────────────────────────────────────────────────
-
+@login_required
 @admin_required
 def admin_certificate_create(request):
     """Créer un certificat (admin) avec les nouveaux champs."""
@@ -2534,7 +2530,7 @@ def admin_certificate_create(request):
         'titre': 'Ajouter un certificat',
     })
 
-
+@login_required
 @admin_required
 def admin_certificate_edit(request, cert_id):
     """Modifier un certificat existant."""
@@ -2554,7 +2550,7 @@ def admin_certificate_edit(request, cert_id):
         'titre': 'Modifier le certificat',
     })
 
-
+@login_required
 @admin_required
 def admin_certificates_list(request):
     """Liste tous les certificats (admin)."""
