@@ -1,392 +1,138 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
 {% load static %}
 {% load lucide %}
-{% block title %} Dashboard {% endblock title %}
-
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}
-<style>
-    td .dropdown {
-    position: relative;
-}
-
-td .dropdown .dropdown-menu {
-    position: absolute;
-    transform: translateY(0) !important;
-    top: -30px !important;
-    margin-top: 0;
-}
-</style>
-{% endblock stylesheets %}
+{% load humanize %}
+{% block title %}Étudiants{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-6">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h5 class="h3 mb-0">Gestion des étudiants</h5>
-                            <p class="text-sm mb-0 text-muted">
-                                {{ total_students }} étudiants enregistrés
-                            </p>
-                        </div>
-                        <div class="col text-right">
-                            <div class="btn-group" role="group">
-                                <button onclick="loadModal('{% url 'admin_student_create' %}')" class="flex items-center gap-2 px-4 py-2 bg-[#26b2bd] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">{% lucide "plus" class="w-4 h-4" %} Ajouter</button>
-                                <a href="{% url 'export_students' %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="ni ni-cloud-download-95"></i> Exporter CSV
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistiques globales -->
-    <div class="row mt-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Total étudiants</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_students }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
-                                <i class="ni ni-single-02"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Heures achetées</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_hours_purchased }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                <i class="ni ni-time-alarm"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Revenu total</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_paid_sum | default:0 }} MAD</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
-                                <i class="ni ni-money-coins"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtres -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-control-label">Statut</label>
-                                <select class="form-control" id="filterStatus">
-                                    <option value="all">Tous les étudiants</option>
-                                    <option value="active">Actifs seulement</option>
-                                    <option value="inactive">Inactifs seulement</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-control-label">Langue</label>
-                                <select class="form-control">
-                                    <option>Toutes les langues</option>
-                                    <option>Anglais</option>
-                                    <option>Français</option>
-                                    <option>Espagnol</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-control-label">Recherche</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Nom, email ou matricule...">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-primary" type="button">
-                                            <i class="ni ni-zoom-split-in"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des étudiants -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header border-0">
-                    <h3 class="mb-0">Liste des étudiants</h3>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Étudiant</th>
-                                <th scope="col">Matricule</th>
-                                <th scope="col">Langues</th>
-                                <th scope="col">Heures restantes</th>
-                                <th scope="col">Total payé</th>
-                                <th scope="col">Enseignants</th>
-                                <th scope="col">Statut</th>
-                                <th scope="col">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student in students %}
-                            <tr>
-                                <th scope="row">
-                                    <div class="media align-items-center">
-                                        <a href="#" class="avatar rounded-circle mr-3">
-                                             <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
-                 border-radius: 50%;
-                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
-                                        </a>
-                                        <div class="media-body">
-                                            <span class="name mb-0 text-sm">{{ student.user.full_name }}</span>
-                                            {% comment %} <small class="text-muted">{{ student.user.email }}</small> {% endcomment %}
-                                            <br>
-                                            <small class="text-muted">
-                                                Inscrit le {{ student.date_joined|date:"d/m/Y" }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </th>
-                                <td>
-                                    <span class="badge badge-default">{{ student.matricule }}</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-wrap">
-                                        {% for language in student.languages.all|slice:":2" %}
-                                        <span class="badge badge-primary mr-1 mb-1">{{ language.name }}</span>
-                                        {% endfor %}
-                                        {% if student.languages.count > 2 %}
-                                        <span class="badge badge-secondary">+{{ student.languages.count|add:"-2" }}</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress-wrapper w-75 mr-3">
-                                            {% widthratio student.hours_remaining student.total_hours_purchased 100 as progress %}
-                                            <div class="progress">
-                                                <div class="progress-bar bg-{{ student.hours_color }}" 
-                                                     role="progressbar" 
-                                                     style="width: {{ progress }}%;">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span class="font-weight-bold">{{ student.hours_remaining }}</span>
-                                            <span class="text-muted">/{{ student.total_hours_purchased }}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="font-weight-bold">{{ student.total_paid_amount|floatformat:2 |default:0 }}MAD</span>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ student.payments.count }} paiement{{ student.payments.count|pluralize }}
-                                    </small>
-                                </td>
-                               <td>
-    <div class="d-flex flex-wrap">
-        {% for teacher in student.current_teachers.all|slice:":3" %}
-        <div class="text-center mr-3 mb-2" style="min-width: 60px;">
-            <a href="#" data-toggle="tooltip" title="{{ teacher.user.full_name }}">
-                <img src="{% static 'assets/img/profile.png' %}" alt="{{ teacher.user.full_name }}" 
-                     style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-            </a>
-            <small class="d-block text-muted mt-1">{{ teacher.user.full_name|truncatechars:13 }}</small>
-        </div>
-        {% endfor %}
-        
-        {% if student.active_teachers_count > 3 %}
-        <div class="text-center mr-3 mb-2" style="min-width: 40px;">
-            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto" 
-                 data-toggle="tooltip" title="{{ student.active_teachers_count }} enseignants"
-                 style="width: 40px; height: 40px;">
-                <span class="text-white small font-weight-bold">+{{ student.active_teachers_count|add:"-3" }}</span>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-</td>
-                                <td>
-                                   {% if student.statuts == 'actif' %}
-    <span class="badge badge-success">
-        <i class="ni ni-check-circle"></i> Actif
-    </span>
-{% elif student.statuts == 'attente' %}
-    <span class="badge badge-warning">
-        <i class="ni ni-time-alarm"></i> En attente
-    </span>
-{% elif student.statuts == 'abandon' %}
-    <span class="badge badge-danger">
-        <i class="ni ni-fat-remove"></i> Abandon
-    </span>
-{% elif student.statuts == 'terminé' %}
-    <span class="badge badge-info">
-        <i class="ni ni-check-bold"></i> Terminé
-    </span>
-{% endif %}
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-neutral dropdown-toggle" type="button" 
-                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Actions
-                                        </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a class="dropdown-item" href="{% url 'student_detail' student.id %}">
-                                                <i class="ni ni-zoom-split-in text-info"></i> Voir détails
-                                            </a>
-                                            <a class="dropdown-item" href="{% url 'admin_student_edit' student.id %}">
-                                                <i class="fas fa-edit text-warning"></i> Modifier
-                                            </a>
-                                            <a class="dropdown-item" href="mailto:{{ student.user.email }}">
-                                                <i class="ni ni-send text-primary"></i> Contacter
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item text-danger" href="{% url 'admin_student_delete' student.id %}">
-                                                <i class="fas fa-trash text-danger"></i> Supprimer
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="8" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="ni ni-single-02 display-4"></i>
-                                        <p class="mt-2">Aucun étudiant enregistré</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card-footer py-4">
-                    <nav aria-label="Page navigation">
-                        {% if page_obj.has_other_pages %}
-                        <ul class="pagination justify-content-end mb-0">
-                            {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                    <i class="ni ni-bold-left"></i>
-                                </a>
-                            </li>
-                            {% endif %}
-                            
-                            {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }}</span>
-                                </li>
-                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-                            
-                            {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                    <i class="ni ni-bold-right"></i>
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                        {% endif %}
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Gestion des étudiants</h1>
+    <p class="text-sm text-gray-500 mt-0.5">{{ total_students }} étudiant{{ total_students|pluralize }} enregistré{{ total_students|pluralize }}</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'admin_student_create' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
+      {% lucide "user-plus" class="w-3.5 h-3.5" %} Ajouter
+    </a>
+    {% comment %} <a href="{% url 'export_students' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50 transition">
+      {% lucide "download" class="w-3.5 h-3.5" %} CSV
+    </a> {% endcomment %}
+  </div>
 </div>
 
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-violet-100 flex items-center justify-center">{% lucide "graduation-cap" class="w-5 h-5 text-violet-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_students }}</p><p class="text-xs text-gray-500">Total étudiants</p></div>
+  </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-sky-100 flex items-center justify-center">{% lucide "clock" class="w-5 h-5 text-sky-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_hours_purchased }}</p><p class="text-xs text-gray-500">Heures achetées</p></div>
+  </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-sm bg-green-100 flex items-center justify-center">{% lucide "banknote" class="w-5 h-5 text-green-600" %}</div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_paid_sum|default:0|intcomma }} MAD</p><p class="text-xs text-gray-500">CA total étudiants</p></div>
+  </div>
+</div>
 
-
-<style>
-.progress-wrapper {
-    position: relative;
-}
-.progress {
-    height: 6px;
-    border-radius: 3px;
-}
-.avatar-group .avatar {
-    transition: transform 0.2s;
-}
-.avatar-group .avatar:hover {
-    transform: translateY(-2px);
-}
-.timeline-step {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #f8f9fe;
-    border: 2px solid #dee2e6;
-}
-.timeline-content {
-    margin-left: 60px;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Filtre par statut
-    const filterStatus = document.getElementById('filterStatus');
-    filterStatus.addEventListener('change', function() {
-        const status = this.value;
-        window.location.href = `?status=${status}`;
-    });
-    
-    // Tooltips pour les avatars
-    $('[data-toggle="tooltip"]').tooltip();
-});
-</script>
+<!-- Table -->
+<div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Étudiant</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Matricule</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Langues</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Heures</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Payé</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for student in students %}
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-sm bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm">
+                {{ student.user.first_name|first|upper }}{{ student.user.last_name|first|upper }}
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">{{ student.user.get_full_name }}</p>
+                <p class="text-xs text-gray-400">{{ student.user.email }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded-sm">{{ student.matricule }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap gap-1">
+              {% for lang in student.languages.all|slice:":2" %}
+              <span class="text-xs font-medium bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-sm border border-violet-200">{{ lang.name }}</span>
+              {% endfor %}
+              {% if student.languages.count > 2 %}<span class="text-xs text-gray-400">+{{ student.languages.count|add:"-2" }}</span>{% endif %}
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <p class="text-sm font-semibold text-gray-900">{{ student.hours_remaining }}<span class="text-gray-400 text-xs">/{{ student.total_hours_purchased }}h</span></p>
+          </td>
+          <td class="px-4 py-3">
+            <p class="text-sm font-semibold text-gray-900">{{ student.total_paid_amount|default:0|floatformat:0 }} MAD</p>
+          </td>
+          <td class="px-4 py-3">
+            {% if student.statuts == 'actif' %}<span class="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-sm">Actif</span>
+            {% elif student.statuts == 'attente' %}<span class="text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-sm">En attente</span>
+            {% elif student.statuts == 'abandon' %}<span class="text-xs font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-sm">Abandon</span>
+            {% elif student.statuts == 'terminé' %}<span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-sm">Terminé</span>
+            {% elif student.statuts == 'pause' %}<span class="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-sm">Pause</span>
+            {% else %}<span class="text-xs font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-sm">{{ student.statuts }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <a href="{% url 'student_detail' student.id %}"
+                 class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-100 text-sky-700 text-xs font-semibold rounded-sm hover:bg-sky-200 transition">
+                {% lucide "eye" class="w-3.5 h-3.5" %}
+              </a>
+              <a href = "{% url 'admin_student_edit' student.id%}"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-sm hover:bg-amber-200 transition">
+                {% lucide "pencil" class="w-3.5 h-3.5" %}
+              </a> 
+       
+              <a href="{% url 'admin_student_delete' student.id %}"
+                 class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 text-xs font-semibold rounded-sm hover:bg-red-200 transition"
+                 onclick="return confirm('Supprimer cet étudiant ?')">
+                {% lucide "trash-2" class="w-3.5 h-3.5" %}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="px-4 py-12 text-center">
+            {% lucide "graduation-cap" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
+            <p class="text-sm text-gray-400">Aucun étudiant enregistré</p>
+            <a href="{% url 'admin_student_create' %}" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
+              {% lucide "plus" class="w-3.5 h-3.5" %} Ajouter le premier étudiant
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+    <p class="text-xs text-gray-500">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</p>
+    <div class="flex gap-1">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">‹</a>{% endif %}
+      <span class="px-2.5 py-1.5 text-xs bg-violet-600 text-white rounded-sm">{{ page_obj.number }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">›</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

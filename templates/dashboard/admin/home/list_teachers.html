@@ -9,10 +9,9 @@
     <h1 class="text-xl font-bold text-gray-900">Gestion des formateurs</h1>
     <p class="text-sm text-gray-500 mt-0.5">{{ total_teachers }} formateur{{ total_teachers|pluralize }} enregistré{{ total_teachers|pluralize }}</p>
   </div>
-  <button onclick="loadModal('{% url 'admin_teacher_create' %}')"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-sm hover:bg-amber-500 transition">
+  <a href="{% url 'admin_teacher_create' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
     {% lucide "user-plus" class="w-3.5 h-3.5" %} Ajouter
-  </button>
+  </a>
 </div>
 
 <!-- Stats -->
@@ -89,10 +88,9 @@
                  class="inline-flex items-center px-2.5 py-1.5 bg-sky-100 text-sky-700 text-xs font-semibold rounded-sm hover:bg-sky-200 transition">
                 {% lucide "eye" class="w-3.5 h-3.5" %}
               </a>
-              <button onclick="loadModal('{% url 'admin_teacher_edit' teacher.id %}')"
-                      class="inline-flex items-center px-2.5 py-1.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-sm hover:bg-amber-200 transition">
+              <a href="{% url 'admin_teacher_edit' teacher.id %}" class="inline-flex items-center px-2.5 py-1.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-sm hover:bg-amber-200 transition">
                 {% lucide "pencil" class="w-3.5 h-3.5" %}
-              </button>
+              </a>
               <a href="{% url 'admin_reporting_detail' teacher.id %}"
                  class="inline-flex items-center px-2.5 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-sm hover:bg-violet-200 transition">
                 {% lucide "bar-chart-2" class="w-3.5 h-3.5" %}
@@ -110,9 +108,9 @@
           <td colspan="6" class="px-4 py-12 text-center">
             {% lucide "users" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
             <p class="text-sm text-gray-400">Aucun formateur enregistré</p>
-            <button onclick="loadModal('{% url 'admin_teacher_create' %}')" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-sm hover:bg-amber-500 transition">
+            <a href="{% url 'admin_teacher_create' %}" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
               {% lucide "plus" class="w-3.5 h-3.5" %} Ajouter le premier formateur
-            </button>
+            </a>
           </td>
         </tr>
         {% endfor %}
