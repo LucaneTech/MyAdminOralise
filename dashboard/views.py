@@ -1478,7 +1478,7 @@ def teacher_evaluations_add(request):
         except Exception as e:
             messages.error(request, f"Erreur lors de l'ajout: {str(e)}")
 
-    students = Student.objects.filter(current_teacher=teacher)
+    students = Student.objects.filter(current_teachers=teacher)
     languages = teacher.languages.all()
     evaluation_types = Evaluation.EVALUATION_TYPES
 
@@ -1776,6 +1776,123 @@ def teacher_sessions_view(request):
         "availables_students": availables_students
     }
     return render(request, "dashboard/teacher/home/sessions.html", context)
+
+
+@login_required
+def teacher_session_create(request):
+    if request.user.role != 'teacher':
+        raise Http404
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+
+    if request.method == 'POST':
+        form = SessionForm(request.POST, teacher=teacher)
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.teacher = teacher
+            session.save()
+            form.save_m2m()
+            messages.success(request, "Séance créée avec succès.")
+            return redirect('teacher_sessions')
+    else:
+        from datetime import date as _date
+        initial = {}
+        start = request.GET.get('start', '')
+        if start:
+            initial['date'] = start[:10]
+            initial['start_time'] = start[11:16] if len(start) > 10 else ''
+        end = request.GET.get('end', '')
+        if end:
+            initial['end_time'] = end[11:16] if len(end) > 10 else ''
+        form = SessionForm(initial=initial, teacher=teacher)
+
+    return render(request, 'dashboard/teacher/home/session_form.html', {
+        'form': form,
+        'titre': 'Nouvelle séance',
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+    })
+
+
+@login_required
+def teacher_session_edit(request, session_id):
+    if request.user.role != 'teacher':
+        raise Http404
+    teacher = get_object_or_404(Teacher, user=request.user)
+    profile = get_object_or_404(Profile, user=request.user)
+    session = get_object_or_404(Session, pk=session_id, teacher=teacher)
+
+    if request.method == 'POST':
+        form = SessionForm(request.POST, instance=session, teacher=teacher)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Séance modifiée avec succès.")
+            return redirect('teacher_sessions')
+    else:
+        form = SessionForm(instance=session, teacher=teacher)
+
+    return render(request, 'dashboard/teacher/home/session_form.html', {
+        'form': form,
+        'titre': 'Modifier la séance',
+        'session': session,
+        'teacher': teacher,
+        'profile': profile,
+        'user': request.user,
+    })
+
+
+@login_required
+def teacher_session_status_update(request, session_id):
+    if request.user.role != 'teacher' or request.method != 'POST':
+        raise Http404
+    teacher = get_object_or_404(Teacher, user=request.user)
+    session = get_object_or_404(Session, pk=session_id, teacher=teacher)
+
+    new_status = request.POST.get('status')
+    valid_statuses = [s[0] for s in Session.STATUS_CHOICES]
+    if new_status not in valid_statuses:
+        messages.error(request, "Statut invalide.")
+        return redirect('teacher_sessions')
+
+    old_status = session.status
+    session.status = new_status
+    session.save()
+
+    status_labels = {
+        'scheduled': 'Planifiée',
+        'completed': 'Terminée',
+        'cancelled': 'Annulée',
+        'rescheduled': 'Reportée',
+        'absent': 'Absent',
+    }
+    label = status_labels.get(new_status, new_status)
+    title = f"Statut séance mis à jour : {label}"
+    body = (
+        f"La séance du {session.date.strftime('%d/%m/%Y')} "
+        f"({session.language}) avec {teacher.user.get_full_name()} "
+        f"est maintenant marquée « {label} »."
+    )
+
+    admin_users = CustomUser.objects.filter(role='admin')
+    for admin in admin_users:
+        Notification.objects.create(
+            user=admin,
+            notification_type='system',
+            title=title,
+            message=body,
+        )
+
+    for student in session.students.all():
+        Notification.objects.create(
+            user=student.user,
+            notification_type='system',
+            title=title,
+            message=body,
+        )
+
+    messages.success(request, f"Statut mis à jour : {label}.")
+    return redirect('teacher_sessions')
 
 
 @login_required
