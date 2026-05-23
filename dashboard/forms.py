@@ -1,4 +1,4 @@
-from time import timezone
+from django.utils import timezone
 from django import forms
 from dashboard.models import (
     Profile, CustomUser, Resource, Session, SessionSeries, Student, Language,
