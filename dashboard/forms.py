@@ -144,9 +144,6 @@ class ResourceForm(forms.ModelForm):
             self.fields['students'].queryset = Student.objects.filter(
                 current_teachers=self.teacher
             )
-            # Limiter les langues aux langues de l'enseignant si nécessaire
-            if hasattr(self.teacher, 'languages'):
-                self.fields['languages'].queryset = self.teacher.languages.all()
         
         # Rendre file et url optionnels
         self.fields['file'].required = False
