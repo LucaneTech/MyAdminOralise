@@ -1475,7 +1475,7 @@ def teacher_evaluations_add(request):
             )
 
             messages.success(request, "Évaluation ajoutée avec succès")
-            return redirect("teacher_evaluations")
+            return redirect("evaluations_view")
 
         except Exception as e:
             messages.error(request, f"Erreur lors de l'ajout: {str(e)}")
