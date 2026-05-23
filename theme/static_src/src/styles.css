@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/**
+  * Sources scannées par Tailwind pour générer le CSS final.
+  */
+@source "../../../**/*.{html,py,js}";
+
+@layer base {
+  :root {
+    --color-admin: #26b2bd;
+    --color-teacher: #033050;
+    --color-student: #d9a505;
+  }
+}

@@ -1,5 +1,6 @@
 {% load static %}
 {% load lucide %}
+{% load tailwind_tags %}
 <!DOCTYPE html>
 <html lang="fr" class="h-full">
 <head>
@@ -9,7 +10,7 @@
   <link rel="icon" href="{% static 'assets/img/icons/favicon.png' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'assets/css/output.css' %}">
+  {% tailwind_css %}
   {% block extra_css %}{% endblock %}
 </head>
 <body class="h-full bg-gray-50 font-['Inter'] antialiased">
@@ -38,7 +39,7 @@
 
   <!-- Modal overlay -->
   <div id="modal-backdrop" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="display:none">
-    <div id="modal-panel" class="bg-white rounded-md shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div id="modal-panel" class="bg-white rounded-sm shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
       <div id="modal-content" class="p-6"></div>
     </div>
   </div>

@@ -1,5 +1,17 @@
 {
-  "enabledPlugins": {
-    "context7@claude-plugins-official": true
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python manage.py tailwind --help)",
+      "Bash(python manage.py tailwind init)",
+      "Bash(python manage.py tailwind install)",
+      "Bash(/home/lucane/myprojects/MyAdminOralise/env/lib/python3.13/site-packages/pytailwindcss/bin/latest/tailwindcss --version)",
+      "Bash(python -c ' *)",
+      "Bash(python manage.py showmigrations dashboard)",
+      "Bash(python manage.py test dashboard.tests.SessionSeriesServiceTest -v 2)",
+      "Bash(python manage.py test dashboard.tests.AdminSessionSeriesViewTest.test_create_series_generates_occurrences -v 2)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
   }
 }

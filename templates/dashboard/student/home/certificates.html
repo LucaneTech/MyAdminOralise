@@ -1,127 +1,92 @@
 {% extends 'dashboard/student/layouts/base.html' %}
 
-{% block title %} Mes certificats {% endblock title %}
-
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Mes certificats{% endblock title %}
 
 {% block content %}
-
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-6 col-7">
-         
-          <h6 class="h2 text-white d-inline-block mb-0">Mes certificats</h6>
-
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item">
-                <a href="{% url 'dashboard_view' username=request.user.username %}">
-                  <i class="fas fa-home"></i>
-                </a>
-              </li>
-              <li class="breadcrumb-item active" aria-current="page">Certificats</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Mes certificats</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Vos certificats de formation</p>
   </div>
 </div>
 
+{% if certificates %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for certificate in certificates %}
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm flex flex-col">
+    <div class="p-5 flex-1">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-900">{{ certificate.language.name }}</h3>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Vérifié</span>
+      </div>
 
-<div class="container-fluid mt--6">
-  <div class="row">
-    <div class="col-xl-12">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Certificats de formation</h3>
-            </div>
-          </div>
-        </div>
+      <ul class="space-y-1 mb-3">
+        <li class="flex items-center justify-between text-xs">
+          <span class="text-gray-500">Niveau</span>
+          <span class="font-medium text-gray-800">{{ certificate.level }}</span>
+        </li>
+        <li class="flex items-center justify-between text-xs">
+          <span class="text-gray-500">Délivré le</span>
+          <span class="font-medium text-gray-800">{{ certificate.issued_date|date:"d/m/Y" }}</span>
+        </li>
+        {% if certificate.duree_formation %}
+        <li class="flex items-center justify-between text-xs">
+          <span class="text-gray-500">Durée</span>
+          <span class="font-medium text-gray-800">{{ certificate.duree_formation }}</span>
+        </li>
+        {% endif %}
+      </ul>
 
-        <div class="card-body">
-          {% if certificates %}
-          <div class="row">
-            {% for certificate in certificates %}
-            <div class="col-xl-4 col-md-6 mb-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="text-center mb-3">
-                    <i class="ni ni-badge text-primary" style="font-size: 2.5rem;"></i>
-                  </div>
-                  <h5 class="card-title text-center">{{ certificate.language.name }}</h5>
-
-                  <ul class="list-unstyled mb-3">
-                    <li><strong>Niveau :</strong> {{ certificate.level }}</li>
-                    <li><strong>Délivré le :</strong> {{ certificate.issued_date|date:"d/m/Y" }}</li>
-                    {% if certificate.duree_formation %}
-                    <li><strong>Durée :</strong> {{ certificate.duree_formation }}</li>
-                    {% endif %}
-                  </ul>
-
-                  {% if certificate.competences_validees %}
-                  <div class="mb-3">
-                    <p class="text-xs text-muted text-uppercase font-weight-bold mb-1">Compétences validées</p>
-                    {% for comp in certificate.competences_validees.splitlines %}
-                    {% if comp.strip %}
-                    <div class="d-flex align-items-center mb-1">
-                      <i class="fas fa-check-circle text-success mr-2" style="font-size:.85rem;"></i>
-                      <small>{{ comp.strip }}</small>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                  </div>
-                  {% endif %}
-
-                  {% if certificate.appreciation_pedagogique %}
-                  <p class="text-sm text-muted font-italic border-left pl-2 mb-3">
-                    {{ certificate.appreciation_pedagogique|truncatechars:100 }}
-                  </p>
-                  {% endif %}
-
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <small class="text-muted"><code>{{ certificate.certificate_id }}</code></small>
-                    <span class="badge badge-success badge-pill">
-                      <i class="fas fa-shield-alt mr-1"></i>Vérifié
-                    </span>
-                  </div>
-                </div>
-
-                <div class="card-footer text-center">
-                  <a href="{% url 'certificate_detail_student' cert_id=certificate.id %}" class="btn btn-sm btn-outline-primary mr-1">
-                    <i class="fas fa-eye mr-1"></i>Voir les détails
-                  </a>
-                  {% if certificate.certificate_file %}
-                  <a href="{{ certificate.certificate_file.url }}" class="btn btn-sm btn-primary" target="_blank">
-                    <i class="ni ni-cloud-download-95 mr-1"></i>PDF
-                  </a>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="text-center py-5">
-            <i class="ni ni-badge text-muted" style="font-size: 4rem;"></i>
-            <h4 class="mt-3 text-muted">Aucun certificat disponible</h4>
-            <p class="text-muted">
-              Vos certificats apparaîtront ici une fois que vous aurez terminé vos formations.
-            </p>
-          </div>
+      {% if certificate.competences_validees %}
+      <div class="mb-3">
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Compétences validées</p>
+        <ul class="space-y-1">
+          {% for comp in certificate.competences_validees.splitlines %}
+          {% if comp.strip %}
+          <li class="flex items-start gap-1.5 text-xs text-gray-700">
+            <span class="text-green-500 mt-0.5">&#10003;</span>
+            {{ comp.strip }}
+          </li>
           {% endif %}
-        </div>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if certificate.appreciation_pedagogique %}
+      <p class="text-xs text-gray-500 italic border-l-2 border-[#d9a505] pl-2 mb-3">
+        {{ certificate.appreciation_pedagogique|truncatechars:100 }}
+      </p>
+      {% endif %}
+
+      <div class="flex items-center justify-between mt-2">
+        <code class="text-xs text-gray-400">{{ certificate.certificate_id }}</code>
       </div>
     </div>
+
+    <div class="px-5 py-3 border-t border-gray-100 flex items-center gap-2">
+      <a href="{% url 'certificate_detail_student' cert_id=certificate.id %}"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+        Voir les détails
+      </a>
+      {% if certificate.certificate_file %}
+      <a href="{{ certificate.certificate_file.url }}" target="_blank"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d9a505] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+        PDF
+      </a>
+      {% endif %}
+    </div>
   </div>
+  {% endfor %}
 </div>
+
+{% else %}
+<div class="bg-white rounded-md border border-gray-100 shadow-sm py-16 text-center">
+  <p class="text-4xl text-gray-200 mb-3">&#127941;</p>
+  <h3 class="text-sm font-semibold text-gray-500 mb-1">Aucun certificat disponible</h3>
+  <p class="text-xs text-gray-400">Vos certificats apparaîtront ici une fois que vous aurez terminé vos formations.</p>
+</div>
+{% endif %}
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %}
-
-
-
+{% block extra_js %}{% endblock extra_js %}

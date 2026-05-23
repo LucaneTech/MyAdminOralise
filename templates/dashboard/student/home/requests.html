@@ -1,306 +1,223 @@
 {% extends 'dashboard/student/layouts/base.html' %}
 
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Mes demandes{% endblock title %}
 
 {% block content %}
-<div class="container-fluid mt-5">
-    <!-- Statistiques des demandes -->
-    <div class="row">
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Total des demandes</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                                <i class="ni ni-paper-diploma"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">En attente</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ pending_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
-                                <i class="ni ni-time-alarm"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Approuvées</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ approved_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                <i class="ni ni-check-bold"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Rejetées</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ rejected_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-danger text-white rounded-circle shadow">
-                                <i class="ni ni-fat-remove"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des demandes -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Mes demandes</h3>
-                        </div>
-                        <div class="col text-right">
-                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newRequestModal">
-                                <i class="ni ni-fat-add"></i> Nouvelle demande
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if requests %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Sujet</th>
-                                        <th>Description</th>
-                                        <th>Statut</th>
-                                        <th>Destinataire</th>
-                                        <th>Date de création</th>
-                                        <th>Actions</th>
-                                     
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for request in requests %}
-                                    <tr>
-                                        <td>
-                                            <span class="badge badge-primary">
-                                                {{ request.get_request_type_display }}
-                                            </span>
-                                        </td>
-                                        <td>{{ request.subject }}</td>
-                                        <td>{{ request.description|truncatewords:20 }}</td>
-                                        <td>
-                                            {% if request.status == 'pending' %}
-                                                <span class="badge badge-warning">En attente</span>
-                                            {% elif request.status == 'processing' %}
-                                                <span class="badge badge-info">En traitement</span>
-                                            {% elif request.status == 'approved' %}
-                                                <span class="badge badge-success">Approuvée</span>
-                                            {% else %}
-                                                <span class="badge badge-danger">Rejetée</span>
-                                            {% endif %}
-                                        </td>
-                                         <td>{{ request.teacher }}</td>
-                                        <td>{{ request.created_at|date:"d/m/Y H:i" }}</td>
-                                        <td>
-                                            {% if request.attachment %}
-                                                <a href="{{ request.attachment.url }}" class="btn btn-sm btn-info" target="_blank">
-                                                    <i class="ni ni-single-copy-04"></i> Pièce jointe
-                                                </a>
-                                            {% else %}
-                                                 <div class="btn btn-sm btn-info" target="_blank">
-                                                    <i class="ni ni-single-copy-04"></i> Aucune pièce jointe 
-                                                </div>
-                                            {% endif %}
-                                            {% if request.response %}
-                                                <button class="btn btn-sm btn-success" data-toggle="modal" data-target="#responseModal{{ request.id }}">
-                                                    <i class="ni ni-email-83"></i> Voir réponse
-                                                </button>
-                                                {% else %}
-                                         
-                                                 <div class="btn btn-sm btn-success" target="_blank">
-                                                    <i class="ni ni-email-83"></i> Pas de réponse
-                                                 </
-                                                </div>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            Vous n'avez pas encore fait de demandes.
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Mes demandes</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Suivi de vos demandes auprès des formateurs</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button type="button" id="openNewRequestModal"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d9a505] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+      Nouvelle demande
+    </button>
+  </div>
 </div>
 
-<!-- Modal pour nouvelle demande -->
-<div class="modal fade" id="newRequestModal" tabindex="-1" role="dialog" aria-labelledby="newRequestModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newRequestModalLabel">Nouvelle demande</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="teacher_id" class="form-control-label">Destinataire</label>
-                        <select class="form-control" id="teacher_id" name="teacher_id" required>
-                            <option value="">Sélectionnez un Prof</option>
-                            {% for teacher in teachers %}
-                                <option value="{{ teacher.id }}">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="invalid-feedback">
-                            Veuillez sélectionner un type de demande.
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="requestType" class="form-control-label">Type de demande</label>
-                        <select class="form-control" id="requestType" name="request_type" required>
-                            <option value="">Sélectionnez un type</option>
-                            <option value="absence">Justification d'absence</option>
-                            <option value="document">Demande de document</option>
-                            <option value="meeting">Demande de rendez-vous</option>
-                            <option value="other">Autre</option>
-                        </select>
-                        <div class="invalid-feedback">
-                            Veuillez sélectionner un type de demande.
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="subject" class="form-control-label">Sujet</label>
-                        <input type="text" class="form-control" id="subject" name="subject" required>
-                        <div class="invalid-feedback">
-                            Veuillez entrer un sujet.
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="description" class="form-control-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
-                        <div class="invalid-feedback">
-                            Veuillez entrer une description.
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="attachment" class="form-control-label">Pièce jointe (optionnel)</label>
-                        <input type="file" class="form-control-file" id="attachment" name="attachment">
-                    </div>
-
-                   
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Envoyer la demande</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total des demandes</p>
+    <p class="text-2xl font-bold text-gray-900">{{ total_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">En attente</p>
+    <p class="text-2xl font-bold text-gray-900">{{ pending_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Approuvées</p>
+    <p class="text-2xl font-bold text-gray-900">{{ approved_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Rejetées</p>
+    <p class="text-2xl font-bold text-gray-900">{{ rejected_requests }}</p>
+  </div>
 </div>
 
-<!-- Modals pour les réponses -->
+<!-- Table -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Sujet</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Destinataire</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% if requests %}
+          {% for request in requests %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#d9a505]/10 text-[#d9a505]">
+                {{ request.get_request_type_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ request.subject }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ request.description|truncatewords:20 }}</td>
+            <td class="px-4 py-3">
+              {% if request.status == 'pending' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">En attente</span>
+              {% elif request.status == 'processing' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">En traitement</span>
+              {% elif request.status == 'approved' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Approuvée</span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Rejetée</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ request.teacher }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ request.created_at|date:"d/m/Y H:i" }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                {% if request.attachment %}
+                  <a href="{{ request.attachment.url }}" target="_blank"
+                    class="inline-flex items-center gap-1 px-2 py-1 border border-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-50 transition">
+                    Pièce jointe
+                  </a>
+                {% else %}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">Aucune pièce jointe</span>
+                {% endif %}
+                {% if request.response %}
+                  <button type="button"
+                    onclick="document.getElementById('responseModal{{ request.id }}').classList.remove('hidden')"
+                    class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-md hover:bg-green-100 transition">
+                    Voir réponse
+                  </button>
+                {% else %}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">Pas de réponse</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-400">
+              Vous n'avez pas encore fait de demandes.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal nouvelle demande -->
+<div id="newRequestModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+  <div class="bg-white rounded-md shadow-lg w-full max-w-lg">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-900">Nouvelle demande</h2>
+      <button type="button" id="closeNewRequestModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+    </div>
+    <form method="post" enctype="multipart/form-data" id="newRequestForm" novalidate>
+      {% csrf_token %}
+      <div class="px-5 py-4 space-y-4">
+        <div>
+          <label for="teacher_id" class="block text-xs font-medium text-gray-600 mb-1">Destinataire</label>
+          <select id="teacher_id" name="teacher_id" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#d9a505]/30 focus:border-[#d9a505] transition bg-white">
+            <option value="">Sélectionnez un Prof</option>
+            {% for teacher in teachers %}
+              <option value="{{ teacher.id }}">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="requestType" class="block text-xs font-medium text-gray-600 mb-1">Type de demande</label>
+          <select id="requestType" name="request_type" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#d9a505]/30 focus:border-[#d9a505] transition bg-white">
+            <option value="">Sélectionnez un type</option>
+            <option value="absence">Justification d'absence</option>
+            <option value="document">Demande de document</option>
+            <option value="meeting">Demande de rendez-vous</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+        <div>
+          <label for="subject" class="block text-xs font-medium text-gray-600 mb-1">Sujet</label>
+          <input type="text" id="subject" name="subject" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#d9a505]/30 focus:border-[#d9a505] transition">
+        </div>
+        <div>
+          <label for="description" class="block text-xs font-medium text-gray-600 mb-1">Description</label>
+          <textarea id="description" name="description" rows="4" required
+            class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#d9a505]/30 focus:border-[#d9a505] transition resize-y"></textarea>
+        </div>
+        <div>
+          <label for="attachment" class="block text-xs font-medium text-gray-600 mb-1">Pièce jointe (optionnel)</label>
+          <input type="file" id="attachment" name="attachment"
+            class="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9a505]/10 file:text-[#d9a505] hover:file:opacity-80">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
+        <button type="button" id="cancelNewRequestModal"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+          Annuler
+        </button>
+        <button type="submit"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d9a505] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+          Envoyer la demande
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modals réponses -->
 {% for request in requests %}
-    {% if request.response %}
-    <div class="modal fade" id="responseModal{{ request.id }}" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Réponse à votre demande</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Demande :</strong> {{ request.subject }}</p>
-                    <hr>
-                    <p><strong>Réponse :</strong></p>
-                    <p>{{ request.response }}</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-                </div>
-            </div>
-        </div>
+  {% if request.response %}
+  <div id="responseModal{{ request.id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div class="bg-white rounded-md shadow-lg w-full max-w-md">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-900">Réponse à votre demande</h2>
+        <button type="button" onclick="document.getElementById('responseModal{{ request.id }}').classList.add('hidden')"
+          class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+      </div>
+      <div class="px-5 py-4 space-y-3">
+        <p class="text-sm text-gray-700"><strong>Demande :</strong> {{ request.subject }}</p>
+        <hr class="border-gray-100">
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Réponse</p>
+        <p class="text-sm text-gray-700">{{ request.response }}</p>
+      </div>
+      <div class="flex justify-end px-5 py-4 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('responseModal{{ request.id }}').classList.add('hidden')"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+          Fermer
+        </button>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
 {% endfor %}
 {% endblock %}
 
-{% block javascripts %}
-<script src="/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
-<script src="/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+{% block extra_js %}
 <script>
-// Validation des formulaires
-(function() {
-    'use strict';
-    window.addEventListener('load', function() {
-        var forms = document.getElementsByClassName('needs-validation');
-        var validation = Array.prototype.filter.call(forms, function(form) {
-            form.addEventListener('submit', function(event) {
-                if (form.checkValidity() === false) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    }, false);
+(function () {
+  const modal = document.getElementById('newRequestModal');
+  document.getElementById('openNewRequestModal').addEventListener('click', function () {
+    modal.classList.remove('hidden');
+  });
+  document.getElementById('closeNewRequestModal').addEventListener('click', function () {
+    modal.classList.add('hidden');
+  });
+  document.getElementById('cancelNewRequestModal').addEventListener('click', function () {
+    modal.classList.add('hidden');
+    document.getElementById('newRequestForm').reset();
+  });
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
 })();
-
-// Réinitialiser le formulaire quand le modal est fermé
-$('#newRequestModal').on('hidden.bs.modal', function () {
-    var form = $(this).find('form')[0];
-    form.reset();
-    form.classList.remove('was-validated');
-});
-
-// S'assurer que le modal est bien initialisé
-$(document).ready(function() {
-    $('#newRequestModal').modal({
-        show: false,
-        backdrop: 'static',
-        keyboard: false
-    });
-});
 </script>
-{% endblock javascripts %} 
+{% endblock extra_js %}

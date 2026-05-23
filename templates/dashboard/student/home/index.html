@@ -3,79 +3,189 @@
 {% load lucide %}
 {% load humanize %}
 
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}Mon espace{% endblock %}
+
+{% block extra_css %}
+<style>
+  .student-banner {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    position: relative;
+    min-height: 200px;
+    overflow: visible;
+  }
+  .student-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 70% 50%, rgba(251,191,36,0.12) 0%, transparent 60%),
+                radial-gradient(circle at 10% 80%, rgba(99,102,241,0.1) 0%, transparent 50%);
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Stats cards -->
-<div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Séances totales</span>
-      {% lucide "calendar" class="w-5 h-5 text-[#d9a505]" %}
+<!-- ═══ BANNIÈRE ÉTUDIANT ══════════════════════════════════════ -->
+<div class="student-banner rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-0">
+  <div class="relative z-10">
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <p class="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">Mon espace</p>
+        <h1 class="text-2xl font-bold text-white">Bonjour, {{ student.user.first_name|default:student.user.username }} 👋</h1>
+        <p class="text-white/50 text-sm mt-1">Matricule : {{ student.matricule }}</p>
+      </div>
+      <a href="{% url 'profile_view' %}" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-medium px-3 py-2 rounded-sm transition">
+        {% lucide "user" class="w-3.5 h-3.5" %} Mon profil
+      </a>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ total_sessions }}</p>
   </div>
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Séances complétées</span>
-      {% lucide "check-circle" class="w-5 h-5 text-[#d9a505]" %}
+
+  <!-- Stat cards chevauchant la bannière -->
+  <div class="relative z-10 grid grid-cols-2 md:grid-cols-3 gap-4 translate-y-8">
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-sky-100 flex items-center justify-center">
+          {% lucide "calendar" class="w-5 h-5 text-sky-600" %}
+        </div>
+        <span class="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-sm">Total</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ total_sessions }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Séances</p>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ completed_sessions }}</p>
-  </div>
-  <div class="bg-white rounded-md shadow-xl p-5">
-    <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Heures restantes</span>
-      {% lucide "clock" class="w-5 h-5 text-[#d9a505]" %}
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-emerald-100 flex items-center justify-center">
+          {% lucide "check-circle" class="w-5 h-5 text-emerald-600" %}
+        </div>
+        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm">Faites</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ completed_sessions_count }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Séances complétées</p>
     </div>
-    <p class="text-3xl font-bold text-gray-900">{{ hours_remaining }}h</p>
+    <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100">
+      <div class="flex items-center justify-between mb-3">
+        <div class="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center">
+          {% lucide "clock" class="w-5 h-5 text-amber-600" %}
+        </div>
+        <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-sm">Restantes</span>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ hours_remaining }}h</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Heures restantes</p>
+    </div>
   </div>
 </div>
 
-<!-- Séances récentes + Actions rapides -->
+<div class="mt-14"></div>
+
+<!-- ═══ CONTENU PRINCIPAL ═════════════════════════════════════ -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <div class="lg:col-span-2 bg-white rounded-md shadow-xl">
+  <!-- Séances récentes -->
+  <div class="lg:col-span-2 bg-white rounded-sm shadow-sm border border-gray-100">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-gray-700">Séances récentes</h2>
-      <a href="{% url 'student_sessions' %}" class="text-xs text-[#d9a505] hover:underline">Voir mes séances</a>
+      <h2 class="text-sm font-semibold text-gray-800">Séances récentes</h2>
+      <a href="{% url 'student_sessions' %}" class="text-xs text-amber-600 hover:underline font-medium">Voir tout →</a>
     </div>
     <div class="divide-y divide-gray-50">
       {% for session in student.recent_sessions %}
-      <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-        <div>
-          <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
-          <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
+      <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-sm bg-amber-50 flex items-center justify-center shrink-0">
+            {% lucide "book" class="w-3.5 h-3.5 text-amber-600" %}
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
+            <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
+          </div>
         </div>
-        <span class="px-2 py-0.5 text-xs font-semibold rounded-md
-          {% if session.status == 'completed' %}bg-green-100 text-green-700
+        <span class="px-2 py-0.5 text-xs font-semibold rounded-sm
+          {% if session.status == 'completed' %}bg-emerald-100 text-emerald-700
           {% elif session.status == 'cancelled' %}bg-red-100 text-red-700
-          {% else %}bg-blue-100 text-blue-700{% endif %}">
+          {% elif session.status == 'rescheduled' %}bg-orange-100 text-orange-700
+          {% else %}bg-sky-100 text-sky-700{% endif %}">
           {{ session.get_status_display }}
         </span>
       </div>
       {% empty %}
-        <p class="px-5 py-8 text-sm text-gray-400 text-center">Aucune séance récente</p>
+        <div class="px-5 py-10 text-center">
+          {% lucide "calendar-x" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
+          <p class="text-sm text-gray-400">Aucune séance récente</p>
+        </div>
       {% endfor %}
     </div>
   </div>
 
-  <div class="bg-white rounded-md shadow-xl">
-    <div class="px-5 py-4 border-b border-gray-100">
-      <h2 class="text-sm font-semibold text-gray-700">Actions rapides</h2>
+  <!-- Panneau droite -->
+  <div class="space-y-4">
+    <!-- Prochaine séance -->
+    {% with next_session=student.upcoming_sessions.first %}
+    {% if next_session %}
+    <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-sm shadow-sm p-5 text-white">
+      <div class="flex items-center gap-2 mb-3">
+        {% lucide "calendar-clock" class="w-4 h-4" %}
+        <span class="text-xs font-semibold uppercase tracking-wider opacity-80">Prochaine séance</span>
+      </div>
+      <p class="text-lg font-bold">{{ next_session.language }}</p>
+      <p class="text-sm opacity-80 mt-1">avec {{ next_session.teacher }}</p>
+      <div class="flex items-center gap-2 mt-3 text-xs opacity-90">
+        {% lucide "clock" class="w-3.5 h-3.5" %}
+        {{ next_session.date }} à {{ next_session.start_time|time:"H:i" }}
+      </div>
+      {% if next_session.meeting_link %}
+      <a href="{{ next_session.meeting_link }}" target="_blank" class="mt-3 inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-1.5 rounded-sm transition">
+        {% lucide "video" class="w-3.5 h-3.5" %} Rejoindre
+      </a>
+      {% endif %}
     </div>
-    <div class="p-4 space-y-2">
-      <a href="{% url 'student_sessions' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "calendar" class="w-4 h-4 text-[#d9a505]" %} Voir mes séances
-      </a>
-      <a href="{% url 'certificates_view' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "award" class="w-4 h-4 text-[#d9a505]" %} Voir mes certificats
-      </a>
-      <a href="{% url 'evaluations_view' %}"
-         class="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100">
-        {% lucide "clipboard-list" class="w-4 h-4 text-[#d9a505]" %} Mes évaluations
-      </a>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Actions rapides -->
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-800">Actions rapides</h2>
+      </div>
+      <div class="p-4 space-y-2">
+        <a href="{% url 'student_sessions' %}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+          <div class="w-7 h-7 rounded-sm bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center transition shrink-0">
+            {% lucide "calendar" class="w-3.5 h-3.5 text-sky-600" %}
+          </div>
+          Voir mes séances
+        </a>
+        <a href="{% url 'certificates_view' %}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+          <div class="w-7 h-7 rounded-sm bg-yellow-100 group-hover:bg-yellow-200 flex items-center justify-center transition shrink-0">
+            {% lucide "award" class="w-3.5 h-3.5 text-yellow-600" %}
+          </div>
+          Mes certificats
+        </a>
+        <a href="{% url 'evaluations_view' %}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+          <div class="w-7 h-7 rounded-sm bg-pink-100 group-hover:bg-pink-200 flex items-center justify-center transition shrink-0">
+            {% lucide "star" class="w-3.5 h-3.5 text-pink-600" %}
+          </div>
+          Mes évaluations
+        </a>
+        <a href="{% url 'resources_view' %}"
+           class="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors border border-gray-100 group">
+          <div class="w-7 h-7 rounded-sm bg-orange-100 group-hover:bg-orange-200 flex items-center justify-center transition shrink-0">
+            {% lucide "folder-open" class="w-3.5 h-3.5 text-orange-600" %}
+          </div>
+          Ressources
+        </a>
+      </div>
     </div>
+
+    <!-- Langues -->
+    {% if languages %}
+    <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
+      <h2 class="text-sm font-semibold text-gray-800 mb-3">Mes langues</h2>
+      <div class="flex flex-wrap gap-2">
+        {% for lang in languages %}
+        <span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-sm border border-amber-200">{{ lang.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

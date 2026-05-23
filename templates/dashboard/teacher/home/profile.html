@@ -5,78 +5,222 @@
 {% block title %}Mon Profil{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="max-w-4xl mx-auto space-y-5">
 
-  <!-- Header profil -->
-  <div class="bg-white rounded-md shadow-xl p-6 flex items-start gap-6">
-    <div class="relative shrink-0">
-      <img src="{{ request.user.profile_picture_url }}" alt="avatar"
-           class="w-24 h-24 rounded-md object-cover ring-4 ring-[#033050]/20">
-    </div>
-    <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-3 flex-wrap mb-1">
-        <h1 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name }}</h1>
-        <span class="px-2 py-0.5 text-xs font-semibold bg-[#033050] text-white rounded-md">Formateur</span>
+  {# ── Hero card ─────────────────────────────────────────────────── #}
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+    <div class="h-20 bg-gradient-to-r from-[#056f77] to-[#26b2bd]"></div>
+    <div class="px-6 pb-6">
+      <div class="flex items-end justify-between -mt-10 mb-4">
+        <img src="{{ request.user.profile_picture_url }}" alt="avatar"
+             class="w-20 h-20 rounded-sm object-cover ring-4 ring-white shadow-sm">
+        <a href="{% url 'profile_edit' %}"
+           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
+          {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier le profil
+        </a>
       </div>
-      <p class="text-sm text-gray-500">
-        {{ profile.city }}{% if profile.city and profile.country %} · {% endif %}{{ profile.country }}
-        {% if profile.number %} · {{ profile.number }}{% endif %}
-      </p>
-    </div>
-    <a href="{% url 'profile_edit' %}"
-       class="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#033050] text-white text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
-      {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier
-    </a>
-  </div>
-
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-4">
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#033050]">{{ teacher.total_students }}</p>
-      <p class="text-xs text-gray-500 mt-1 font-medium">Étudiants actifs</p>
-    </div>
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#033050]">{{ sessions_this_month }}</p>
-      <p class="text-xs text-gray-500 mt-1 font-medium">Séances ce mois</p>
-    </div>
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#033050]">{{ teacher.hourly_rate|default:"—" }}</p>
-      <p class="text-xs text-gray-500 mt-1 font-medium">Taux horaire</p>
-    </div>
-  </div>
-
-  <!-- Corps -->
-  <div class="bg-white rounded-md shadow-xl p-6 space-y-5">
-    {% if profile.about and profile.about.strip %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "user" class="w-4 h-4 text-[#033050]" %} À propos
-      </h3>
-      <p class="text-sm text-gray-600 leading-relaxed">{{ profile.about }}</p>
-    </div>
-    {% endif %}
-
-    {% if teacher.languages.all %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "globe" class="w-4 h-4 text-[#033050]" %} Langues enseignées
-      </h3>
-      <div class="flex flex-wrap gap-2">
-        {% for lang in teacher.languages.all %}
-          <span class="px-3 py-1 text-xs font-medium bg-[#033050]/10 text-[#033050] rounded-md">{{ lang.name }}</span>
-        {% endfor %}
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-xl font-bold text-gray-900">{{ user.get_full_name }}</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold bg-[#056f77]/10 text-[#056f77] rounded-sm">Formateur</span>
+            {% if teacher.statut %}
+            <span class="px-2 py-0.5 text-xs font-semibold
+              {% if teacher.statut == 'actif' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+              {% else %}bg-gray-100 text-gray-500{% endif %} rounded-sm">
+              {{ teacher.get_statut_display|default:teacher.statut }}
+            </span>
+            {% endif %}
+          </div>
+          <p class="text-sm text-gray-500 mt-0.5">{{ user.email }}</p>
+        </div>
+        <div class="text-right text-xs text-gray-400 space-y-0.5">
+          {% if profile.city or profile.country %}
+          <p class="flex items-center gap-1 justify-end">
+            {% lucide "map-pin" class="w-3.5 h-3.5" %}
+            {{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}
+          </p>
+          {% endif %}
+          {% if profile.number %}
+          <p class="flex items-center gap-1 justify-end">
+            {% lucide "phone" class="w-3.5 h-3.5" %}
+            {{ profile.number }}
+          </p>
+          {% endif %}
+          <p class="flex items-center gap-1 justify-end">
+            {% lucide "calendar" class="w-3.5 h-3.5" %}
+            Membre depuis {{ user.date_joined|date:"M Y" }}
+          </p>
+        </div>
       </div>
     </div>
-    {% endif %}
+  </div>
 
-    {% if teacher.speciality %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "award" class="w-4 h-4 text-[#033050]" %} Spécialité
-      </h3>
-      <p class="text-sm text-gray-600 leading-relaxed">{{ teacher.speciality }}</p>
+  {# ── KPI stats ─────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-3">
+      {% lucide "users" class="w-5 h-5 text-[#26b2bd] shrink-0" %}
+      <div>
+        <p class="text-2xl font-bold text-gray-900">{{ teacher.total_students }}</p>
+        <p class="text-xs text-gray-400 font-medium">Étudiants actifs</p>
+      </div>
     </div>
-    {% endif %}
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-3">
+      {% lucide "check-circle" class="w-5 h-5 text-emerald-500 shrink-0" %}
+      <div>
+        <p class="text-2xl font-bold text-gray-900">{{ completed_sessions }}</p>
+        <p class="text-xs text-gray-400 font-medium">Séances terminées</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-3">
+      {% lucide "calendar-check" class="w-5 h-5 text-blue-500 shrink-0" %}
+      <div>
+        <p class="text-2xl font-bold text-gray-900">{{ sessions_this_month }}</p>
+        <p class="text-xs text-gray-400 font-medium">Séances ce mois</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-3">
+      {% lucide "star" class="w-5 h-5 text-amber-400 shrink-0" %}
+      <div>
+        <p class="text-2xl font-bold text-gray-900">{{ evaluations_given }}</p>
+        <p class="text-xs text-gray-400 font-medium">Évaluations données</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+    {# ── Left col ──────────────────────────────────────────────────── #}
+    <div class="space-y-4">
+
+      {# Contact #}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+          {% lucide "contact" class="w-4 h-4 text-[#26b2bd]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Contact</span>
+        </div>
+        <div class="p-5 space-y-3 text-sm">
+          <div class="flex items-center gap-2.5 text-gray-600">
+            {% lucide "mail" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span class="truncate">{{ user.email }}</span>
+          </div>
+          {% if profile.number %}
+          <div class="flex items-center gap-2.5 text-gray-600">
+            {% lucide "phone" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.number }}</span>
+          </div>
+          {% endif %}
+          {% if profile.address %}
+          <div class="flex items-center gap-2.5 text-gray-600">
+            {% lucide "home" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.address }}</span>
+          </div>
+          {% endif %}
+          {% if profile.city or profile.country %}
+          <div class="flex items-center gap-2.5 text-gray-600">
+            {% lucide "map-pin" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Infos pro #}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+          {% lucide "briefcase" class="w-4 h-4 text-[#26b2bd]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Infos pro</span>
+        </div>
+        <div class="p-5 space-y-3">
+          {% if teacher.hourly_rate %}
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Taux horaire</span>
+            <span class="font-semibold text-gray-800">{{ teacher.hourly_rate }} MAD</span>
+          </div>
+          {% endif %}
+          {% if teacher.taux_remuneration %}
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Rémunération</span>
+            <span class="font-semibold text-gray-800">{{ teacher.taux_remuneration }}%</span>
+          </div>
+          {% endif %}
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Total séances</span>
+            <span class="font-semibold text-gray-800">{{ total_sessions }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {# ── Right col (2/3 width) ─────────────────────────────────────── #}
+    <div class="md:col-span-2 space-y-4">
+
+      {# About #}
+      {% if profile.about and profile.about.strip %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+          {% lucide "user" class="w-4 h-4 text-[#26b2bd]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">À propos</span>
+        </div>
+        <div class="p-5">
+          <p class="text-sm text-gray-600 leading-relaxed">{{ profile.about }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Languages + Speciality #}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+          {% lucide "globe" class="w-4 h-4 text-[#26b2bd]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Compétences</span>
+        </div>
+        <div class="p-5 space-y-4">
+          {% if teacher.languages.all %}
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Langues enseignées</p>
+            <div class="flex flex-wrap gap-2">
+              {% for lang in teacher.languages.all %}
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#056f77]/8 text-[#056f77] border border-[#056f77]/20 rounded-sm">
+                {% lucide "globe-2" class="w-3 h-3" %} {{ lang.name }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if teacher.speciality %}
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Spécialité</p>
+            <p class="text-sm text-gray-600">{{ teacher.speciality }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Next session #}
+      {% if next_session %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+          {% lucide "calendar-clock" class="w-4 h-4 text-[#26b2bd]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Prochaine séance</span>
+        </div>
+        <div class="p-5 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-sm bg-[#056f77]/10 flex items-center justify-center shrink-0">
+              {% lucide "calendar" class="w-5 h-5 text-[#056f77]" %}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-800">{{ next_session.date|date:"l d F Y" }}</p>
+              <p class="text-xs text-gray-500">{{ next_session.start_time|time:"H:i" }} – {{ next_session.end_time|time:"H:i" }} · {{ next_session.language }}</p>
+            </div>
+          </div>
+          <a href="{% url 'teacher_sessions' %}"
+             class="text-xs font-semibold text-[#056f77] hover:underline shrink-0">Voir le calendrier</a>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
   </div>
 
 </div>

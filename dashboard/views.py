@@ -335,17 +335,25 @@ def profile_view(request):
 
     elif user.role == "teacher":
         teacher = get_object_or_404(Teacher, user=user)
-        total_sessions = Session.objects.filter(teacher=teacher).count()
         now = timezone.now()
+        total_sessions = Session.objects.filter(teacher=teacher).count()
+        completed_sessions = Session.objects.filter(teacher=teacher, status='completed').count()
         sessions_this_month = Session.objects.filter(
             teacher=teacher,
             date__year=now.year,
             date__month=now.month
         ).count()
+        evaluations_given = Evaluation.objects.filter(teacher=teacher).count()
+        next_session = Session.objects.filter(
+            teacher=teacher, status='scheduled', date__gte=now.date()
+        ).order_by('date', 'start_time').first()
         context.update({
             "teacher": teacher,
             "total_sessions": total_sessions,
+            "completed_sessions": completed_sessions,
             "sessions_this_month": sessions_this_month,
+            "evaluations_given": evaluations_given,
+            "next_session": next_session,
         })
         return render(request, "dashboard/teacher/home/profile.html", context)
 
@@ -388,7 +396,7 @@ def profile_edit(request):
     elif user.role == "student":
         return render(request, "dashboard/student/home/profile_edit.html", context)
     else:
-        return render(request, "dashboard/default/profile_edit.html", context)
+        return render(request, "dashboard/admin/home/admin_profile_edit.html", context)
 
 
 # Vue pour changer la photo de profil

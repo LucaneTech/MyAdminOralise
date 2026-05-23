@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     # extensions
     "django_extensions",
+    # Tailwind CSS
+    "tailwind",
+    "theme",
+    "django_browser_reload",
     # Dashboard app
     "dashboard",
     "widget_tweaks",
@@ -62,6 +66,9 @@ INSTALLED_APPS = [
     # bucket of railway
     "storages",
 ]
+
+TAILWIND_APP_NAME = "theme"
+INTERNAL_IPS = ["127.0.0.1"]
 
 # djang-compressor
 STATICFILES_FINDERS = [
@@ -99,6 +106,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # django-allauth middleware
     "allauth.account.middleware.AccountMiddleware",
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
 SOCIALACCOUNT_PROVIDERS = {}
@@ -288,16 +296,19 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": False,
 }
 
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 465))
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
-EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = "Oralise <contact@oralise.pro>"
-
+if DEBUG:  
+    # Affiche les emails directement dans la console du terminal de développement
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.gmail.com"
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 465))
+    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+    DEFAULT_FROM_EMAIL = "Oralise <contact@oralise.pro>"
 
 def current_year(request):
     return {"current_year": datetime.now().year}

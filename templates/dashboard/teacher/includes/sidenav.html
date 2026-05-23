@@ -2,14 +2,10 @@
 {% load lucide %}
 <aside class="fixed top-0 left-0 h-screen w-64 bg-[#0c1e35] text-white flex flex-col z-40 shadow-2xl">
   <!-- Logo -->
-  <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-    <div class="w-9 h-9 rounded-sm bg-sky-500 flex items-center justify-center">
-      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-6 h-6">
-    </div>
-    <div>
-      <span class="text-base font-bold tracking-wide">Oralise</span>
-      <p class="text-[10px] text-white/40 uppercase tracking-widest">Formateur</p>
-    </div>
+  <div class="flex flex-col items-start gap-3 px-4 py-5 border-b border-white/10">
+    
+      <img src="{% static 'assets/img/brand/white.png' %}" alt="Oralise" class="w-40 h-auto object-cover">
+   
   </div>
 
   <!-- Nav -->
@@ -49,7 +45,7 @@
       </span>
       <span class="text-white/90">Ressources</span>
     </a>
-    <a href="{% url 'teacher_evaluations_add' %}"
+    <a href="{% url 'evaluations_view' %}"
        class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'evaluations' in request.path %}bg-pink-500/20 border-l-2 border-pink-400{% endif %}">
       <span class="w-7 h-7 rounded-sm bg-pink-500/20 flex items-center justify-center shrink-0">
         {% lucide "bar-chart-2" class="w-3.5 h-3.5 text-pink-400" %}
@@ -61,7 +57,7 @@
       <span class="w-7 h-7 rounded-sm bg-lime-500/20 flex items-center justify-center shrink-0">
         {% lucide "trending-up" class="w-3.5 h-3.5 text-lime-400" %}
       </span>
-      <span class="text-white/90">Reporting</span>
+      <span class="text-white/90">Mon rapport</span>
     </a>
     <a href="{% url 'mes_paiements_formateur' %}"
        class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'paiements' in request.path %}bg-green-500/20 border-l-2 border-green-400{% endif %}">

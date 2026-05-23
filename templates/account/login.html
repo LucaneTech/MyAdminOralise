@@ -12,16 +12,17 @@
   <!-- Gauche : image + accroche -->
   <div class="hidden md:flex md:w-1/2 relative flex-col">
     <div class="absolute inset-0 bg-cover bg-center"
-         style="background-image: url('{% static "assets/img/theme/img-login.jpg" %}')"></div>
-    <div class="absolute inset-0 bg-[#033050]/70"></div>
+         style="background-image: url('{% static "assets/img/brand/sigin.jpg" %}')"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[#033150] to-[#033150]/0"></div>
     <!-- Logo haut gauche -->
     <div class="relative z-10 p-6">
-      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-10 h-10">
+      <img src="{% static 'assets/img/brand/white.png' %}" alt="Oralise" class="w-40 h-auto object-cover">
     </div>
     <!-- Accroche centrée -->
     <div class="relative z-10 flex-1 flex flex-col justify-end p-10 pb-16">
-      <h2 class="text-3xl font-bold text-white leading-tight mb-3">
-        Gérez votre école<br>en toute clarté.
+      <h2 class="text-2xl md:text-4xl font-bold text-white leading-tight mb-3">
+        
+Parlez.<br> <span class="text-[#d9a505] text-5xl">Progressez.</span> <br>Brillez.
       </h2>
       <p class="text-white/70 text-base">La plateforme tout-en-un d'Oralise.</p>
     </div>
@@ -62,7 +63,7 @@
         {% endif %}
 
         <button type="submit"
-                class="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition-colors">
+                class="w-full py-2.5 bg-[#033150] text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition-colors">
           Se connecter
         </button>
       </form>

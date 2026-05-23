@@ -1,737 +1,320 @@
 {% extends "dashboard/teacher/layouts/base.html" %}
+
+{% block title %}Demandes des étudiants{% endblock %}
+
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-    <div class="container-fluid">
-        <div class="header-body">
-            <div class="row align-items-center py-4">
-                <div class="col-lg-6 col-7">
-                    <h6 class="h2 text-white d-inline-block mb-0">Demandes des étudiants</h6>
-                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                            <li class="breadcrumb-item">
-                                <a href="{% url 'teacher_view' username=request.user.username %}">
-                                    <i class="fas fa-home"></i>
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">Demandes</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Demandes des étudiants</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Gérez les demandes de vos étudiants</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Rejetées : {{ rejected_requests }}</span>
+  </div>
 </div>
 
-<div class="container-fluid mt-5">
-    <!-- Statistiques des demandes -->
-    <div class="row">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Total des demandes</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ total_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
-                                <i class="ni ni-paper-diploma"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">En attente</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ pending_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle shadow">
-                                <i class="ni ni-time-alarm"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">En traitement</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ processing_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle shadow">
-                                <i class="ni ni-settings"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card card-stats">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="card-title text-uppercase text-muted mb-0">Approuvées</h5>
-                            <span class="h2 font-weight-bold mb-0">{{ approved_requests }}</span>
-                        </div>
-                        <div class="col-auto">
-                            <div class="icon icon-shape bg-gradient-success text-white rounded-circle shadow">
-                                <i class="ni ni-check-bold"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des demandes -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header border-0">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="mb-0">Demandes des étudiants</h3>
-                        </div>
-                        <div class="col text-right">
-                            <span class="badge badge-primary">Rejetées : {{ rejected_requests }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    {% if requests %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Étudiant</th>
-                                        <th>Sujet</th>
-                                        <th>Description</th>
-                                        <th>Type</th>
-                                        <th>Statut</th>
-                                        <th>Date de création</th>
-                                        <th>Pièce jointe</th>
-                                        <th>Ma réponse</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for req in requests %}
-                                    <tr id="request-row-{{ req.id }}">
-                                        <td>
-                                            <strong>{{ req.student.user.first_name }} {{ req.student.user.last_name }}</strong>
-                                            <br>
-                                            <small class="text-muted">{{ req.student.matricule }}</small>
-                                        </td>
-                                        <td>{{ req.subject }}</td>
-                                        <td>{{ req.description|truncatewords:15 }}</td>
-                                        <td>
-                                            <span class="badge badge-secondary">
-                                                {{ req.get_request_type_display }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge status-badge badge-{% if req.status == 'pending' %}warning{% elif req.status == 'processing' %}info{% elif req.status == 'approved' %}success{% elif req.status == 'rejected' %}danger{% endif %}">
-                                                {% if req.status == 'pending' %}En attente
-                                                {% elif req.status == 'processing' %}En traitement
-                                                {% elif req.status == 'approved' %}Approuvée
-                                                {% elif req.status == 'rejected' %}Rejetée
-                                                {% endif %}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <small>{{ req.created_at|date:"d/m/Y" }}</small>
-                                            <br>
-                                            <small class="text-muted">{{ req.created_at|time:"H:i" }}</small>
-                                        </td>
-                                        <td>
-                                            {% if req.attachment %}
-                                                <a href="{{ req.attachment.url }}" class="btn btn-sm btn-info" target="_blank" title="Télécharger">
-                                                    <i class="ni ni-single-copy-04"></i>
-                                                </a>
-                                            {% else %}
-                                                <span class="text-muted">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if req.response %}
-                                                <div class="btn btn-sm btn-success" target="_blank">
-                                                    {{ req.response|truncatewords:5 }}
-                                                </div>
-                                            {% else %}
-                                                <div class="btn btn-sm btn-info" target="_blank">
-                                                    <i class="ni ni-email-83"></i> Pas de réponse
-                                                </div>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <!-- Bouton pour voir les détails -->
-                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#detailModal{{ req.id }}">
-                                                <i class="ni ni-zoom-split-in"></i>
-                                            </button>
-                                            
-                                            <!-- Actions selon le statut -->
-                                            <div class="btn-group mt-1 request-actions" role="group">
-                                                {% if req.status == 'pending' %}
-                                                    <button type="button" class="btn btn-sm btn-info btn-process" data-request-id="{{ req.id }}" title="Mettre en traitement">
-                                                        <i class="ni ni-settings"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-success btn-approve" data-request-id="{{ req.id }}" title="Approuver">
-                                                        <i class="ni ni-check-bold"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-danger btn-reject" data-request-id="{{ req.id }}" title="Rejeter">
-                                                        <i class="ni ni-fat-remove"></i>
-                                                    </button>
-                                                {% elif req.status == 'processing' %}
-                                                    
-                                                    <buttontype="button" class="btn btn-sm btn-success btn-approve" data-request-id="{{ req.id }}" title="Approuver">
-                                                     <i class="ni ni-check-bold"></i>Approuver
-                                                   </button>
-                                                     <button type="button" class="btn btn-sm btn-warning btn-pending" data-request-id="{{ req.id }}" title="Remettre en attente">
-                                                    <i class="ni ni-refresh"></i>Remettre en attente 
-                                                   </button>
-                                                {% elif req.status == 'approved' or req.status == 'rejected' %}
-                                                  
-                                                <button type="button" class="btn btn-sm btn-warning btn-pending" data-request-id="{{ req.id }}" title="Remettre en attente">
-                                                    <i class="ni ni-refresh"></i>Remettre en attente 
-                                                   </button>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                     
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="ni ni-send fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">Aucune demande pour le moment</h5>
-                            <p class="text-muted">Les demandes de vos étudiants apparaîtront ici.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total</p>
+    <p class="text-2xl font-bold text-gray-900">{{ total_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">En attente</p>
+    <p class="text-2xl font-bold text-gray-900">{{ pending_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">En traitement</p>
+    <p class="text-2xl font-bold text-gray-900">{{ processing_requests }}</p>
+  </div>
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Approuvées</p>
+    <p class="text-2xl font-bold text-gray-900">{{ approved_requests }}</p>
+  </div>
 </div>
 
-<!-- Modals pour les détails des demandes -->
+<!-- Table -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Demandes des étudiants</h2>
+  </div>
+  {% if requests %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Sujet</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">P.J.</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Réponse</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for req in requests %}
+        <tr id="request-row-{{ req.id }}" class="hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <p class="text-sm font-medium text-gray-800">{{ req.student.user.first_name }} {{ req.student.user.last_name }}</p>
+            <p class="text-xs text-gray-500">{{ req.student.matricule }}</p>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ req.subject }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ req.description|truncatewords:15 }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ req.get_request_type_display }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="status-badge inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+              {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700
+              {% elif req.status == 'processing' %}bg-blue-100 text-blue-700
+              {% elif req.status == 'approved' %}bg-green-100 text-green-700
+              {% elif req.status == 'rejected' %}bg-red-100 text-red-700
+              {% endif %}">
+              {% if req.status == 'pending' %}En attente
+              {% elif req.status == 'processing' %}En traitement
+              {% elif req.status == 'approved' %}Approuvée
+              {% elif req.status == 'rejected' %}Rejetée
+              {% endif %}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-700">
+            {{ req.created_at|date:"d/m/Y" }}<br>
+            <span class="text-xs text-gray-500">{{ req.created_at|time:"H:i" }}</span>
+          </td>
+          <td class="px-4 py-3">
+            {% if req.attachment %}
+            <a href="{{ req.attachment.url }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 text-white text-xs font-semibold rounded-md hover:bg-sky-600 transition">
+              Voir
+            </a>
+            {% else %}
+            <span class="text-xs text-gray-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            {% if req.response %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">{{ req.response|truncatewords:5 }}</span>
+            {% else %}
+            <span class="text-xs text-gray-400">Pas de réponse</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap gap-1">
+              <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition"
+                      onclick="openDetailModal({{ req.id }})">
+                Détails
+              </button>
+              <div class="request-actions flex flex-wrap gap-1">
+                {% if req.status == 'pending' %}
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-sky-500 text-white text-xs font-semibold rounded-md hover:bg-sky-600 transition btn-process" data-request-id="{{ req.id }}" title="Mettre en traitement">En cours</button>
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded-md hover:bg-green-700 transition btn-approve" data-request-id="{{ req.id }}" title="Approuver">Approuver</button>
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-md hover:bg-red-700 transition btn-reject" data-request-id="{{ req.id }}" title="Rejeter">Rejeter</button>
+                {% elif req.status == 'processing' %}
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded-md hover:bg-green-700 transition btn-approve" data-request-id="{{ req.id }}">Approuver</button>
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-yellow-500 text-white text-xs font-semibold rounded-md hover:bg-yellow-600 transition btn-pending" data-request-id="{{ req.id }}">En attente</button>
+                {% elif req.status == 'approved' or req.status == 'rejected' %}
+                <button type="button" class="inline-flex items-center gap-1.5 px-2 py-1 bg-yellow-500 text-white text-xs font-semibold rounded-md hover:bg-yellow-600 transition btn-pending" data-request-id="{{ req.id }}">En attente</button>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="py-16 text-center">
+    <p class="text-sm font-medium text-gray-500">Aucune demande pour le moment</p>
+    <p class="text-xs text-gray-400 mt-1">Les demandes de vos étudiants apparaîtront ici.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modals détails -->
 {% for req in requests %}
-<div class="modal fade" id="detailModal{{ req.id }}" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Détails de la demande</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- En-tête avec infos de base -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">Étudiant</h6>
-                        <p class="mb-1">
-                            <strong>{{ req.student.user.first_name }} {{ req.student.user.last_name }}</strong>
-                        </p>
-                        <p class="mb-0">
-                            <small>Matricule : {{ req.student.matricule }}</small>
-                        </p>
-                        <p class="mb-0">
-                            <small>Email : {{ req.student.user.email }}</small>
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <h6 class="text-muted">Informations</h6>
-                        <p class="mb-1">
-                            <span class="badge badge-{% if req.status == 'pending' %}warning{% elif req.status == 'processing' %}info{% elif req.status == 'approved' %}success{% else %}danger{% endif %}">
-                                {% if req.status == 'pending' %}En attente
-                                {% elif req.status == 'processing' %}En traitement
-                                {% elif req.status == 'approved' %}Approuvée
-                                {% elif req.status == 'rejected' %}Rejetée
-                                {% endif %}
-                            </span>
-                        </p>
-                        <p class="mb-0">
-                            <small>Date : {{ req.created_at|date:"d/m/Y à H:i" }}</small>
-                        </p>
-                        <p class="mb-0">
-                            <span class="badge badge-secondary">{{ req.get_request_type_display }}</span>
-                        </p>
-                    </div>
-                </div>
-                
-                <hr>
-                
-                <!-- Détails de la demande -->
-                <div class="mb-4">
-                    <h6 class="text-muted">Sujet</h6>
-                    <p class="mb-3">{{ req.subject }}</p>
-                    
-                    <h6 class="text-muted">Description</h6>
-                    <div class="card bg-light p-3">
-                        {{ req.description|linebreaks }}
-                    </div>
-                </div>
-                
-                <!-- Pièce jointe -->
-                {% if req.attachment %}
-                <div class="mb-4">
-                    <h6 class="text-muted">Pièce jointe</h6>
-                    <a href="{{ req.attachment.url }}" target="_blank" class="btn btn-outline-primary">
-                        <i class="ni ni-cloud-download-95 mr-2"></i>Télécharger le fichier
-                    </a>
-                </div>
-                {% endif %}
-                
-                <!-- Réponse (si elle existe) -->
-                {% if req.response %}
-                <div class="mb-4 response-content">
-                    <h6 class="text-muted">Réponse</h6>
-                    <div class="alert alert-info">
-                        <i class="ni ni-chat-round mr-2"></i>
-                        {{ req.response }}
-                    </div>
-                </div>
-                {% else %}
-                <div class="mb-4 response-content"></div>
-                {% endif %}
-                
-                <!-- Formulaire de réponse -->
-                <div class="mb-4">
-                    <h6 class="text-muted">Répondre à l'étudiant</h6>
-                    <form method="post" class="response-form" data-request-id="{{ req.id }}">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="respond">
-                        <input type="hidden" name="request_id" value="{{ req.id }}">
-                        <div class="form-group">
-                            <textarea class="form-control response-message" name="response" rows="3" placeholder="Saisissez votre réponse ici..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="ni ni-send mr-1"></i>Envoyer la réponse
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-            </div>
-        </div>
+<div id="detailModal{{ req.id }}" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700">Détails de la demande</h3>
+      <button onclick="closeDetailModal({{ req.id }})" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
     </div>
+    <div class="p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs font-medium text-gray-500 mb-1">Étudiant</p>
+          <p class="text-sm font-semibold text-gray-800">{{ req.student.user.first_name }} {{ req.student.user.last_name }}</p>
+          <p class="text-xs text-gray-500">Matricule : {{ req.student.matricule }}</p>
+          <p class="text-xs text-gray-500">{{ req.student.user.email }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-500 mb-1">Informations</p>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+            {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700
+            {% elif req.status == 'processing' %}bg-blue-100 text-blue-700
+            {% elif req.status == 'approved' %}bg-green-100 text-green-700
+            {% else %}bg-red-100 text-red-700{% endif %}">
+            {% if req.status == 'pending' %}En attente{% elif req.status == 'processing' %}En traitement{% elif req.status == 'approved' %}Approuvée{% elif req.status == 'rejected' %}Rejetée{% endif %}
+          </span>
+          <p class="text-xs text-gray-500 mt-1">{{ req.created_at|date:"d/m/Y à H:i" }}</p>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ req.get_request_type_display }}</span>
+        </div>
+      </div>
+      <hr class="border-gray-100">
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">Sujet</p>
+        <p class="text-sm text-gray-700">{{ req.subject }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">Description</p>
+        <div class="bg-gray-50 rounded-md p-3 text-sm text-gray-700">{{ req.description|linebreaks }}</div>
+      </div>
+      {% if req.attachment %}
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">Pièce jointe</p>
+        <a href="{{ req.attachment.url }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+          Télécharger le fichier
+        </a>
+      </div>
+      {% endif %}
+      {% if req.response %}
+      <div class="response-content">
+        <p class="text-xs font-medium text-gray-500 mb-1">Réponse</p>
+        <div class="bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700">{{ req.response }}</div>
+      </div>
+      {% else %}
+      <div class="response-content"></div>
+      {% endif %}
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">Répondre à l'étudiant</p>
+        <form method="post" class="response-form" data-request-id="{{ req.id }}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="respond">
+          <input type="hidden" name="request_id" value="{{ req.id }}">
+          <textarea name="response" rows="3" placeholder="Saisissez votre réponse ici..."
+                    class="response-message w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition mb-2"></textarea>
+          <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+            Envoyer la réponse
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="flex justify-end px-5 py-4 border-t border-gray-100">
+      <button onclick="closeDetailModal({{ req.id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+        Fermer
+      </button>
+    </div>
+  </div>
 </div>
 {% endfor %}
 
-<!-- Modal de confirmation -->
-<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Confirmation</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <div class="mb-3">
-                    <i class="ni ni-check-bold fa-3x text-primary" id="confirmationModalIcon"></i>
-                </div>
-                <p id="confirmationModalMessage"></p>
-                <div class="alert alert-warning mt-3" id="confirmationWarning" style="display: none;">
-                    <i class="ni ni-bell-55 mr-2"></i>
-                    Cette action est irréversible.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelAction" data-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="confirmAction">Confirmer</button>
-            </div>
-        </div>
+<!-- Modal confirmation -->
+<div id="confirmationModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm w-full max-w-md mx-4">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-700">Confirmation</h3>
     </div>
+    <div class="p-5 text-center">
+      <p id="confirmationModalMessage" class="text-sm text-gray-700 mb-3"></p>
+      <div id="confirmationWarning" class="hidden bg-yellow-50 border border-yellow-100 rounded-md p-3 text-xs text-yellow-700 mb-3">
+        Cette action est irréversible.
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 px-5 py-4 border-t border-gray-100">
+      <button id="cancelAction" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">Annuler</button>
+      <button id="confirmAction" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">Confirmer</button>
+    </div>
+  </div>
 </div>
-
 {% endblock %}
 
-{% block javascripts %}
+{% block extra_js %}
 <script>
+function openDetailModal(id) {
+  const m = document.getElementById('detailModal' + id);
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+}
+function closeDetailModal(id) {
+  const m = document.getElementById('detailModal' + id);
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+
 $(document).ready(function() {
-    // Variables globales
-    var currentRequestId = null;
-    var currentAction = null;
-    var csrfToken = $('[name=csrfmiddlewaretoken]').val();
-    
-    // Initialisation des tooltips
-    $('[title]').tooltip();
-    
-    // ============================================
-    // GESTION DES ACTIONS DE CHANGEMENT DE STATUT
-    // ============================================
-    
-    // Gestion du bouton "Mettre en traitement"
-    $(document).on('click', '.btn-process', function() {
-        currentRequestId = $(this).data('request-id');
-        currentAction = 'process';
-        showConfirmationModal(
-            'Mettre en traitement',
-            'Êtes-vous sûr de vouloir mettre cette demande en traitement ?',
-            'primary',
-            'ni ni-settings'
-        );
+  var currentRequestId = null;
+  var currentAction = null;
+  var csrfToken = $('[name=csrfmiddlewaretoken]').first().val();
+
+  function showConfirmModal(message, showWarning) {
+    $('#confirmationModalMessage').html(message);
+    if (showWarning) $('#confirmationWarning').removeClass('hidden');
+    else $('#confirmationWarning').addClass('hidden');
+    const m = document.getElementById('confirmationModal');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+  }
+  function hideConfirmModal() {
+    const m = document.getElementById('confirmationModal');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+  }
+
+  $(document).on('click', '.btn-process', function() {
+    currentRequestId = $(this).data('request-id'); currentAction = 'process';
+    showConfirmModal('Mettre cette demande en traitement ?', false);
+  });
+  $(document).on('click', '.btn-approve', function() {
+    currentRequestId = $(this).data('request-id'); currentAction = 'approve';
+    showConfirmModal('Approuver cette demande ?', false);
+  });
+  $(document).on('click', '.btn-reject', function() {
+    currentRequestId = $(this).data('request-id'); currentAction = 'reject';
+    showConfirmModal('Rejeter cette demande ?', true);
+  });
+  $(document).on('click', '.btn-pending', function() {
+    currentRequestId = $(this).data('request-id'); currentAction = 'pending';
+    showConfirmModal('Remettre cette demande en attente ?', false);
+  });
+
+  $('#cancelAction').click(function() { currentRequestId = null; currentAction = null; hideConfirmModal(); });
+
+  $('#confirmAction').click(function() {
+    if (!currentRequestId || !currentAction) return;
+    $.ajax({
+      url: 'update-status/',
+      method: 'POST',
+      data: { request_id: currentRequestId, action: currentAction, csrfmiddlewaretoken: csrfToken },
+      success: function(response) {
+        hideConfirmModal();
+        if (response.success) location.reload();
+        else alert(response.error || 'Erreur');
+      },
+      error: function() { hideConfirmModal(); alert('Erreur de communication.'); }
     });
-    
-    // Gestion du bouton "Approuver"
-    $(document).on('click', '.btn-approve', function() {
-        currentRequestId = $(this).data('request-id');
-        currentAction = 'approve';
-        showConfirmationModal(
-            'Approuver la demande',
-            'Êtes-vous sûr de vouloir approuver cette demande ?',
-            'success',
-            'ni ni-check-bold'
-        );
+  });
+
+  $(document).on('submit', '.response-form', function(e) {
+    e.preventDefault();
+    var form = $(this);
+    var msg = form.find('.response-message').val().trim();
+    if (!msg) { alert('Veuillez saisir un message.'); return; }
+    $.ajax({
+      url: 'add-response/',
+      method: 'POST',
+      data: form.serialize(),
+      success: function(response) {
+        if (response.success) {
+          form.closest('.fixed').find('.response-content').html(
+            '<p class="text-xs font-medium text-gray-500 mb-1">Réponse</p><div class="bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700">' + response.response + '</div>'
+          );
+          form.find('.response-message').val('');
+        } else alert(response.error || 'Erreur');
+      }
     });
-    
-    // Gestion du bouton "Rejeter"
-    $(document).on('click', '.btn-reject', function() {
-        currentRequestId = $(this).data('request-id');
-        currentAction = 'reject';
-        showConfirmationModal(
-            'Rejeter la demande',
-            'Êtes-vous sûr de vouloir rejeter cette demande ?<br><small class="text-danger">Cette action est irréversible.</small>',
-            'danger',
-            'ni ni-fat-remove',
-            true
-        );
-    });
-    
-    // Gestion du bouton "Remettre en attente"
-    $(document).on('click', '.btn-pending', function() {
-        currentRequestId = $(this).data('request-id');
-        currentAction = 'pending';
-        showConfirmationModal(
-            'Remettre en attente',
-            'Êtes-vous sûr de vouloir remettre cette demande en attente ?',
-            'warning',
-            'ni ni-watch-time'
-        );
-    });
-    
-    // ============================================
-    // FONCTIONS UTILITAIRES
-    // ============================================
-    
-    // Afficher le modal de confirmation
-    function showConfirmationModal(title, message, color, icon, showWarning = false) {
-        $('#confirmationModalLabel').text(title);
-        $('#confirmationModalIcon').removeClass().addClass(icon);
-        $('#confirmationModalMessage').html(message);
-        
-        // Personnaliser la couleur du modal
-        $('#confirmationModal .modal-header').removeClass('bg-primary bg-success bg-danger bg-warning bg-info')
-            .addClass('bg-' + color + ' text-white');
-        
-        // Afficher l'avertissement si nécessaire
-        if (showWarning) {
-            $('#confirmationWarning').show();
-        } else {
-            $('#confirmationWarning').hide();
-        }
-        
-        $('#confirmationModal').modal('show');
-    }
-    
-    // Envoyer la requête AJAX pour changer le statut
-    function changeRequestStatus(requestId, action) {
-        $.ajax({
-            url: 'update-status/',  // À adapter selon vos URLs
-            method: 'POST',
-            data: {
-                'request_id': requestId,
-                'action': action,
-                'csrfmiddlewaretoken': csrfToken
-            },
-            beforeSend: function() {
-                $('#confirmationModal').modal('hide');
-                showLoading(true);
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Mettre à jour la ligne dans le tableau
-                    updateRequestRow(requestId, response.request);
-                    // Mettre à jour les statistiques
-                    if (response.stats) {
-                        updateStats(response.stats);
-                    }
-                    showSuccessMessage(response.message);
-                } else {
-                    showErrorMessage(response.error || 'Erreur lors de la mise à jour');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Erreur AJAX:', error);
-                if (xhr.status === 403) {
-                    showErrorMessage('Accès non autorisé. Votre session a peut-être expiré.');
-                } else if (xhr.status === 404) {
-                    showErrorMessage('La demande n\'existe plus.');
-                } else {
-                    showErrorMessage('Erreur de communication avec le serveur');
-                }
-            },
-            complete: function() {
-                showLoading(false);
-            }
-        });
-    }
-    
-    // Mettre à jour une ligne dans le tableau
-    function updateRequestRow(requestId, requestData) {
-        var row = $('#request-row-' + requestId);
-        
-        if (!row.length) return;
-        
-        // Mettre à jour le badge de statut
-        var statusBadge = row.find('.status-badge');
-        var statusClass = getStatusClass(requestData.status);
-        var statusText = getStatusText(requestData.status);
-        
-        statusBadge.removeClass().addClass('badge status-badge badge-' + statusClass);
-        statusBadge.text(statusText);
-        
-        // Mettre à jour les boutons d'action
-        var actionsCell = row.find('.request-actions');
-        actionsCell.html(generateActionButtons(requestId, requestData.status));
-        
-        // Animation de mise à jour
-        row.addClass('table-' + statusClass);
-        setTimeout(function() {
-            row.removeClass('table-' + statusClass);
-        }, 1000);
-    }
-    
-    // Générer les boutons d'action selon le statut
-    function generateActionButtons(requestId, status) {
-        var buttons = '';
-        
-        switch(status) {
-            case 'pending':
-                buttons = `
-                    <button type="button" class="btn btn-sm btn-info btn-process" data-request-id="${requestId}" title="Mettre en traitement">
-                        <i class="ni ni-settings"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-success btn-approve" data-request-id="${requestId}" title="Approuver">
-                        <i class="ni ni-check-bold"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger btn-reject" data-request-id="${requestId}" title="Rejeter">
-                        <i class="ni ni-fat-remove"></i>
-                    </button>
-                `;
-                break;
-                
-            case 'processing':
-                buttons = `
-                    <button type="button" class="btn btn-sm btn-success btn-approve" data-request-id="${requestId}" title="Approuver">
-                        <i class="ni ni-check-bold"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-warning btn-pending" data-request-id="${requestId}" title="Remettre en attente">
-                        <i class="ni ni-watch-time"></i> Remettre en attente
-                    </button>
-                `;
-                break;
-                
-            case 'approved':
-            case 'rejected':
-                buttons = `
-                    <button type="button" class="btn btn-sm btn-warning btn-pending" data-request-id="${requestId}" title="Remettre en attente">
-                        <i class="ni ni-refresh"></i> Remettre en attente
-                    </button>
-                `;
-                break;
-        }
-        
-        return buttons;
-    }
-    
-    // Obtenir la classe CSS pour le statut
-    function getStatusClass(status) {
-        switch(status) {
-            case 'pending': return 'warning';
-            case 'processing': return 'info';
-            case 'approved': return 'success';
-            case 'rejected': return 'danger';
-            default: return 'secondary';
-        }
-    }
-    
-    // Obtenir le texte pour le statut
-    function getStatusText(status) {
-        switch(status) {
-            case 'pending': return 'En attente';
-            case 'processing': return 'En traitement';
-            case 'approved': return 'Approuvée';
-            case 'rejected': return 'Rejetée';
-            default: return 'Inconnu';
-        }
-    }
-    
-    // Mettre à jour les statistiques
-    function updateStats(stats) {
-        if (stats.total !== undefined) $('.card-stats:eq(0) .h2').text(stats.total);
-        if (stats.pending !== undefined) $('.card-stats:eq(1) .h2').text(stats.pending);
-        if (stats.processing !== undefined) $('.card-stats:eq(2) .h2').text(stats.processing);
-        if (stats.approved !== undefined) $('.card-stats:eq(3) .h2').text(stats.approved);
-        if (stats.rejected !== undefined) $('.badge-primary:contains("Rejetées")').text('Rejetées : ' + stats.rejected);
-    }
-    
-    // ============================================
-    // GESTION DES RÉPONSES
-    // ============================================
-    
-    // Gestion du formulaire de réponse dans les modals
-    $(document).on('submit', '.response-form', function(e) {
-        e.preventDefault();
-        
-        var form = $(this);
-        var requestId = form.data('request-id');
-        var responseMessage = form.find('.response-message').val().trim();
-        
-        if (!responseMessage) {
-            alert('Veuillez saisir un message de réponse.');
-            return;
-        }
-        
-        var formData = form.serialize();
-        
-        $.ajax({
-            url: 'add-response/',  // À adapter selon vos URLs
-            method: 'POST',
-            data: formData,
-            beforeSend: function() {
-                showLoading(true);
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Mettre à jour l'affichage de la réponse
-                    var modal = $('#detailModal' + requestId);
-                    var responseContent = modal.find('.response-content');
-                    
-                    responseContent.html(`
-                        <h6 class="text-muted">Réponse</h6>
-                        <div class="alert alert-info">
-                            <i class="ni ni-chat-round mr-2"></i>
-                            ${response.response}
-                        </div>
-                    `);
-                    
-                    // Réinitialiser le formulaire
-                    form.find('.response-message').val('');
-                    
-                    showSuccessMessage(response.message);
-                } else {
-                    showErrorMessage(response.error || 'Erreur lors de l\'envoi de la réponse');
-                }
-            },
-            error: function(xhr) {
-                showErrorMessage('Erreur de communication avec le serveur');
-            },
-            complete: function() {
-                showLoading(false);
-            }
-        });
-    });
-    
-    // ============================================
-    // FONCTIONS D'AFFICHAGE
-    // ============================================
-    
-    // Afficher un message de succès
-    function showSuccessMessage(message) {
-        var alert = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-                <i class="ni ni-check-bold mr-2"></i>
-                ${message}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        `;
-        
-        $('body').append(alert);
-        
-        setTimeout(function() {
-            $('.alert-success').alert('close');
-        }, 3000);
-    }
-    
-    // Afficher un message d'erreur
-    function showErrorMessage(message) {
-        var alert = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-                <i class="ni ni-bell-55 mr-2"></i>
-                ${message}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        `;
-        
-        $('body').append(alert);
-        
-        setTimeout(function() {
-            $('.alert-danger').alert('close');
-        }, 5000);
-    }
-    
-    // Afficher/cacher l'indicateur de chargement
-    function showLoading(show) {
-        if (show) {
-            $('body').append(`
-                <div id="global-loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="sr-only">Chargement...</span>
-                        </div>
-                        <p class="mt-2">Traitement en cours...</p>
-                    </div>
-                </div>
-            `);
-        } else {
-            $('#global-loader').remove();
-        }
-    }
-    
-    // ============================================
-    // GESTION DES ÉVÉNEMENTS
-    // ============================================
-    
-    // Confirmation du changement de statut
-    $('#confirmAction').click(function() {
-        if (currentRequestId && currentAction) {
-            changeRequestStatus(currentRequestId, currentAction);
-        }
-    });
-    
-    // Fermer le modal sans action
-    $('#cancelAction').click(function() {
-        currentRequestId = null;
-        currentAction = null;
-    });
-    
-    // Réinitialiser les tooltips après les mises à jour AJAX
-    $(document).ajaxComplete(function() {
-        $('[title]').tooltip('dispose').tooltip();
-    });
+  });
 });
 </script>
-{% endblock javascripts %}
+{% endblock %}

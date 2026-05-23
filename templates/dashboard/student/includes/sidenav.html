@@ -1,62 +1,94 @@
 {% load static %}
 {% load lucide %}
-<aside class="fixed top-0 left-0 h-screen w-64 bg-[#d9a505] text-gray-900 flex flex-col z-40 shadow-xl">
+<aside class="fixed top-0 left-0 h-screen w-64 bg-[#1a1a2e] text-white flex flex-col z-40 shadow-2xl">
   <!-- Logo -->
-  <div class="flex items-center gap-3 px-6 py-5 border-b border-black/10">
-    <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-8 h-8">
-    <span class="text-lg font-semibold tracking-wide">Oralise</span>
+  <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+    <div class="w-9 h-9 rounded-sm bg-amber-500 flex items-center justify-center">
+      <img src="{% static 'assets/img/icons/favicon.png' %}" alt="Oralise" class="w-6 h-6">
+    </div>
+    <div>
+      <span class="text-base font-bold tracking-wide">Oralise</span>
+      <p class="text-[10px] text-white/40 uppercase tracking-widest">Espace Étudiant</p>
+    </div>
   </div>
 
   <!-- Nav -->
-  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
     <a href="{% url 'dashboard_view' request.user.username %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if request.resolver_match.url_name == 'dashboard_view' %}bg-black/15{% endif %}">
-      {% lucide "layout-dashboard" class="w-4 h-4 shrink-0" %} Mon espace
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if request.resolver_match.url_name == 'dashboard_view' %}bg-amber-500/20 border-l-2 border-amber-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-amber-500/20 flex items-center justify-center shrink-0">
+        {% lucide "layout-dashboard" class="w-3.5 h-3.5 text-amber-400" %}
+      </span>
+      <span class="text-white/90">Mon espace</span>
     </a>
     <a href="{% url 'student_sessions' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'sessions' in request.path %}bg-black/15{% endif %}">
-      {% lucide "calendar" class="w-4 h-4 shrink-0" %} Mes séances
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'sessions' in request.path %}bg-sky-500/20 border-l-2 border-sky-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-sky-500/20 flex items-center justify-center shrink-0">
+        {% lucide "calendar" class="w-3.5 h-3.5 text-sky-400" %}
+      </span>
+      <span class="text-white/90">Mes séances</span>
     </a>
     <a href="{% url 'payments_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'payments' in request.path %}bg-black/15{% endif %}">
-      {% lucide "credit-card" class="w-4 h-4 shrink-0" %} Mes paiements
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'payments' in request.path %}bg-green-500/20 border-l-2 border-green-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-green-500/20 flex items-center justify-center shrink-0">
+        {% lucide "credit-card" class="w-3.5 h-3.5 text-green-400" %}
+      </span>
+      <span class="text-white/90">Mes paiements</span>
     </a>
     <a href="{% url 'certificates_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'certificates' in request.path %}bg-black/15{% endif %}">
-      {% lucide "award" class="w-4 h-4 shrink-0" %} Mes certificats
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'certificates' in request.path %}bg-yellow-500/20 border-l-2 border-yellow-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-yellow-500/20 flex items-center justify-center shrink-0">
+        {% lucide "award" class="w-3.5 h-3.5 text-yellow-400" %}
+      </span>
+      <span class="text-white/90">Mes certificats</span>
     </a>
     <a href="{% url 'evaluations_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'evaluations' in request.path %}bg-black/15{% endif %}">
-      {% lucide "star" class="w-4 h-4 shrink-0" %} Évaluations
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'evaluations' in request.path %}bg-pink-500/20 border-l-2 border-pink-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-pink-500/20 flex items-center justify-center shrink-0">
+        {% lucide "star" class="w-3.5 h-3.5 text-pink-400" %}
+      </span>
+      <span class="text-white/90">Évaluations</span>
     </a>
     <a href="{% url 'resources_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'resources' in request.path %}bg-black/15{% endif %}">
-      {% lucide "folder-open" class="w-4 h-4 shrink-0" %} Ressources
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'resources' in request.path %}bg-orange-500/20 border-l-2 border-orange-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-orange-500/20 flex items-center justify-center shrink-0">
+        {% lucide "folder-open" class="w-3.5 h-3.5 text-orange-400" %}
+      </span>
+      <span class="text-white/90">Ressources</span>
     </a>
     <a href="{% url 'requests_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'requests' in request.path %}bg-black/15{% endif %}">
-      {% lucide "mail" class="w-4 h-4 shrink-0" %} Demandes
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'requests' in request.path %}bg-red-500/20 border-l-2 border-red-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-red-500/20 flex items-center justify-center shrink-0">
+        {% lucide "mail" class="w-3.5 h-3.5 text-red-400" %}
+      </span>
+      <span class="text-white/90">Demandes</span>
     </a>
     <a href="{% url 'notifications_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'notifications' in request.path %}bg-black/15{% endif %}">
-      {% lucide "bell" class="w-4 h-4 shrink-0" %} Notifications
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'notifications' in request.path %}bg-violet-500/20 border-l-2 border-violet-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-violet-500/20 flex items-center justify-center shrink-0">
+        {% lucide "bell" class="w-3.5 h-3.5 text-violet-400" %}
+      </span>
+      <span class="text-white/90">Notifications</span>
     </a>
     <a href="{% url 'profile_view' %}"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors hover:bg-black/10 {% if 'profile' in request.path %}bg-black/15{% endif %}">
-      {% lucide "user" class="w-4 h-4 shrink-0" %} Profil
+       class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 {% if 'profile' in request.path %}bg-cyan-500/20 border-l-2 border-cyan-400{% endif %}">
+      <span class="w-7 h-7 rounded-sm bg-cyan-500/20 flex items-center justify-center shrink-0">
+        {% lucide "user" class="w-3.5 h-3.5 text-cyan-400" %}
+      </span>
+      <span class="text-white/90">Profil</span>
     </a>
   </nav>
 
   <!-- User -->
-  <div class="border-t border-black/10 px-4 py-4">
+  <div class="border-t border-white/10 px-4 py-4">
     <div class="flex items-center gap-3">
-      <img src="{{ request.user.profile_picture_url }}" alt="avatar" class="w-8 h-8 rounded-md object-cover ring-2 ring-black/20">
+      <img src="{{ request.user.profile_picture_url }}" alt="avatar" class="w-8 h-8 rounded-sm object-cover ring-1 ring-white/20">
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
-        <p class="text-xs text-gray-700 truncate">Student</p>
+        <p class="text-sm font-semibold truncate text-white">{{ request.user.get_full_name|default:request.user.username }}</p>
+        <p class="text-xs text-white/40 truncate">Étudiant</p>
       </div>
-      <a href="{% url 'account_logout' %}" title="Déconnexion">
-        {% lucide "log-out" class="w-4 h-4 text-gray-700 hover:text-gray-900" %}
+      <a href="{% url 'account_logout' %}" title="Déconnexion" class="w-7 h-7 rounded-sm bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition">
+        {% lucide "log-out" class="w-3.5 h-3.5 text-white/50 hover:text-red-400" %}
       </a>
     </div>
   </div>

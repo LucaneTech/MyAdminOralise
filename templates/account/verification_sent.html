@@ -1,48 +1,29 @@
 {% extends "account/base.html" %}
 {% load i18n %}
 {% load allauth %}
-{% block head_title %}
-    {% trans "Verify Your Email Address" %}
-{% endblock head_title %}
+{% load static %}
+
+{% block title %}Vérification de l'email{% endblock %}
+
 {% block content %}
-<style>
-    body
-    {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-    h1,h4{
-        color:white;
-    }
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-8 w-full max-w-sm text-center">
+    <div class="w-14 h-14 bg-[#d9a505]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-7 h-7 text-[#d9a505]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+    </div>
 
-    #check-verification{
-        color: green;
-        background-color: white;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        margin: 0 auto;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 2rem;
-        margin-top: 20px;
-    }
-</style>
+    <h1 class="text-lg font-bold text-gray-900 mb-2">{% trans "Vérifiez votre email" %}</h1>
+    <p class="text-sm text-gray-600 mb-6">
+      {% trans "Veuillez confirmer votre Email !" %}
+      Un lien de confirmation vous a été envoyé.
+    </p>
 
-<div class="container text-center mt-5">
-   
-
-    {% element h1 %}
-        {% trans "Verify Your Email Address" %}
-    {% endelement %}
-   
-    <h4 class="mt-3">{% trans "Veuillez confirmer votre Email!"%}</h4>
-   
-
-    <p id="check-verification" ><i class="icofont-verification-check"></i></p>
+    <a href="{% url 'account_login' %}"
+      class="inline-flex items-center justify-center w-full px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-50 transition">
+      Retour à la connexion
+    </a>
+  </div>
 </div>
-
 {% endblock content %}

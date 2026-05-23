@@ -1,295 +1,191 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
 {% load static %}
-{% block title %} Dashboard {% endblock title %}
+{% block title %}Détail étudiant{% endblock title %}
 
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
 {% block content %}
-<div class="container-fluid mt-6">
-    <!-- En-tête avec infos étudiant -->
-    <div class="row">
-        <div class="col-xl-4">
-            <div class="card card-profile">
-                <div class="card-header bg-gradient-primary text-center py-5">
-                    
-                        <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 100px;
-                 border-radius: 50%;
-                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
-                    
-                </div>
-                <div class="card-body pt-0">
-                    <div class="text-center mt-4">
-                        <h5 class="h3">{{ student.user.full_name }}</h5>
-                        <div class="h5 font-weight-300">
-                            <i class="ni ni-email-83 mr-2"></i>{{ student.user.email }}
-                        </div>
-                        <div class="mt-2">
-                            <i class="ni ni-mobile-button mr-1"></i>{{ student.user.user_profile.number|default:"Non renseigné" }}
-                        </div>
-                        <div class="mt-3">
-                            <span class="badge badge-pill badge-primary">
-                                <i class="ni ni-badge"></i> {{ student.matricule }}
-                            </span>
-                           {% if student.statuts == 'actif' %}
-    <span class="badge badge-success">
-        <i class="ni ni-check-circle"></i> Actif
-    </span>
-{% elif student.statuts == 'attente' %}
-    <span class="badge badge-warning">
-        <i class="ni ni-time-alarm"></i> En attente
-    </span>
-{% elif student.statuts == 'abandon' %}
-    <span class="badge badge-danger">
-        <i class="ni ni-fat-remove"></i> Abandon
-    </span>
-{% elif student.statuts == 'terminé' %}
-    <span class="badge badge-info">
-        <i class="ni ni-check-bold"></i> Terminé
-    </span>
-{% endif %}
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="row">
-                            <div class="col">
-                                <div class="text-center">
-                                    <h5 class="h1">{{ student.hours_remaining }}</h5>
-                                    <span class="text-sm text-muted">Heures restantes</span>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="text-center">
-                                    <h5 class="h1">{{ total_paid }}MAD</h5>
-                                    <span class="text-sm text-muted">Total payé</span>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="text-center">
-                                    <h5 class="h1">{{ teachers.count }}</h5>
-                                    <span class="text-sm text-muted">Enseignants</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Informations de contact -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Informations de contact</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-uppercase  text-black">Adresse</small>
-                        <p class="mb-0">
-                            {% if student.user.user_profile.address %}
-                            {{ student.user.user_profile.address }}<br>
-                            {{ student.user.user_profile.city }}, {{ student.user.user_profile.country }}
-                            {% else %}
-                            <span class="text-muted">Non renseignée</span>
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="mb-3">
-                        <small class="text-uppercase text-black">Date d'inscription</small>
-                        <p class="mb-0">{{ student.date_joined|date:"d/m/Y" }}</p>
-                    </div>
-                    <div>
-                        <small class="text-uppercase text-black">À propos</small>
-                        <p class="mb-0">
-                            {% if student.user.user_profile.about %}
-                            {{ student.user.user_profile.about|truncatechars:100 }}
-                            {% else %}
-                            <span class="text-muted">Non renseigné</span>
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-8">
-            <!-- Langues apprises -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Langues apprises</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for language in student.languages.all %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card border">
-                                <div class="card-body text-center">
-                                    <i class="ni ni-world text-primary display-4 mb-2"></i>
-                                    <h5 class="mb-0">{{ language.name }}</h5>
-                                    <small class="text-muted">{{ language.code }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12 text-center py-4">
-                            <i class="ni ni-world display-4 text-muted"></i>
-                            <p class="text-muted mt-2">Aucune langue assignée</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Enseignants assignés -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h5 class="h3 mb-0">Enseignants assignés</h5>
-                        </div>
-                        <div class="col text-right">
-                            <button class="btn btn-sm btn-primary">Assigner un enseignant</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for teacher in teachers %}
-                        <div class="col-md-6 mb-3">
-                            <div class="card border">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col-auto">
-                                           <img src="{% static 'assets/img/profile.png' %}" alt="Image placeholder" style="width: 50px;
-                 border-radius: 50%;
-                 box-shadow: 7px 5px 7px 5px rgba(0, 0, 0, 0.062); border:1px solid gray;">
-                                        </div>
-                                        <div class="col">
-                                            <h6 class="mb-0">{{ teacher.user.full_name }}</h6>
-                                            <small class="text-muted">{{ teacher.speciality }}</small>
-                                            <div class="mt-2">
-                                                {% for lang in teacher.languages.all|slice:":2" %}
-                                                <span class="badge badge-sm badge-primary">{{ lang.name }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <span class="badge badge-success">
-                                                {{ teacher.hourly_rate }}MAD/h
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12 text-center py-4">
-                            <i class="ni ni-single-02 display-4 text-muted"></i>
-                            <p class="text-muted mt-2">Aucun enseignant assigné</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Paiements récents -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="h3 mb-0">Historique des paiements</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table align-items-center table-flush">
-                        <thead class="thead-light">
-                            <tr>
-                                <th scope="col">Date</th>
-                                <th scope="col">Montant</th>
-                                <th scope="col">Heures achetées</th>
-                                <th scope="col">Type</th>
-                                <th scope="col">Statut</th>
-                                <th scope="col">Langue</th>
-                                <th scope="col">Facture</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for payment in payments %}
-                            <tr>
-                                <td>{{ payment.payment_date|date:"d/m/Y H:i" }}</td>
-                                <td class="font-weight-bold">{{ payment.amount }}MAD</td>
-                                <td>
-                                    <span class="badge badge-primary">{{ payment.hours_purchased }}h</span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-default">{{ payment.get_payment_type_display }}</span>
-                                </td>
-                                
-                                <td>
-                                    <span class="badge badge-{{ payment.status_color }}">
-                                        {{ payment.get_status_display }}
-                                    </span>
-                                </td>
-                                 <td>
-                                   {% if payment.languages|lower in "français,french, Français, Francais, francais" %}
-    <span class="badge badge-success">
-        {{ payment.languages }}
-    </span>
-{% elif payment.languages|lower in "anglais,english, Anglais" %}
-    <span class="badge badge-primary">
-        {{ payment.languages }}
-    </span>
-{% endif %}
-                                </td>
-                                <td>
-                                    {% if payment.invoice_number %}
-                                    <button class="btn btn-sm btn-outline-primary">
-                                        <i class="ni ni-cloud-download-95"></i> Télécharger
-                                    </button>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="ni ni-money-coins display-4"></i>
-                                        <p class="mt-2">Aucun paiement enregistré</p>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            
-        </div>
-    </div>
+<!-- Page header -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">{{ student.user.full_name }}</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Fiche étudiant · {{ student.matricule }}</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'admin_student_edit' student.id %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-sm hover:bg-yellow-600 transition">Modifier</a>
+    <a href="{% url 'admin_students' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50 transition">Retour</a>
+  </div>
 </div>
 
-<style>
-.avatar {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-}
-.avatar-xl {
-    width: 100px;
-    height: 100px;
-}
-.timeline-step {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #f8f9fe;
-    border: 2px solid #dee2e6;
-}
-.timeline-content {
-    margin-left: 60px;
-}
-.card.border {
-    border: 1px solid #e9ecef !important;
-}
-</style>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Left: Profile card -->
+  <div class="space-y-4">
+    <!-- Profile -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="bg-[#26b2bd] rounded-t-md py-8 flex justify-center">
+        <img src="{% static 'assets/img/profile.png' %}" alt="" class="w-20 h-20 rounded-sm object-cover border-2 border-white shadow">
+      </div>
+      <div class="p-5 text-center">
+        <h2 class="text-base font-bold text-gray-900">{{ student.user.full_name }}</h2>
+        <p class="text-xs text-gray-500 mt-0.5">{{ student.user.email }}</p>
+        <p class="text-xs text-gray-500">{{ student.user.user_profile.number|default:"Non renseigné" }}</p>
+        <div class="flex items-center justify-center gap-2 mt-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#26b2bd]/10 text-[#26b2bd]">{{ student.matricule }}</span>
+          {% if student.statuts == 'actif' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Actif</span>
+          {% elif student.statuts == 'attente' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">En attente</span>
+          {% elif student.statuts == 'abandon' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Abandon</span>
+          {% elif student.statuts == 'terminé' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Terminé</span>
+          {% endif %}
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-gray-100">
+          <div class="text-center">
+            <p class="text-xl font-bold text-gray-900">{{ student.hours_remaining }}</p>
+            <p class="text-xs text-gray-500">Heures rest.</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xl font-bold text-gray-900">{{ total_paid }}</p>
+            <p class="text-xs text-gray-500">MAD payés</p>
+          </div>
+          <div class="text-center">
+            <p class="text-xl font-bold text-gray-900">{{ teachers.count }}</p>
+            <p class="text-xs text-gray-500">Enseignants</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact info -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Informations de contact</h2>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Adresse</p>
+          {% if student.user.user_profile.address %}
+          <p class="text-sm text-gray-700">{{ student.user.user_profile.address }}, {{ student.user.user_profile.city }}, {{ student.user.user_profile.country }}</p>
+          {% else %}
+          <p class="text-sm text-gray-400">Non renseignée</p>
+          {% endif %}
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Date d'inscription</p>
+          <p class="text-sm text-gray-700">{{ student.date_joined|date:"d/m/Y" }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">À propos</p>
+          {% if student.user.user_profile.about %}
+          <p class="text-sm text-gray-700">{{ student.user.user_profile.about|truncatechars:100 }}</p>
+          {% else %}
+          <p class="text-sm text-gray-400">Non renseigné</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Details -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Langues -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Langues apprises</h2>
+      </div>
+      <div class="p-5">
+        {% if student.languages.all %}
+        <div class="flex flex-wrap gap-2">
+          {% for language in student.languages.all %}
+          <span class="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-[#26b2bd]/10 text-[#26b2bd]">{{ language.name }} <span class="ml-1 text-xs text-[#26b2bd]/60">{{ language.code }}</span></span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-4">Aucune langue assignée</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Enseignants assignés -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Enseignants assignés</h2>
+      </div>
+      <div class="p-5">
+        {% if teachers %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% for teacher in teachers %}
+          <div class="flex items-center gap-3 p-3 rounded-sm border border-gray-100">
+            <img src="{% static 'assets/img/profile.png' %}" alt="" class="w-10 h-10 rounded-sm object-cover">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">{{ teacher.user.full_name }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ teacher.speciality }}</p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                {% for lang in teacher.languages.all|slice:":2" %}
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-[#26b2bd]/10 text-[#26b2bd]">{{ lang.name }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 shrink-0">{{ teacher.hourly_rate }} MAD/h</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-4">Aucun enseignant assigné</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Historique paiements -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Historique des paiements</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Montant</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Heures</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Langue</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Facture</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for payment in payments %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm text-gray-700">{{ payment.payment_date|date:"d/m/Y H:i" }}</td>
+              <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ payment.amount }} MAD</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#26b2bd]/10 text-[#26b2bd]">{{ payment.hours_purchased }}h</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ payment.get_payment_type_display }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ payment.get_status_display }}</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ payment.languages }}</td>
+              <td class="px-4 py-3 text-sm text-gray-500">
+                {% if payment.invoice_number %}
+                <span class="text-[#26b2bd] font-medium">Télécharger</span>
+                {% else %}
+                —
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-500">Aucun paiement enregistré</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

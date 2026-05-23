@@ -1,80 +1,85 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
 {% block title %}Ressources{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">Gestion des ressources</h6>
-        </div>
-        <div class="col text-right">
-          <a href="{% url 'admin_resource_create' %}" class="btn btn-sm btn-light">
-            <i class="fas fa-plus mr-1"></i>Ajouter une ressource
-          </a>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Gestion des ressources</h1>
+    <p class="text-sm text-gray-500">Fichiers et ressources pédagogiques</p>
   </div>
+  <a href="{% url 'admin_resource_create' %}"
+     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white text-xs font-semibold rounded-sm hover:bg-orange-500 transition">
+    {% lucide "plus" class="w-3.5 h-3.5" %} Ajouter
+  </a>
 </div>
 
-<div class="container-fluid mt--6">
-  {% if messages %}{% for msg in messages %}
-  <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">{{ msg }}<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>
-  {% endfor %}{% endif %}
-
-  <div class="card shadow">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table align-items-center table-flush">
-          <thead class="thead-light">
-            <tr>
-              <th>Titre</th>
-              <th>Type</th>
-              <th>Langue</th>
-              <th>Formateur</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in resources %}
-            <tr>
-              <td>
-                <strong>{{ r.title }}</strong><br>
-                <small class="text-muted">{{ r.description|default:""|truncatechars:50 }}</small>
-              </td>
-              <td>
-                <span class="badge badge-info">{{ r.get_resource_type_display|default:r.resource_type }}</span>
-              </td>
-              <td>{{ r.language|default:"—" }}</td>
-              <td>{{ r.teacher|default:"—" }}</td>
-              <td>{{ r.created_at|date:"d/m/Y" }}</td>
-              <td>
-                {% if r.file_url or r.file %}
-                <a href="{{ r.file_url|default:r.file.url }}" target="_blank" class="btn btn-sm btn-success" title="Voir"><i class="fas fa-eye"></i></a>
-                {% endif %}
-                <a href="{% url 'admin_resource_edit' r.id %}" class="btn btn-sm btn-info" title="Modifier"><i class="fas fa-edit"></i></a>
-                <a href="{% url 'admin_resource_delete' r.id %}" class="btn btn-sm btn-danger" title="Supprimer"><i class="fas fa-trash"></i></a>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="text-center text-muted py-5">Aucune ressource trouvée.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% if resources.has_other_pages %}
-    <div class="card-footer">
-      <nav><ul class="pagination justify-content-end mb-0">
-        {% if resources.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ resources.previous_page_number }}">Précédent</a></li>{% endif %}
-        <li class="page-item active"><span class="page-link">{{ resources.number }} / {{ resources.paginator.num_pages }}</span></li>
-        {% if resources.has_next %}<li class="page-item"><a class="page-link" href="?page={{ resources.next_page_number }}">Suivant</a></li>{% endif %}
-      </ul></nav>
-    </div>
-    {% endif %}
+<div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Titre</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Langue</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Formateur</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for r in resources %}
+        <tr class="hover:bg-gray-50/50 transition-colors">
+          <td class="px-4 py-3">
+            <p class="text-sm font-semibold text-gray-900">{{ r.title }}</p>
+            {% if r.description %}<p class="text-xs text-gray-400 mt-0.5">{{ r.description|truncatechars:50 }}</p>{% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-xs font-medium bg-orange-50 text-orange-700 px-2 py-0.5 rounded-sm border border-orange-200">{{ r.get_resource_type_display|default:r.resource_type }}</span>
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ r.language|default:"—" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ r.teacher|default:"—" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ r.created_at|date:"d/m/Y" }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              {% if r.file_url or r.file %}
+              <a href="{{ r.file_url|default:r.file.url }}" target="_blank"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-sky-100 text-sky-700 text-xs font-semibold rounded-sm hover:bg-sky-200 transition">
+                {% lucide "eye" class="w-3.5 h-3.5" %}
+              </a>
+              {% endif %}
+              <a href="{% url 'admin_resource_edit' r.id %}"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-sm hover:bg-amber-200 transition">
+                {% lucide "pencil" class="w-3.5 h-3.5" %}
+              </a>
+              <a href="{% url 'admin_resource_delete' r.id %}"
+                 class="inline-flex items-center px-2.5 py-1.5 bg-red-100 text-red-700 text-xs font-semibold rounded-sm hover:bg-red-200 transition"
+                 onclick="return confirm('Supprimer cette ressource ?')">
+                {% lucide "trash-2" class="w-3.5 h-3.5" %}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="px-4 py-12 text-center">
+            {% lucide "file-text" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
+            <p class="text-sm text-gray-400">Aucune ressource trouvée</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+  {% if resources.has_other_pages %}
+  <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+    <p class="text-xs text-gray-500">Page {{ resources.number }} sur {{ resources.paginator.num_pages }}</p>
+    <div class="flex gap-1">
+      {% if resources.has_previous %}<a href="?page={{ resources.previous_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">‹</a>{% endif %}
+      <span class="px-2.5 py-1.5 text-xs bg-orange-600 text-white rounded-sm">{{ resources.number }}</span>
+      {% if resources.has_next %}<a href="?page={{ resources.next_page_number }}" class="px-2.5 py-1.5 text-xs rounded-sm border border-gray-200 hover:bg-gray-50">›</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

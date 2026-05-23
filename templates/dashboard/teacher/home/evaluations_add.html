@@ -1,163 +1,98 @@
 {% extends 'dashboard/teacher/layouts/base.html' %}
 
-{% block title %} Ajouter une évaluation {% endblock title %}
-
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Ajouter une évaluation{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-6 col-7">
-          <h6 class="h2 text-white d-inline-block mb-0">Nouvelle évaluation</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="{% url 'evaluations_view' %}">Évaluations</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Nouvelle évaluation</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Nouvelle évaluation</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Créer une évaluation pour un étudiant</p>
   </div>
+  <a href="{% url 'evaluations_view' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+    Retour
+  </a>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row justify-content-center">
-    <div class="col-xl-8">
-      <div class="card">
-        <div class="card-header border-0">
-          <div class="row align-items-center">
-            <div class="col">
-              <h3 class="mb-0">Ajouter une nouvelle évaluation</h3>
-            </div>
+<div class="max-w-2xl">
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-700">Ajouter une nouvelle évaluation</h2>
+    </div>
+    <div class="p-5">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="student" class="block text-xs font-medium text-gray-600 mb-1">Étudiant *</label>
+            <select name="student" id="student" required
+                    class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition">
+              <option value="">Sélectionner un étudiant</option>
+              {% for student in students %}
+              <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.matricule }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="language" class="block text-xs font-medium text-gray-600 mb-1">Langue *</label>
+            <select name="language" id="language" required
+                    class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition">
+              <option value="">Sélectionner une langue</option>
+              {% for language in languages %}
+              <option value="{{ language.id }}">{{ language.name }}</option>
+              {% endfor %}
+            </select>
           </div>
         </div>
-        <div class="card-body">
-          <form method="post">
-            {% csrf_token %}
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="student">Étudiant *</label>
-                  <select name="student" id="student" class="form-control" required>
-                    <option value="">Sélectionner un étudiant</option>
-                    {% for student in students %}
-                    <option value="{{ student.id }}">{{ student.user.get_full_name }} ({{ student.matricule }})</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="language">Langue *</label>
-                  <select name="language" id="language" class="form-control" required>
-                    <option value="">Sélectionner une langue</option>
-                    {% for language in languages %}
-                    <option value="{{ language.id }}">{{ language.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="evaluation_type">Type d'évaluation *</label>
-                  <select name="evaluation_type" id="evaluation_type" class="form-control" required>
-                    <option value="">Sélectionner un type</option>
-                    {% for type_code, type_name in evaluation_types %}
-                    <option value="{{ type_code }}">{{ type_name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="score">Note /20 *</label>
-                  <input type="number" name="score" id="score" class="form-control" min="0" max="20" step="0.5" required>
-                  <small class="form-text text-muted">Note sur 20 avec possibilité de demi-points</small>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="comments">Commentaires et observations</label>
-              <textarea name="comments" id="comments" class="form-control" rows="4" placeholder="Détails sur l'évaluation, points forts, axes d'amélioration..."></textarea>
-            </div>
-
-            <div class="row mt-4">
-              <div class="col-md-6">
-                <a href="{% url 'evaluations_view' %}" class="btn btn-secondary btn-block">
-                  <i class="ni ni-fat-remove"></i> Annuler
-                </a>
-              </div>
-              <div class="col-md-6">
-                <button type="submit" class="btn btn-primary btn-block">
-                  <i class="ni ni-check-bold"></i> Enregistrer l'évaluation
-                </button>
-              </div>
-            </div>
-          </form>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="evaluation_type" class="block text-xs font-medium text-gray-600 mb-1">Type d'évaluation *</label>
+            <select name="evaluation_type" id="evaluation_type" required
+                    class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition">
+              <option value="">Sélectionner un type</option>
+              {% for type_code, type_name in evaluation_types %}
+              <option value="{{ type_code }}">{{ type_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="score" class="block text-xs font-medium text-gray-600 mb-1">Note /20 *</label>
+            <input type="number" name="score" id="score" min="0" max="20" step="0.5" required
+                   class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition">
+            <p class="text-xs text-gray-400 mt-1">Note sur 20 avec possibilité de demi-points</p>
+          </div>
         </div>
-      </div>
+        <div>
+          <label for="comments" class="block text-xs font-medium text-gray-600 mb-1">Commentaires et observations</label>
+          <textarea name="comments" id="comments" rows="4" placeholder="Détails sur l'évaluation, points forts, axes d'amélioration..."
+                    class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <a href="{% url 'evaluations_view' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+            Annuler
+          </a>
+          <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+            Enregistrer l'évaluation
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-{% endblock content %}
+{% endblock %}
 
-{% block javascripts %}
+{% block extra_js %}
 <script>
-$(document).ready(function() {
-    // Validation en temps réel
-    $('#score').on('input', function() {
-        var score = parseFloat($(this).val());
-        if (score < 0 || score > 20) {
-            $(this).addClass('is-invalid');
-            if (score < 0) {
-                $(this).next('.invalid-feedback').remove();
-                $(this).after('<div class="invalid-feedback">La note ne peut pas être négative</div>');
-            } else if (score > 20) {
-                $(this).next('.invalid-feedback').remove();
-                $(this).after('<div class="invalid-feedback">La note ne peut pas dépasser 20</div>');
-            }
-        } else {
-            $(this).removeClass('is-invalid');
-            $(this).next('.invalid-feedback').remove();
-        }
-    });
-
-    // Validation du formulaire avant soumission
-    $('form').on('submit', function(e) {
-        var score = parseFloat($('#score').val());
-        if (score < 0 || score > 20) {
-            e.preventDefault();
-            alert('Veuillez entrer une note valide entre 0 et 20');
-            return false;
-        }
-        
-        if (!$('#student').val()) {
-            e.preventDefault();
-            alert('Veuillez sélectionner un étudiant');
-            return false;
-        }
-        
-        if (!$('#language').val()) {
-            e.preventDefault();
-            alert('Veuillez sélectionner une langue');
-            return false;
-        }
-        
-        if (!$('#evaluation_type').val()) {
-            e.preventDefault();
-            alert('Veuillez sélectionner un type d\'évaluation');
-            return false;
-        }
-    });
+document.getElementById('score').addEventListener('input', function() {
+  const score = parseFloat(this.value);
+  if (score < 0 || score > 20) this.classList.add('border-red-400');
+  else this.classList.remove('border-red-400');
+});
+document.querySelector('form').addEventListener('submit', function(e) {
+  const score = parseFloat(document.getElementById('score').value);
+  if (score < 0 || score > 20) { e.preventDefault(); alert('Veuillez entrer une note valide entre 0 et 20'); return false; }
+  if (!document.getElementById('student').value) { e.preventDefault(); alert('Veuillez sélectionner un étudiant'); return false; }
+  if (!document.getElementById('language').value) { e.preventDefault(); alert('Veuillez sélectionner une langue'); return false; }
+  if (!document.getElementById('evaluation_type').value) { e.preventDefault(); alert("Veuillez sélectionner un type d'évaluation"); return false; }
 });
 </script>
-{% endblock javascripts %} 
+{% endblock %}

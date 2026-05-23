@@ -2,110 +2,103 @@
 {% block title %}Détail du certificat{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">Mon certificat</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'dashboard_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="{% url 'certificates_view' %}" class="text-white">Certificats</a></li>
-              <li class="breadcrumb-item active">Détail</li>
-            </ol>
-          </nav>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Mon certificat</h1>
+    <p class="text-sm text-gray-500 mt-0.5">
+      <a href="{% url 'dashboard_view' username=request.user.username %}" class="hover:text-[#d9a505]">Accueil</a>
+      &rsaquo;
+      <a href="{% url 'certificates_view' %}" class="hover:text-[#d9a505]">Certificats</a>
+      &rsaquo; Détail
+    </p>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card">
-        <!-- En-tête -->
-        <div class="card-header text-center py-4" style="background: linear-gradient(135deg,#147a81,#0e5a60);">
-          <i class="ni ni-badge text-white" style="font-size:3rem;"></i>
-          <h4 class="text-white mt-2 mb-0">Certificat de Formation</h4>
-          <p class="text-white-50 mb-0">{{ cert.language.name }}</p>
+<div class="flex justify-center">
+  <div class="w-full max-w-2xl">
+    <div class="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
+      <!-- Header -->
+      <div class="bg-[#d9a505] px-6 py-8 text-center">
+        <p class="text-3xl text-white mb-2">&#127941;</p>
+        <h2 class="text-lg font-bold text-white mb-1">Certificat de Formation</h2>
+        <p class="text-white/80 text-sm">{{ cert.language.name }}</p>
+      </div>
+
+      <div class="p-6">
+        <!-- Main info grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-center">
+          <div class="border-r border-gray-100 last:border-0">
+            <p class="text-xs text-gray-500 mb-1">Étudiant</p>
+            <p class="text-sm font-semibold text-gray-900">{{ cert.student }}</p>
+          </div>
+          <div class="border-r border-gray-100 last:border-0">
+            <p class="text-xs text-gray-500 mb-1">Niveau</p>
+            <p class="text-sm font-semibold text-gray-900">{{ cert.level }}</p>
+          </div>
+          <div class="border-r border-gray-100 last:border-0">
+            <p class="text-xs text-gray-500 mb-1">Délivré le</p>
+            <p class="text-sm font-semibold text-gray-900">{{ cert.issued_date|date:"d/m/Y" }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Durée</p>
+            <p class="text-sm font-semibold text-gray-900">{{ cert.duree_formation|default:"—" }}</p>
+          </div>
         </div>
 
-        <div class="card-body">
-          <!-- Infos principales -->
-          <div class="row text-center mb-4">
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1 text-sm">Étudiant</p>
-              <h5>{{ cert.student }}</h5>
-            </div>
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1 text-sm">Niveau</p>
-              <h5>{{ cert.level }}</h5>
-            </div>
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1 text-sm">Délivré le</p>
-              <h5>{{ cert.issued_date|date:"d/m/Y" }}</h5>
-            </div>
-            <div class="col-md-3">
-              <p class="text-muted mb-1 text-sm">Durée</p>
-              <h5>{{ cert.duree_formation|default:"—" }}</h5>
-            </div>
-          </div>
+        <hr class="border-gray-100 mb-5">
 
-          <hr>
-
-          <!-- Compétences validées -->
-          {% if cert.competences_validees %}
-          <div class="mb-4">
-            <h6 class="text-uppercase text-muted font-weight-bold mb-3">Compétences validées</h6>
-            <ul class="list-unstyled">
-              {% for comp in cert.competences_validees.splitlines %}
-              {% if comp.strip %}
-              <li class="mb-1">
-                <i class="fas fa-check-circle text-success mr-2"></i>{{ comp.strip }}
-              </li>
-              {% endif %}
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
-
-          <!-- Appréciation -->
-          {% if cert.appreciation_pedagogique %}
-          <div class="mb-4">
-            <h6 class="text-uppercase text-muted font-weight-bold mb-2">Appréciation pédagogique</h6>
-            <blockquote class="blockquote pl-3 border-left border-primary">
-              <p class="mb-0">{{ cert.appreciation_pedagogique }}</p>
-            </blockquote>
-          </div>
-          {% endif %}
-
-          <hr>
-
-          <!-- ID & Badge vérification -->
-          <div class="row align-items-center">
-            <div class="col">
-              <p class="text-muted mb-1 text-sm">ID du certificat</p>
-              <code class="h5">{{ cert.certificate_id }}</code>
-            </div>
-            <div class="col-auto">
-              <span class="badge badge-success badge-pill px-3 py-2">
-                <i class="fas fa-shield-alt mr-1"></i> Certificat vérifié par Oralise
-              </span>
-            </div>
-          </div>
-
-          <div class="mt-4 text-center">
-            <a href="{% url 'certificate_public_view' certificate_id=cert.certificate_id %}" class="btn btn-outline-info btn-sm" target="_blank">
-              <i class="fas fa-external-link-alt mr-1"></i>Page de vérification publique
-            </a>
-            {% if cert.certificate_file %}
-            <a href="{{ cert.certificate_file.url }}" class="btn btn-primary btn-sm ml-2" target="_blank">
-              <i class="ni ni-cloud-download-95 mr-1"></i>Télécharger le PDF
-            </a>
+        <!-- Compétences validées -->
+        {% if cert.competences_validees %}
+        <div class="mb-5">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Compétences validées</p>
+          <ul class="space-y-1.5">
+            {% for comp in cert.competences_validees.splitlines %}
+            {% if comp.strip %}
+            <li class="flex items-start gap-2 text-sm text-gray-700">
+              <span class="text-green-500 mt-0.5 flex-shrink-0">&#10003;</span>
+              {{ comp.strip }}
+            </li>
             {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Appréciation pédagogique -->
+        {% if cert.appreciation_pedagogique %}
+        <div class="mb-5">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Appréciation pédagogique</p>
+          <blockquote class="border-l-2 border-[#d9a505] pl-3 text-sm text-gray-600 italic">
+            {{ cert.appreciation_pedagogique }}
+          </blockquote>
+        </div>
+        {% endif %}
+
+        <hr class="border-gray-100 mb-5">
+
+        <!-- ID & verification badge -->
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">ID du certificat</p>
+            <code class="text-sm font-mono text-gray-800">{{ cert.certificate_id }}</code>
           </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+            Certificat vérifié par Oralise
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-center gap-2">
+          <a href="{% url 'certificate_public_view' certificate_id=cert.certificate_id %}" target="_blank"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+            Page de vérification publique
+          </a>
+          {% if cert.certificate_file %}
+          <a href="{{ cert.certificate_file.url }}" target="_blank"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#d9a505] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+            Télécharger le PDF
+          </a>
+          {% endif %}
         </div>
       </div>
     </div>

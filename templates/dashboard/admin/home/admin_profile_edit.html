@@ -1,0 +1,62 @@
+{% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
+{% block title %}Modifier le profil{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+  <a href="{% url 'profile_view' %}" aria-label="Retour" class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-sm hover:bg-gray-50 transition text-gray-500">
+    {% lucide "arrow-left" class="w-4 h-4" %}
+  </a>
+  <div>
+    <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Profil → Modifier</p>
+    <h1 class="text-lg font-bold text-gray-900 mt-0.5">Modifier le profil</h1>
+  </div>
+</div>
+
+<div class="max-w-2xl">
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="space-y-4">
+
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+        {% lucide "user" class="w-4 h-4 text-teal-500" %}
+        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Informations personnelles</span>
+      </div>
+      <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in form %}{% if field.html_name in 'city,country,number,address' %}
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
+        {% lucide "image" class="w-4 h-4 text-teal-500" %}
+        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Photo &amp; Bio</span>
+      </div>
+      <div class="p-5 space-y-4">
+        {% for field in form %}{% if field.html_name in 'profile_picture,about' %}
+        <div {% if field.html_name == 'about' %}class="md:col-span-2"{% endif %}>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+
+  </div>
+  <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 py-4 flex justify-between items-center mt-6">
+    <a href="{% url 'profile_view' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">Annuler</a>
+    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#056f77] text-white text-sm font-semibold rounded-sm hover:bg-[#045f66] transition">
+      {% lucide "save" class="w-4 h-4" %} Enregistrer
+    </button>
+  </div>
+</form>
+</div>
+{% endblock %}

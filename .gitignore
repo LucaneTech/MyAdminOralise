@@ -20,4 +20,10 @@ Thumbs.db
 
 #static collection version
 staticfiles/
+/CLAUDE.md
+./CLAUDE.md
+.CLAUDE.md
+./guide.md
+.guide.md
+guide.md
 

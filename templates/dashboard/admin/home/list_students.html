@@ -32,7 +32,7 @@
   </div>
   <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 flex items-center gap-4">
     <div class="w-10 h-10 rounded-sm bg-green-100 flex items-center justify-center">{% lucide "banknote" class="w-5 h-5 text-green-600" %}</div>
-    <div><p class="text-2xl font-bold text-gray-900">{{ total_paid_sum|default:0|intcomma }} MAD</p><p class="text-xs text-gray-500">CA total étudiants</p></div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_paid_sum|default:0 }} MAD</p><p class="text-xs text-gray-500">CA total étudiants</p></div>
   </div>
 </div>
 
@@ -46,7 +46,7 @@
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Matricule</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Langues</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Heures</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Payé</th>
+          {% comment %} <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Payé</th> {% endcomment %}
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
         </tr>
@@ -79,9 +79,9 @@
           <td class="px-4 py-3">
             <p class="text-sm font-semibold text-gray-900">{{ student.hours_remaining }}<span class="text-gray-400 text-xs">/{{ student.total_hours_purchased }}h</span></p>
           </td>
-          <td class="px-4 py-3">
-            <p class="text-sm font-semibold text-gray-900">{{ student.total_paid_amount|default:0|floatformat:0 }} MAD</p>
-          </td>
+          {% comment %} <td class="px-4 py-3">
+            <p class="text-sm font-semibold text-gray-900">{{ student.total_paid_amount_by_student|default:0|floatformat:0 }} MAD</p>
+          </td> {% endcomment %}
           <td class="px-4 py-3">
             {% if student.statuts == 'actif' %}<span class="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-sm">Actif</span>
             {% elif student.statuts == 'attente' %}<span class="text-xs font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-sm">En attente</span>

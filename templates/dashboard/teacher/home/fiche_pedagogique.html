@@ -3,203 +3,188 @@
 {% block title %}Fiche pédagogique{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col-lg-8 col-7">
-          <h6 class="h2 text-white d-inline-block mb-0">Fiche pédagogique</h6>
-          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
-            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-              <li class="breadcrumb-item"><a href="{% url 'teacher_view' username=request.user.username %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="{% url 'teacher_sessions' %}" class="text-white">Séances</a></li>
-              <li class="breadcrumb-item active">Fiche</li>
-            </ol>
-          </nav>
-        </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Fiche pédagogique</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Remplir la fiche pour cette séance</p>
+  </div>
+  <a href="{% url 'teacher_sessions' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+    Retour aux séances
+  </a>
+</div>
+
+<!-- Info séance -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Informations de la séance</h2>
+  </div>
+  <div class="p-5">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-0.5">Étudiant</p>
+        <p class="font-semibold text-gray-800">{{ session.student }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-0.5">Langue</p>
+        <p class="font-semibold text-gray-800">{{ session.language }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-0.5">Date</p>
+        <p class="font-semibold text-gray-800">{{ session.date|date:"d/m/Y" }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-0.5">Statut</p>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+          {% if session.statut_validation == 'validee' %}bg-green-100 text-green-700
+          {% elif session.statut_validation == 'refusee' %}bg-red-100 text-red-700
+          {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+          {{ session.get_statut_validation_display }}
+        </span>
       </div>
     </div>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
+<form method="post" class="space-y-4">
+  {% csrf_token %}
 
-      <!-- Info séance -->
-      <div class="card mb-4">
-        <div class="card-header bg-default text-white">
-          <h5 class="mb-0"><i class="fas fa-info-circle mr-2"></i>Informations de la séance</h5>
+  <!-- A. Identification -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">A. Identification de la séance</h2>
+    </div>
+    <div class="p-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.duree_minutes.label }}</label>
+          {{ form.duree_minutes }}
         </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-3"><strong>Étudiant :</strong><br>{{ session.student }}</div>
-            <div class="col-md-3"><strong>Langue :</strong><br>{{ session.language }}</div>
-            <div class="col-md-3"><strong>Date :</strong><br>{{ session.date|date:"d/m/Y" }}</div>
-            <div class="col-md-3"><strong>Statut :</strong><br>
-              <span class="badge badge-{% if session.statut_validation == 'validee' %}success{% elif session.statut_validation == 'refusee' %}danger{% else %}warning{% endif %}">
-                {{ session.get_statut_validation_display }}
-              </span>
-            </div>
-          </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.type_seance.label }}</label>
+          {{ form.type_seance }}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.theme_cours.label }}</label>
+          {{ form.theme_cours }}
         </div>
       </div>
-
-      <form method="post">
-        {% csrf_token %}
-
-        <!-- A. Identification -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-tag mr-2"></i>A. Identification de la séance</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-4 form-group">
-                <label>{{ form.duree_minutes.label }}</label>
-                {{ form.duree_minutes }}
-              </div>
-              <div class="col-md-4 form-group">
-                <label>{{ form.type_seance.label }}</label>
-                {{ form.type_seance }}
-              </div>
-              <div class="col-md-4 form-group">
-                <label>{{ form.theme_cours.label }}</label>
-                {{ form.theme_cours }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- B. Compétences travaillées -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-graduation-cap mr-2"></i>B. Compétences travaillées</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              {% for field in form %}
-                {% if field.name|slice:":5" == "comp_" %}
-                <div class="col-md-2 col-4 text-center mb-3">
-                  <div class="custom-control custom-checkbox">
-                    {{ field }}
-                    <label class="custom-control-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                  </div>
-                </div>
-                {% endif %}
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- C. Évaluation rapide -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-star mr-2"></i>C. Évaluation rapide (1 = Faible → 4 = Excellent)</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-4 form-group">
-                <label>{{ form.participation.label }}</label>
-                {{ form.participation }}
-              </div>
-              <div class="col-md-4 form-group">
-                <label>{{ form.comprehension_score.label }}</label>
-                {{ form.comprehension_score }}
-              </div>
-              <div class="col-md-4 form-group">
-                <label>{{ form.engagement.label }}</label>
-                {{ form.engagement }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- D. Analyse pédagogique -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-search mr-2"></i>D. Analyse pédagogique</h5>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>{{ form.difficultes.label }}</label>
-              {{ form.difficultes }}
-            </div>
-            <div class="form-group">
-              <label>{{ form.observations_formateur.label }}</label>
-              {{ form.observations_formateur }}
-            </div>
-            <div class="form-group">
-              <label>{{ form.prochaine_etape.label }}</label>
-              {{ form.prochaine_etape }}
-            </div>
-          </div>
-        </div>
-
-        <!-- E. Devoir -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-book-open mr-2"></i>E. Devoir</h5>
-          </div>
-          <div class="card-body">
-            <div class="custom-control custom-switch mb-3">
-              {{ form.devoir_donne }}
-              <label class="custom-control-label" for="{{ form.devoir_donne.id_for_label }}">{{ form.devoir_donne.label }}</label>
-            </div>
-            <div class="form-group" id="devoir-desc" style="{% if not form.instance.devoir_donne %}display:none;{% endif %}">
-              <label>{{ form.description_devoir.label }}</label>
-              {{ form.description_devoir }}
-            </div>
-          </div>
-        </div>
-
-        <!-- F. Validation -->
-        <div class="card mb-4">
-          <div class="card-header" style="background-color:#147a81; color:white;">
-            <h5 class="mb-0"><i class="fas fa-check-circle mr-2"></i>F. Validation</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="custom-control custom-switch">
-                  {{ form.seance_realisee }}
-                  <label class="custom-control-label" for="{{ form.seance_realisee.id_for_label }}">{{ form.seance_realisee.label }}</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="custom-control custom-switch">
-                  {{ form.fiche_completee }}
-                  <label class="custom-control-label" for="{{ form.fiche_completee.id_for_label }}">{{ form.fiche_completee.label }}</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center mb-5">
-          <button type="submit" class="btn btn-lg" style="background-color:#147a81; color:white;">
-            <i class="fas fa-save mr-2"></i>Enregistrer la fiche
-          </button>
-          <a href="{% url 'teacher_sessions' %}" class="btn btn-lg btn-secondary ml-2">Annuler</a>
-        </div>
-
-      </form>
     </div>
   </div>
-</div>
+
+  <!-- B. Compétences travaillées -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">B. Compétences travaillées</h2>
+    </div>
+    <div class="p-5">
+      <div class="flex flex-wrap gap-4">
+        {% for field in form %}
+          {% if field.name|slice:":5" == "comp_" %}
+          <div class="flex items-center gap-2">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ field.label }}</label>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- C. Évaluation rapide -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">C. Évaluation rapide (1 = Faible → 4 = Excellent)</h2>
+    </div>
+    <div class="p-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.participation.label }}</label>
+          {{ form.participation }}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.comprehension_score.label }}</label>
+          {{ form.comprehension_score }}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.engagement.label }}</label>
+          {{ form.engagement }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D. Analyse pédagogique -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">D. Analyse pédagogique</h2>
+    </div>
+    <div class="p-5 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.difficultes.label }}</label>
+        {{ form.difficultes }}
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.observations_formateur.label }}</label>
+        {{ form.observations_formateur }}
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.prochaine_etape.label }}</label>
+        {{ form.prochaine_etape }}
+      </div>
+    </div>
+  </div>
+
+  <!-- E. Devoir -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">E. Devoir</h2>
+    </div>
+    <div class="p-5 space-y-3">
+      <div class="flex items-center gap-2">
+        {{ form.devoir_donne }}
+        <label for="{{ form.devoir_donne.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.devoir_donne.label }}</label>
+      </div>
+      <div id="devoir-desc" {% if not form.instance.devoir_donne %}style="display:none;"{% endif %}>
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.description_devoir.label }}</label>
+        {{ form.description_devoir }}
+      </div>
+    </div>
+  </div>
+
+  <!-- F. Validation -->
+  <div class="bg-white rounded-md border border-gray-100 shadow-sm">
+    <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
+      <h2 class="text-sm font-semibold text-white">F. Validation</h2>
+    </div>
+    <div class="p-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex items-center gap-2">
+          {{ form.seance_realisee }}
+          <label for="{{ form.seance_realisee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.seance_realisee.label }}</label>
+        </div>
+        <div class="flex items-center gap-2">
+          {{ form.fiche_completee }}
+          <label for="{{ form.fiche_completee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.fiche_completee.label }}</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2 pb-6">
+    <a href="{% url 'teacher_sessions' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+      Annuler
+    </a>
+    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+      Enregistrer la fiche
+    </button>
+  </div>
+</form>
 {% endblock %}
 
-{% block javascripts %}
+{% block extra_js %}
 <script>
-  document.getElementById('{{ form.devoir_donne.id_for_label }}').addEventListener('change', function() {
-    document.getElementById('devoir-desc').style.display = this.checked ? 'block' : 'none';
-  });
-
-  // Ajouter custom-control-input aux checkboxes
-  document.querySelectorAll('input[type="checkbox"]').forEach(el => {
-    if (!el.classList.contains('custom-control-input')) {
-      el.classList.add('custom-control-input');
-    }
-  });
+document.getElementById('{{ form.devoir_donne.id_for_label }}').addEventListener('change', function() {
+  document.getElementById('devoir-desc').style.display = this.checked ? 'block' : 'none';
+});
 </script>
 {% endblock %}

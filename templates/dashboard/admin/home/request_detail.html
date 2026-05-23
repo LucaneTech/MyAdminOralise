@@ -2,88 +2,107 @@
 {% block title %}Demande #{{ req.id }}{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">Demande #{{ req.id }}</h6>
-        </div>
-        <div class="col text-right">
-          <a href="{% url 'admin_requests_list' %}" class="btn btn-sm btn-light">
-            <i class="fas fa-arrow-left mr-1"></i>Retour
-          </a>
-        </div>
-      </div>
-    </div>
+<!-- Page header -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Demande #{{ req.id }}</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Détail et traitement de la demande</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'admin_requests_list' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50 transition">Retour</a>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row">
-    <div class="col-lg-8">
-      <div class="card shadow mb-4">
-        <div class="card-header"><h5 class="mb-0">Détails de la demande</h5></div>
-        <div class="card-body">
-          <dl class="row">
-            <dt class="col-sm-3">Étudiant</dt>
-            <dd class="col-sm-9">{{ req.student }}</dd>
-            <dt class="col-sm-3">Type</dt>
-            <dd class="col-sm-9">{{ req.get_request_type_display|default:req.request_type }}</dd>
-            <dt class="col-sm-3">Statut</dt>
-            <dd class="col-sm-9">
-              <span class="badge badge-{% if req.status == 'approved' %}success{% elif req.status == 'rejected' %}danger{% elif req.status == 'in_progress' %}info{% else %}warning{% endif %}">
-                {{ req.get_status_display }}
-              </span>
-            </dd>
-            <dt class="col-sm-3">Date</dt>
-            <dd class="col-sm-9">{{ req.created_at|date:"d/m/Y H:i" }}</dd>
-            <dt class="col-sm-3">Message</dt>
-            <dd class="col-sm-9">{{ req.message }}</dd>
-            {% if req.admin_response %}
-            <dt class="col-sm-3">Réponse admin</dt>
-            <dd class="col-sm-9">{{ req.admin_response }}</dd>
-            {% endif %}
-          </dl>
-        </div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Main content -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Détails -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Détails de la demande</h2>
       </div>
-
-      <!-- Répondre -->
-      <div class="card shadow">
-        <div class="card-header"><h5 class="mb-0"><i class="fas fa-reply mr-2"></i>Traiter la demande</h5></div>
-        <div class="card-body">
-          <form method="post" action="{% url 'add_request_response' %}">
-            {% csrf_token %}
-            <input type="hidden" name="request_id" value="{{ req.id }}">
-            <div class="form-group">
-              <label>Statut</label>
-              <select name="status" class="form-control">
-                <option value="pending" {% if req.status == 'pending' %}selected{% endif %}>En attente</option>
-                <option value="in_progress" {% if req.status == 'in_progress' %}selected{% endif %}>En cours</option>
-                <option value="approved" {% if req.status == 'approved' %}selected{% endif %}>Approuver</option>
-                <option value="rejected" {% if req.status == 'rejected' %}selected{% endif %}>Rejeter</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Réponse</label>
-              <textarea name="response" class="form-control" rows="4" placeholder="Votre réponse à l'étudiant…">{{ req.admin_response|default:'' }}</textarea>
-            </div>
-            <button type="submit" class="btn" style="background-color:#147a81;color:white;">
-              <i class="fas fa-save mr-1"></i>Enregistrer la réponse
-            </button>
-          </form>
-        </div>
+      <div class="p-5">
+        <dl class="space-y-4">
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Étudiant</dt>
+            <dd class="col-span-2 text-sm text-gray-900">{{ req.student }}</dd>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</dt>
+            <dd class="col-span-2 text-sm text-gray-900">{{ req.get_request_type_display|default:req.request_type }}</dd>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Statut</dt>
+            <dd class="col-span-2">
+              {% if req.status == 'approved' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">{{ req.get_status_display }}</span>
+              {% elif req.status == 'rejected' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">{{ req.get_status_display }}</span>
+              {% elif req.status == 'in_progress' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">{{ req.get_status_display }}</span>
+              {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">{{ req.get_status_display }}</span>
+              {% endif %}
+            </dd>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Date</dt>
+            <dd class="col-span-2 text-sm text-gray-900">{{ req.created_at|date:"d/m/Y H:i" }}</dd>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Message</dt>
+            <dd class="col-span-2 text-sm text-gray-900">{{ req.message }}</dd>
+          </div>
+          {% if req.admin_response %}
+          <div class="grid grid-cols-3 gap-2">
+            <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Réponse admin</dt>
+            <dd class="col-span-2 text-sm text-gray-900">{{ req.admin_response }}</dd>
+          </div>
+          {% endif %}
+        </dl>
       </div>
     </div>
 
-    <div class="col-lg-4">
-      <div class="card shadow">
-        <div class="card-header"><h5 class="mb-0">Actions</h5></div>
-        <div class="card-body">
-          <a href="{% url 'admin_request_delete' req.id %}" class="btn btn-danger btn-block">
-            <i class="fas fa-trash mr-1"></i>Supprimer la demande
-          </a>
-        </div>
+    <!-- Traitement -->
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Traiter la demande</h2>
+      </div>
+      <div class="p-5">
+        <form method="post" action="{% url 'add_request_response' %}" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="request_id" value="{{ req.id }}">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Statut</label>
+            <select name="status" class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/30 focus:border-[#26b2bd] transition">
+              <option value="pending" {% if req.status == 'pending' %}selected{% endif %}>En attente</option>
+              <option value="in_progress" {% if req.status == 'in_progress' %}selected{% endif %}>En cours</option>
+              <option value="approved" {% if req.status == 'approved' %}selected{% endif %}>Approuver</option>
+              <option value="rejected" {% if req.status == 'rejected' %}selected{% endif %}>Rejeter</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Réponse</label>
+            <textarea name="response" rows="4" placeholder="Votre réponse à l'étudiant…" class="w-full px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#26b2bd]/30 focus:border-[#26b2bd] transition resize-none">{{ req.admin_response|default:'' }}</textarea>
+          </div>
+          <div>
+            <button type="submit" class="px-5 py-2.5 bg-[#26b2bd] text-white text-sm font-semibold rounded-sm hover:opacity-90 transition">Enregistrer la réponse</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Actions -->
+  <div>
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700">Actions</h2>
+      </div>
+      <div class="p-5">
+        <a href="{% url 'admin_request_delete' req.id %}" class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600 text-white text-xs font-semibold rounded-sm hover:bg-red-700 transition">
+          Supprimer la demande
+        </a>
       </div>
     </div>
   </div>

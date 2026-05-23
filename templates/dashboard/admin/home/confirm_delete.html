@@ -1,44 +1,25 @@
 {% extends 'dashboard/admin/layouts/base.html' %}
+{% load lucide %}
 {% block title %}{{ titre }}{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#c0392b;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">{{ titre }}</h6>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-gray-900">{{ titre }}</h1>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
-      <div class="card shadow border-danger">
-        <div class="card-body text-center py-5">
-          <div class="mb-4">
-            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
-          </div>
-          <h4 class="text-danger">Confirmer la suppression</h4>
-          <p class="text-muted mb-4">
-            Voulez-vous vraiment supprimer <strong>{{ objet }}</strong> ?<br>
-            <small>Cette action est irréversible.</small>
-          </p>
-          <form method="post">
-            {% csrf_token %}
-            <a href="{% url back_url %}" class="btn btn-secondary mr-3">
-              <i class="fas fa-times mr-1"></i>Annuler
-            </a>
-            <button type="submit" class="btn btn-danger">
-              <i class="fas fa-trash mr-1"></i>Supprimer définitivement
-            </button>
-          </form>
-        </div>
-      </div>
+<div class="flex items-center justify-center">
+  <div class="bg-white rounded-sm border border-red-200 shadow-sm p-8 max-w-md w-full text-center">
+    <div class="flex items-center justify-center w-14 h-14 bg-red-100 rounded-full mx-auto mb-4">
+      {% lucide "triangle-alert" class="w-7 h-7 text-red-600" %}
     </div>
+    <h2 class="text-lg font-bold text-red-700 mb-2">Confirmer la suppression</h2>
+    <p class="text-sm text-gray-600 mb-1">Voulez-vous vraiment supprimer <strong>{{ objet }}</strong> ?</p>
+    <p class="text-xs text-gray-400 mb-6">Cette action est irréversible.</p>
+    <form method="post" class="flex items-center justify-center gap-3">
+      {% csrf_token %}
+      <a href="{% url back_url %}" class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-semibold rounded-sm hover:bg-gray-50 transition">Annuler</a>
+      <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-sm hover:bg-red-700 transition">{% lucide "trash-2" class="w-4 h-4" %} Supprimer définitivement</button>
+    </form>
   </div>
 </div>
 {% endblock %}

@@ -1,125 +1,137 @@
 {% extends 'dashboard/teacher/layouts/base.html' %}
+
 {% block title %}Détail fiche pédagogique{% endblock %}
 
 {% block content %}
-<div class="header pb-6" style="background-color:#147a81;">
-  <div class="container-fluid">
-    <div class="header-body">
-      <div class="row align-items-center py-4">
-        <div class="col">
-          <h6 class="h2 text-white d-inline-block mb-0">Fiche pédagogique — Détail</h6>
-        </div>
-      </div>
-    </div>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Fiche pédagogique — Détail</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Récapitulatif de la séance</p>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if request.user.role == 'teacher' %}
+    <a href="{% url 'fiche_pedagogique_edit' session_id=session.id %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 text-white text-xs font-semibold rounded-md hover:bg-yellow-600 transition">
+      Modifier la fiche
+    </a>
+    {% endif %}
+    <a href="javascript:history.back()" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+      Retour
+    </a>
   </div>
 </div>
 
-<div class="container-fluid mt--6">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-
-      <!-- En-tête -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1">Étudiant</p>
-              <h5>{{ session.student }}</h5>
-            </div>
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1">Langue</p>
-              <h5>{{ session.language }}</h5>
-            </div>
-            <div class="col-md-3 border-right">
-              <p class="text-muted mb-1">Date</p>
-              <h5>{{ session.date|date:"d/m/Y" }}</h5>
-            </div>
-            <div class="col-md-3">
-              <p class="text-muted mb-1">Durée</p>
-              <h5>{{ session.duree_minutes|default:"-" }} min</h5>
-            </div>
-          </div>
-        </div>
-        <div class="card-footer text-center">
-          <span class="badge badge-{% if session.statut_validation == 'validee' %}success{% elif session.statut_validation == 'refusee' %}danger{% else %}warning{% endif %} badge-lg px-3 py-2">
-            {{ session.get_statut_validation_display }}
-          </span>
-          <span class="badge badge-info ml-2">{{ session.get_type_seance_display }}</span>
-        </div>
+<!-- En-tête -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="p-5">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-sm">
+      <div class="border-r border-gray-100 last:border-0">
+        <p class="text-xs text-gray-500 mb-1">Étudiant</p>
+        <p class="font-semibold text-gray-800">{{ session.student }}</p>
       </div>
-
-      <!-- Thème et compétences -->
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Contenu pédagogique</h5></div>
-        <div class="card-body">
-          <p><strong>Thème :</strong> {{ session.theme_cours|default:"Non renseigné" }}</p>
-          <p><strong>Compétences travaillées :</strong>
-            {% if session.competences_list %}
-              {% for c in session.competences_list %}
-                <span class="badge badge-primary mr-1">{{ c }}</span>
-              {% endfor %}
-            {% else %}
-              <span class="text-muted">Aucune sélectionnée</span>
-            {% endif %}
-          </p>
-        </div>
+      <div class="border-r border-gray-100 last:border-0">
+        <p class="text-xs text-gray-500 mb-1">Langue</p>
+        <p class="font-semibold text-gray-800">{{ session.language }}</p>
       </div>
-
-      <!-- Évaluations -->
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Évaluation rapide</h5></div>
-        <div class="card-body">
-          <div class="row text-center">
-            {% with p=session.participation c=session.comprehension_score e=session.engagement %}
-            <div class="col-md-4">
-              <p class="text-muted">Participation</p>
-              <h3>{{ p|default:"-" }} <small class="text-muted">/ 4</small></h3>
-            </div>
-            <div class="col-md-4">
-              <p class="text-muted">Compréhension</p>
-              <h3>{{ c|default:"-" }} <small class="text-muted">/ 4</small></h3>
-            </div>
-            <div class="col-md-4">
-              <p class="text-muted">Engagement</p>
-              <h3>{{ e|default:"-" }} <small class="text-muted">/ 4</small></h3>
-            </div>
-            {% endwith %}
-          </div>
-        </div>
+      <div class="border-r border-gray-100 last:border-0">
+        <p class="text-xs text-gray-500 mb-1">Date</p>
+        <p class="font-semibold text-gray-800">{{ session.date|date:"d/m/Y" }}</p>
       </div>
-
-      <!-- Analyse pédagogique -->
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Analyse pédagogique</h5></div>
-        <div class="card-body">
-          <p><strong>Difficultés :</strong><br>{{ session.difficultes|default:"Aucune" }}</p>
-          <hr>
-          <p><strong>Observations :</strong><br>{{ session.observations_formateur|default:"—" }}</p>
-          <hr>
-          <p><strong>Prochaine étape :</strong><br>{{ session.prochaine_etape|default:"—" }}</p>
-        </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Durée</p>
+        <p class="font-semibold text-gray-800">{{ session.duree_minutes|default:"—" }} min</p>
       </div>
+    </div>
+  </div>
+  <div class="px-5 py-3 border-t border-gray-100 flex items-center gap-2 justify-center">
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+      {% if session.statut_validation == 'validee' %}bg-green-100 text-green-700
+      {% elif session.statut_validation == 'refusee' %}bg-red-100 text-red-700
+      {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+      {{ session.get_statut_validation_display }}
+    </span>
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">{{ session.get_type_seance_display }}</span>
+  </div>
+</div>
 
-      <!-- Devoir -->
-      {% if session.devoir_donne %}
-      <div class="card mb-4">
-        <div class="card-header"><h5 class="mb-0">Devoir donné</h5></div>
-        <div class="card-body">
-          <p>{{ session.description_devoir|default:"—" }}</p>
-        </div>
+<!-- Contenu pédagogique -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Contenu pédagogique</h2>
+  </div>
+  <div class="p-5 space-y-3 text-sm text-gray-700">
+    <p><span class="font-semibold text-gray-600">Thème :</span> {{ session.theme_cours|default:"Non renseigné" }}</p>
+    <div>
+      <span class="font-semibold text-gray-600">Compétences travaillées :</span>
+      {% if session.competences_list %}
+      <div class="flex flex-wrap gap-1 mt-1">
+        {% for c in session.competences_list %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#033050]/10 text-[#033050]">{{ c }}</span>
+        {% endfor %}
       </div>
+      {% else %}
+      <span class="text-gray-400 ml-1">Aucune sélectionnée</span>
       {% endif %}
-
-      <div class="text-center mb-5">
-        {% if request.user.role == 'teacher' %}
-        <a href="{% url 'fiche_pedagogique_edit' session_id=session.id %}" class="btn btn-warning">
-          <i class="fas fa-edit mr-1"></i>Modifier la fiche
-        </a>
-        {% endif %}
-        <a href="javascript:history.back()" class="btn btn-secondary ml-2">Retour</a>
-      </div>
-
     </div>
   </div>
 </div>
+
+<!-- Évaluation rapide -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Évaluation rapide</h2>
+  </div>
+  <div class="p-5">
+    {% with p=session.participation c=session.comprehension_score e=session.engagement %}
+    <div class="grid grid-cols-3 gap-4 text-center">
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Participation</p>
+        <p class="text-2xl font-bold text-gray-900">{{ p|default:"—" }} <span class="text-sm font-normal text-gray-400">/ 4</span></p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Compréhension</p>
+        <p class="text-2xl font-bold text-gray-900">{{ c|default:"—" }} <span class="text-sm font-normal text-gray-400">/ 4</span></p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 mb-1">Engagement</p>
+        <p class="text-2xl font-bold text-gray-900">{{ e|default:"—" }} <span class="text-sm font-normal text-gray-400">/ 4</span></p>
+      </div>
+    </div>
+    {% endwith %}
+  </div>
+</div>
+
+<!-- Analyse pédagogique -->
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Analyse pédagogique</h2>
+  </div>
+  <div class="p-5 space-y-4 text-sm text-gray-700">
+    <div>
+      <p class="font-semibold text-gray-600 mb-1">Difficultés</p>
+      <p>{{ session.difficultes|default:"Aucune" }}</p>
+    </div>
+    <hr class="border-gray-100">
+    <div>
+      <p class="font-semibold text-gray-600 mb-1">Observations</p>
+      <p>{{ session.observations_formateur|default:"—" }}</p>
+    </div>
+    <hr class="border-gray-100">
+    <div>
+      <p class="font-semibold text-gray-600 mb-1">Prochaine étape</p>
+      <p>{{ session.prochaine_etape|default:"—" }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Devoir -->
+{% if session.devoir_donne %}
+<div class="bg-white rounded-md border border-gray-100 shadow-sm mb-4">
+  <div class="px-5 py-4 border-b border-gray-100">
+    <h2 class="text-sm font-semibold text-gray-700">Devoir donné</h2>
+  </div>
+  <div class="p-5 text-sm text-gray-700">
+    <p>{{ session.description_devoir|default:"—" }}</p>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

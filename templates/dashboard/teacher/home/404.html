@@ -1,44 +1,15 @@
 {% extends "dashboard/teacher/layouts/base.html" %}
 {% load static %}
-
-{% block title %} Error 404 {% endblock title %}
-
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Page non trouvée{% endblock %}
 
 {% block content %}
-
-    <!-- Page content -->
-    <div class="container mt--8 pb-5">
-      <div class="row justify-content-center">
-        <div class="col-lg-5 col-md-7">
-          <div class="card bg-secondary shadow border-0">
-            <div class="card-header bg-transparent pb-5">
-
-              <div class="text-muted text-center mt-2 mb-3">
-                Oups! Error 404      
-              </div>
-
-              <div class="text-center mb-4">
-                Page not found - <a href="/">Home</a>
-              </div>
-
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-6">
-              <a href="/" class="text-light"><small>Home</small></a>
-            </div>
-            <div class="col-6 text-right">
-              <a target="_blank" 
-                 href="https://appseed.us/support" class="text-light"><small>Get Support</small></a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-{% endblock content %}
-
-<!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+  <p class="text-8xl font-bold text-[#033050] mb-4">404</p>
+  <h1 class="text-2xl font-bold text-gray-900 mb-2">Page non trouvée</h1>
+  <p class="text-gray-500 mb-8">La page que vous recherchez n'existe pas ou a été déplacée.</p>
+  <div class="flex items-center gap-3">
+    <a href="/" class="px-5 py-2.5 bg-[#033050] text-white text-sm font-semibold rounded-md hover:opacity-90 transition">Retour à l'accueil</a>
+    <a href="javascript:history.back()" class="px-5 py-2.5 border border-gray-200 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-50 transition">Page précédente</a>
+  </div>
+</div>
+{% endblock %}
