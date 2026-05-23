@@ -723,9 +723,13 @@ def update_request_status(request):
         # Mettre à jour le statut selon l'action
         status_map = {
             'process': 'processing',
-            'approve': 'approved', 
+            'approve': 'approved',
             'reject': 'rejected',
-            'pending': 'pending'
+            'pending': 'pending',
+            # direct status values from dropdown
+            'processing': 'processing',
+            'approved': 'approved',
+            'rejected': 'rejected',
         }
         
         if action not in status_map:
@@ -1123,9 +1127,10 @@ def teacher_student_detail(request, student_id):
     )
 
     # Récupération des données associées
-    recent_sessions = Session.objects.filter(students=student).order_by(
-        "-date", "-start_time"
-    )[:10]
+    today = timezone.now().date()
+    recent_sessions = Session.objects.filter(
+        students=student, date__gte=today
+    ).order_by('date', 'start_time')[:10]
 
     # Statistiques
     total_sessions = Session.objects.filter(students=student).count()
@@ -2331,9 +2336,10 @@ def fiche_pedagogique_detail(request, session_id):
 @admin_required
 def admin_sessions_list(request):
     """Liste toutes les séances avec filtres de validation."""
+    today = timezone.now().date()
     sessions = Session.objects.select_related(
         'teacher__user', 'language'
-    ).prefetch_related('students__user').order_by('-date')
+    ).prefetch_related('students__user').filter(date__gte=today).order_by('date', 'start_time')
 
     statut = request.GET.get('statut_validation', '')
     teacher_id = request.GET.get('teacher', '')

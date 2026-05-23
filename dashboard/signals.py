@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 import logging
-from django.db.models import Sum
+from django.db.models import Sum, F
 from .models import CustomUser, Student, Teacher, Session, Payment, Notification
 
 logger = logging.getLogger(__name__)
@@ -35,8 +35,13 @@ def store_old_session_status(sender, instance, **kwargs):
 @receiver(post_save, sender=Session)
 def handle_session_completed(sender, instance, **kwargs):
     if instance._old_status != 'completed' and instance.status == 'completed':
-        # Notifier chaque étudiant de la session
+        hours = instance.duration_hours
         for student in instance.students.select_related('user').all():
+            # Déduire les heures utilisées
+            Student.objects.filter(pk=student.pk).update(
+                total_hours_used=F('total_hours_used') + hours
+            )
+            # Notifier l'étudiant
             already_notified = Notification.objects.filter(
                 user=student.user,
                 notification_type='evaluation_request',

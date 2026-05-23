@@ -572,10 +572,11 @@ class Session(models.Model):
         if self.duree_minutes:
             return self.duree_minutes / 60
         if self.start_time and self.end_time:
-            start = datetime.combine(self.date, self.start_time)
-            end = datetime.combine(self.date, self.end_time)
-            duration = end - start
-            return duration.total_seconds() / 3600
+            from datetime import date as _date, time as _time
+            d = self.date if isinstance(self.date, _date) else _date.fromisoformat(str(self.date))
+            st = self.start_time if isinstance(self.start_time, _time) else _time.fromisoformat(str(self.start_time)[:5])
+            et = self.end_time if isinstance(self.end_time, _time) else _time.fromisoformat(str(self.end_time)[:5])
+            return (datetime.combine(d, et) - datetime.combine(d, st)).total_seconds() / 3600
         return 0
 
     @property

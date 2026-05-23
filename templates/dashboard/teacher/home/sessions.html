@@ -8,7 +8,7 @@
 <div class="flex items-center justify-between mb-6">
   <div>
     <h1 class="text-lg font-bold text-gray-900">Mes séances</h1>
-    <p class="text-xs text-gray-400 mt-0.5">Vue calendrier de vos cours planifiés</p>
+    <p class="text-xs text-gray-400 mt-0.5">Vue calendrier · cliquez un événement pour modifier le statut</p>
   </div>
   <a href="{% url 'teacher_session_create' %}"
      class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#056f77] text-white text-sm font-semibold rounded-sm hover:bg-[#045f66] transition">
@@ -43,16 +43,107 @@
 <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-4">
   <div id="calendar"></div>
 </div>
+
+{# ── Inline status panel ─────────────────────────────────────────── #}
+<div id="session-panel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+  <div class="bg-white rounded-sm border border-gray-100 shadow-xl w-full max-w-sm">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h3 class="text-sm font-semibold text-gray-800" id="panel-title">Séance</h3>
+      <button onclick="closePanel()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+    </div>
+    <div class="px-5 py-4 space-y-3 text-sm" id="panel-info"></div>
+    <div class="px-5 pb-4">
+      <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Changer le statut</label>
+      <div class="flex flex-wrap gap-2" id="panel-status-btns"></div>
+    </div>
+    <div class="flex justify-between items-center px-5 py-3 border-t border-gray-100">
+      <a id="panel-edit-link" href="#"
+         class="inline-flex items-center gap-1 text-xs font-semibold text-[#056f77] hover:underline">
+        Modifier la séance →
+      </a>
+      <button onclick="closePanel()"
+              class="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-medium rounded-sm hover:bg-gray-50 transition">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <script>
+const STATUS_LABELS = {
+  scheduled:   { label: 'Planifiée',   cls: 'border-blue-200 text-blue-700 hover:bg-blue-50' },
+  completed:   { label: 'Terminée',    cls: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' },
+  cancelled:   { label: 'Annulée',     cls: 'border-red-200 text-red-600 hover:bg-red-50' },
+  rescheduled: { label: 'Reportée',    cls: 'border-amber-200 text-amber-700 hover:bg-amber-50' },
+  absent:      { label: 'Absent',      cls: 'border-orange-200 text-orange-700 hover:bg-orange-50' },
+};
+
+let _currentEventId = null;
+let _calendarRef = null;
+
 function getCookie(name) {
   const v = `; ${document.cookie}`.split(`; ${name}=`);
   if (v.length === 2) return v.pop().split(';').shift();
 }
+
+function closePanel() {
+  document.getElementById('session-panel').classList.add('hidden');
+  _currentEventId = null;
+}
+
+function openPanel(event) {
+  _currentEventId = event.id;
+  const p = event.extendedProps;
+  document.getElementById('panel-title').textContent =
+    p.language + ' · ' + (event.start ? event.start.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}) : '');
+  document.getElementById('panel-info').innerHTML = `
+    <div class="flex justify-between"><span class="text-gray-500">Étudiants</span><span class="font-medium">${(p.students||[]).join(', ') || '—'}</span></div>
+    <div class="flex justify-between"><span class="text-gray-500">Statut actuel</span>
+      <span class="font-semibold text-gray-800">${STATUS_LABELS[p.status]?.label || p.status}</span></div>
+  `;
+  document.getElementById('panel-edit-link').href = `/teacher/sessions/${event.id}/modifier/`;
+
+  const btnsEl = document.getElementById('panel-status-btns');
+  btnsEl.innerHTML = '';
+  Object.entries(STATUS_LABELS).forEach(([val, {label, cls}]) => {
+    if (val === p.status) return;
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.className = `px-3 py-1.5 border text-xs font-semibold rounded-sm transition ${cls}`;
+    btn.addEventListener('click', () => updateStatus(event.id, val));
+    btnsEl.appendChild(btn);
+  });
+
+  document.getElementById('session-panel').classList.remove('hidden');
+}
+
+function updateStatus(sessionId, newStatus) {
+  fetch(`/api/sessions/${sessionId}/status/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+    body: JSON.stringify({status: newStatus})
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success && _calendarRef) {
+      const ev = _calendarRef.getEventById(String(sessionId));
+      if (ev) {
+        ev.setProp('color', d.event.color);
+        ev.setProp('title', d.event.title);
+        ev.setExtendedProp('status', newStatus);
+      }
+      closePanel();
+    }
+  });
+}
+
+document.getElementById('session-panel').addEventListener('click', function(e) {
+  if (e.target === this) closePanel();
+});
 
 document.addEventListener('DOMContentLoaded', function () {
   const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -74,36 +165,27 @@ document.addEventListener('DOMContentLoaded', function () {
       window.location.href = `{% url 'teacher_session_create' %}?${params}`;
     },
     eventClick: function (info) {
-      window.location.href = `/teacher/sessions/${info.event.id}/modifier/`;
+      openPanel(info.event);
     },
     eventDrop: function (info) {
-      const s = info.event.startStr;
-      const e = info.event.endStr;
+      const s = info.event.startStr, e = info.event.endStr;
       fetch(`/api/sessions/${info.event.id}/update/`, {
         method: 'POST',
-        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: s.substring(0, 10),
-          start_time: s.substring(11, 16),
-          end_time: e.substring(11, 16)
-        })
+        headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+        body: JSON.stringify({date: s.substring(0,10), start_time: s.substring(11,16), end_time: e.substring(11,16)})
       }).then(r => r.json()).then(d => { if (!d.success) info.revert(); });
     },
     eventResize: function (info) {
-      const s = info.event.startStr;
-      const e = info.event.endStr;
+      const s = info.event.startStr, e = info.event.endStr;
       fetch(`/api/sessions/${info.event.id}/update/`, {
         method: 'POST',
-        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: s.substring(0, 10),
-          start_time: s.substring(11, 16),
-          end_time: e.substring(11, 16)
-        })
+        headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+        body: JSON.stringify({date: s.substring(0,10), start_time: s.substring(11,16), end_time: e.substring(11,16)})
       }).then(r => r.json()).then(d => { if (!d.success) info.revert(); });
     }
   });
   calendar.render();
+  _calendarRef = calendar;
 });
 </script>
 {% endblock %}

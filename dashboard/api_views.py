@@ -19,23 +19,32 @@ STATUS_COLORS = {
 }
 
 
-def _session_to_event(session):
+def _session_to_event(session, role='admin'):
     start_dt = datetime.combine(session.date, session.start_time)
     end_dt = datetime.combine(session.date, session.end_time)
+    time_str = start_dt.strftime('%H:%M')
     student_names = ', '.join(
         s.user.get_full_name() for s in session.students.select_related('user').all()
     )
+    teacher_name = session.teacher.user.get_full_name() if session.teacher else '—'
+    lang = str(session.language)
+    if role == 'teacher':
+        title = f"{time_str} · {lang} · {student_names or '—'}"
+    elif role == 'student':
+        title = f"{time_str} · {lang} · {teacher_name}"
+    else:  # admin
+        title = f"{time_str} · {lang} · {teacher_name} · {student_names or '—'}"
     return {
         'id': session.id,
-        'title': f"{session.language} — {student_names or '—'}",
+        'title': title,
         'start': start_dt.isoformat(),
         'end': end_dt.isoformat(),
         'color': STATUS_COLORS.get(session.status, '#6b7280'),
         'extendedProps': {
             'status': session.status,
             'status_display': session.get_status_display(),
-            'teacher': str(session.teacher),
-            'language': str(session.language),
+            'teacher': teacher_name,
+            'language': lang,
             'students': [s.user.get_full_name() for s in session.students.all()],
             'session_id': session.id,
         },
@@ -71,7 +80,8 @@ def api_sessions_feed(request):
             qs = qs.filter(students__id=request.GET['student_id'])
         if request.GET.get('language_id'):
             qs = qs.filter(language_id=request.GET['language_id'])
-    events = [_session_to_event(s) for s in qs]
+    role = request.user.role
+    events = [_session_to_event(s, role=role) for s in qs.order_by('date', 'start_time')]
     return JsonResponse(events, safe=False)
 
 
@@ -113,7 +123,7 @@ def api_session_create(request):
         session.save()
         form.save_m2m()
         return JsonResponse({'success': True, 'session_id': session.id,
-                             'event': _session_to_event(session)})
+                             'event': _session_to_event(session, role=request.user.role)})
     return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
 
@@ -139,7 +149,7 @@ def api_session_update(request, session_id):
         if 'end_time' in data:
             session.end_time = data['end_time']
         session.save(update_fields=['date', 'start_time', 'end_time'])
-        return JsonResponse({'success': True, 'event': _session_to_event(session)})
+        return JsonResponse({'success': True, 'event': _session_to_event(session, role=request.user.role)})
 
     # Form POST
     teacher = request.user.teacher if request.user.role == 'teacher' else None
@@ -179,7 +189,7 @@ def api_session_status(request, session_id):
     session.status = new_status
     session.save(update_fields=['status'])
     return JsonResponse({'success': True, 'status': new_status,
-                         'event': _session_to_event(session)})
+                         'event': _session_to_event(session, role=request.user.role)})
 
 
 @login_required
