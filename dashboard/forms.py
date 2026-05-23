@@ -100,7 +100,7 @@ class ResourceForm(forms.ModelForm):
         model = Resource
         fields = [
             'title', 'description', 'resource_type', 'file', 'url',
-            'students', 'teachers', 'languages', 'valid_until', 'is_visible'
+            'students', 'valid_until', 'is_visible'
         ]
         widgets = {
             'title': forms.TextInput(attrs={
@@ -125,11 +125,6 @@ class ResourceForm(forms.ModelForm):
             'students': forms.SelectMultiple(attrs={
                 'class': TW_SELECT,
                 'data-placeholder': 'Sélectionnez des étudiants...'
-            }),
-            'teachers': forms.TextInput(attrs={'class': TW_INPUT}),
-            'languages': forms.SelectMultiple(attrs={
-                'class': TW_SELECT,
-                'data-placeholder': 'Sélectionnez des langues...'
             }),
             'valid_until': forms.DateTimeInput(attrs={
                 'class': TW_INPUT,

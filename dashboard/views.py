@@ -494,8 +494,10 @@ def resource_create(request):
         form = ResourceForm(request.POST, request.FILES, teacher=teacher)
         if form.is_valid():
             resource = form.save(commit=False)
+            resource.teachers = teacher
             resource.save()
             form.save_m2m()
+            resource.languages.set(teacher.languages.all())
             messages.success(request, "Ressource créée.")
             return redirect('teacher_resources_dashboard')
     else:
@@ -2177,12 +2179,13 @@ def admin_student_view(request):
         'payments',
         'sessions'
     ).annotate(
-        total_paid_amount=Sum('payments__amount', filter=Q(payments__status='paid')),  # Renommé
+        total_paid_amount_by_student=Sum('payments__amount', filter=Q(payments__status='paid')), 
         paid_hours_purchased=Sum('payments__hours_purchased', filter=Q(payments__status='paid')),  # Renommé
         active_teachers_count=Count('current_teachers', distinct=True),
         completed_sessions_count=Count('sessions', filter=Q(sessions__status='completed'))
     ).all()
-    
+   
+        
     # Filtres
     filter_status = request.GET.get('status', 'all')
     
@@ -2194,11 +2197,13 @@ def admin_student_view(request):
     
     # Calcul des totaux pour les statistiques
     total_hours_purchased_sum = 0
-    total_paid_sum = 0
+    total_paid_sum = Payment.objects.filter(status='paid').aggregate(
+        total=Sum('amount'))['total'] or 0
     
     for student in students:
         total_hours_purchased_sum += student.total_hours_purchased 
-        total_paid_sum += student.total_paid_amount or 0  
+    
+   
     
     # Pagination
     paginator = Paginator(students, 10)
@@ -2211,6 +2216,7 @@ def admin_student_view(request):
         "total_hours_purchased": total_hours_purchased_sum,
         "total_paid_sum": total_paid_sum,
         "page_obj": page_obj,
+       
     }
     return render(request, 'dashboard/admin/home/list_students.html', context)
 
