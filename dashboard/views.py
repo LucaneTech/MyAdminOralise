@@ -1915,7 +1915,7 @@ def admin_dashboard(request):
         total=Sum('amount'))['total'] or 0
     recent_sessions = Session.objects.select_related(
         'teacher__user', 'language'
-    ).order_by('-date', '-start_time')[:8]
+    ).filter(date__gte=today).order_by('date', 'start_time')[:8]
 
     # ── Graphes : séances sur 6 mois ─────────────────────────────
     labels = []

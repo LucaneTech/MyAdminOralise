@@ -214,6 +214,48 @@ class SessionSeriesServiceTest(TestCase):
         self.assertEqual(updated[3].start_time, _time(14, 0))  # changed
 
 
+class AdminDashboardURLsTest(TestCase):
+    """Smoke-test all admin GET URLs — expects 200 (no crash, no template error)."""
+
+    def setUp(self):
+        self.admin_user = make_user('admin_urls', 'admin')
+        self.client = Client()
+        self.client.login(username='admin_urls', password='pass')
+
+    def _get_ok(self, url):
+        r = self.client.get(url)
+        self.assertIn(r.status_code, (200, 302), msg=f'{url} returned {r.status_code}')
+
+    def test_admin_home(self):               self._get_ok('/administrateur/')
+    def test_students_list(self):            self._get_ok('/administrateur/students/')
+    def test_student_create(self):           self._get_ok('/administrateur/students/creer/')
+    def test_teachers_list(self):            self._get_ok('/administrateur/teachers/')
+    def test_teacher_create(self):           self._get_ok('/administrateur/teachers/creer/')
+    def test_sessions_list(self):            self._get_ok('/administrateur/seances/')
+    def test_session_create(self):           self._get_ok('/administrateur/seances/creer/')
+    def test_series_list(self):              self._get_ok('/administrateur/seances/series/')
+    def test_languages_list(self):           self._get_ok('/administrateur/langues/')
+    def test_language_create(self):          self._get_ok('/administrateur/langues/creer/')
+    def test_payments_list(self):            self._get_ok('/administrateur/paiements/')
+    def test_payment_create(self):           self._get_ok('/administrateur/paiements/creer/')
+    def test_evaluations_list(self):         self._get_ok('/administrateur/evaluations/')
+    def test_evaluation_create(self):        self._get_ok('/administrateur/evaluations/creer/')
+    def test_resources_list(self):           self._get_ok('/administrateur/ressources/')
+    def test_resource_create(self):          self._get_ok('/administrateur/ressources/creer/')
+    def test_notifications_list(self):       self._get_ok('/administrateur/notifications/')
+    def test_notification_create(self):      self._get_ok('/administrateur/notifications/creer/')
+    def test_paiements_formateurs(self):     self._get_ok('/administrateur/paiements-formateurs/')
+    def test_paiement_formateur_create(self):self._get_ok('/administrateur/paiements-formateurs/creer/')
+    def test_certificates_list(self):        self._get_ok('/administrateur/certificats/')
+    def test_certificate_create(self):       self._get_ok('/administrateur/certificats/ajouter/')
+    def test_assignments_list(self):         self._get_ok('/administrateur/devoirs/')
+    def test_assignment_create(self):        self._get_ok('/administrateur/devoirs/creer/')
+    def test_users_list(self):               self._get_ok('/administrateur/utilisateurs/')
+    def test_user_create(self):              self._get_ok('/administrateur/utilisateurs/creer/')
+    def test_requests_list(self):            self._get_ok('/administrateur/demandes/')
+    def test_reporting_list(self):           self._get_ok('/administrateur/reporting/')
+
+
 class AdminSessionSeriesViewTest(TestCase):
     def setUp(self):
         self.admin_user = make_user('admin_sv', 'admin')
