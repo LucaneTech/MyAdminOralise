@@ -12,7 +12,7 @@ from .views import (
     evaluations_view, notifications_view, payments_view,
     teacher_sessions_view, student_sessions_view,
     teacher_session_create, teacher_session_edit, teacher_session_status_update,
-    teacher_evaluations_add, evaluation_edit,
+    teacher_evaluations_add, evaluation_edit, teacher_evaluation_delete,
     export_students_csv, teacher_student_detail,
     update_request_status, add_request_response,
     resource_create, resource_delete, resource_edit, resources_view,
@@ -68,6 +68,7 @@ urlpatterns = [
     path('teacher/sessions/<int:session_id>/statut/', teacher_session_status_update, name='teacher_session_status_update'),
     path('teacher/evaluations/add/', teacher_evaluations_add, name='teacher_evaluations_add'),
     path('teacher/evaluations/<int:evaluation_id>/edit/', evaluation_edit, name='evaluation_edit'),
+    path('teacher/evaluations/<int:evaluation_id>/supprimer/', teacher_evaluation_delete, name='teacher_evaluation_delete'),
     path('teacher/mes-paiements/', mes_paiements_formateur, name='mes_paiements_formateur'),
     path('teacher/<str:username>/', teacher_view, name='teacher_view'),
 

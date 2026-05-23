@@ -1528,6 +1528,15 @@ def evaluation_edit(request, evaluation_id):
     return render(request, "dashboard/teacher/home/evaluation_edit.html", context)
 
 
+@login_required
+def teacher_evaluation_delete(request, evaluation_id):
+    if request.user.role != "teacher" or request.method != "POST":
+        raise Http404
+    evaluation = get_object_or_404(Evaluation, id=evaluation_id, teacher__user=request.user)
+    evaluation.delete()
+    messages.success(request, "Évaluation supprimée.")
+    return redirect("evaluations_view")
+
 
 @login_required
 def teacher_resources_add_student(request):
