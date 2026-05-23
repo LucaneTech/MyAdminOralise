@@ -2871,11 +2871,10 @@ def admin_student_create(request):
         if user_form.is_valid() and student_form.is_valid():
             user = user_form.save(commit=False)
             user.role = 'student'
-            user.save()
-            student = student_form.save(commit=False)
-            student.user = user
-            student.save()
-            student_form.save_m2m()
+            user.save()  # signal creates Student via get_or_create
+            student = Student.objects.get(user=user)
+            student_form.instance = student
+            student_form.save()
             messages.success(request, f"Étudiant {user.get_full_name()} créé.")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': True, 'redirect': reverse('admin_students')})
@@ -2946,11 +2945,10 @@ def admin_teacher_create(request):
         if user_form.is_valid() and teacher_form.is_valid():
             user = user_form.save(commit=False)
             user.role = 'teacher'
-            user.save()
-            teacher = teacher_form.save(commit=False)
-            teacher.user = user
-            teacher.save()
-            teacher_form.save_m2m()
+            user.save()  # signal creates Teacher via get_or_create
+            teacher = Teacher.objects.get(user=user)
+            teacher_form.instance = teacher
+            teacher_form.save()
             messages.success(request, f"Formateur {user.get_full_name()} créé.")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': True, 'redirect': reverse('admin_teachers')})
