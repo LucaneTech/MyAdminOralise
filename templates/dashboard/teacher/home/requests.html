@@ -1,16 +1,15 @@
 {% extends "dashboard/teacher/layouts/base.html" %}
-
 {% block title %}Demandes des étudiants{% endblock %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
 <div class="flex items-center justify-between mb-6">
   <div>
     <h1 class="text-xl font-bold text-gray-900">Demandes des étudiants</h1>
     <p class="text-sm text-gray-500 mt-0.5">Gérez les demandes de vos étudiants</p>
   </div>
-  <div class="flex items-center gap-2">
-    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Rejetées : {{ rejected_requests }}</span>
-  </div>
+  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Rejetées : {{ rejected_requests }}</span>
 </div>
 
 <!-- Stats -->
@@ -50,7 +49,6 @@
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">P.J.</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Réponse</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
         </tr>
       </thead>
@@ -62,7 +60,7 @@
             <p class="text-xs text-gray-500">{{ req.student.matricule }}</p>
           </td>
           <td class="px-4 py-3 text-sm text-gray-700">{{ req.subject }}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">{{ req.description|truncatewords:15 }}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">{{ req.description|truncatewords:12 }}</td>
           <td class="px-4 py-3">
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ req.get_request_type_display }}</span>
           </td>
@@ -86,33 +84,31 @@
           </td>
           <td class="px-4 py-3">
             {% if req.attachment %}
-            <a href="{{ req.attachment.url }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 text-white text-xs font-semibold rounded-md hover:bg-sky-600 transition">
-              Voir
-            </a>
+            <a href="{{ req.attachment.url }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-500 text-white text-xs font-semibold rounded-md hover:bg-sky-600 transition">Voir</a>
             {% else %}
             <span class="text-xs text-gray-400">—</span>
             {% endif %}
           </td>
           <td class="px-4 py-3">
-            {% if req.response %}
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">{{ req.response|truncatewords:5 }}</span>
-            {% else %}
-            <span class="text-xs text-gray-400">Pas de réponse</span>
-            {% endif %}
-          </td>
-          <td class="px-4 py-3">
             <div class="flex items-center gap-2">
               <button type="button"
-                      class="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50 transition"
-                      onclick="openDetailModal({{ req.id }})">
+                      onclick="openDetail({{ req.id }})"
+                      class="inline-flex items-center gap-1 px-2.5 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-sm hover:bg-gray-50 transition">
                 Détails
               </button>
+              <form method="post" action="{% url 'delete_request' req.id %}" onsubmit="return confirm('Supprimer cette demande ?')">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-sm hover:bg-red-100 transition">
+                  ✕
+                </button>
+              </form>
               <select class="req-status-select text-xs border border-gray-200 rounded-sm px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#056f77] cursor-pointer"
-                      data-request-id="{{ req.id }}">
-                <option value="pending"     {% if req.status == 'pending' %}selected{% endif %}>En attente</option>
-                <option value="processing"  {% if req.status == 'processing' %}selected{% endif %}>En traitement</option>
-                <option value="approved"    {% if req.status == 'approved' %}selected{% endif %}>Approuvée</option>
-                <option value="rejected"    {% if req.status == 'rejected' %}selected{% endif %}>Rejetée</option>
+                      data-request-id="{{ req.id }}"
+                      data-current="{{ req.status }}">
+                <option value="pending"    {% if req.status == 'pending' %}selected{% endif %}>En attente</option>
+                <option value="processing" {% if req.status == 'processing' %}selected{% endif %}>En traitement</option>
+                <option value="approved"   {% if req.status == 'approved' %}selected{% endif %}>Approuvée</option>
+                <option value="rejected"   {% if req.status == 'rejected' %}selected{% endif %}>Rejetée</option>
               </select>
             </div>
           </td>
@@ -129,83 +125,90 @@
   {% endif %}
 </div>
 
-<!-- Modals détails -->
-{% for req in requests %}
-<div id="detailModal{{ req.id }}" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
-  <div class="bg-white rounded-md border border-gray-100 shadow-sm w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+{# Embedded request data for the single modal #}
+<script id="req-json" type="application/json">
+{
+  {% for req in requests %}
+  "{{ req.id }}": {
+    "id": {{ req.id }},
+    "student_name": "{{ req.student.user.first_name|escapejs }} {{ req.student.user.last_name|escapejs }}",
+    "matricule": "{{ req.student.matricule|escapejs }}",
+    "email": "{{ req.student.user.email|escapejs }}",
+    "status": "{{ req.status|escapejs }}",
+    "type_display": "{{ req.get_request_type_display|escapejs }}",
+    "created_at": "{{ req.created_at|date:'d/m/Y à H:i'|escapejs }}",
+    "subject": "{{ req.subject|escapejs }}",
+    "description": "{{ req.description|escapejs }}",
+    "attachment_url": "{% if req.attachment %}{{ req.attachment.url|escapejs }}{% endif %}",
+    "response": "{{ req.response|default:''|escapejs }}"
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+}
+</script>
+
+{# Single reusable detail modal #}
+<div id="detailModal" style="display:none" class="fixed inset-0 z-[9999] items-center justify-center bg-black/50">
+  <div class="bg-white rounded-md border border-gray-100 shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
       <h3 class="text-sm font-semibold text-gray-700">Détails de la demande</h3>
-      <button onclick="closeDetailModal({{ req.id }})" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+      <button onclick="closeDetail()" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 text-xl leading-none rounded hover:bg-gray-100 transition">&times;</button>
     </div>
     <div class="p-5 space-y-4">
       <div class="grid grid-cols-2 gap-4">
         <div>
           <p class="text-xs font-medium text-gray-500 mb-1">Étudiant</p>
-          <p class="text-sm font-semibold text-gray-800">{{ req.student.user.first_name }} {{ req.student.user.last_name }}</p>
-          <p class="text-xs text-gray-500">Matricule : {{ req.student.matricule }}</p>
-          <p class="text-xs text-gray-500">{{ req.student.user.email }}</p>
+          <p id="m-student" class="text-sm font-semibold text-gray-800"></p>
+          <p id="m-matricule" class="text-xs text-gray-500"></p>
+          <p id="m-email" class="text-xs text-gray-500"></p>
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 mb-1">Informations</p>
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-            {% if req.status == 'pending' %}bg-yellow-100 text-yellow-700
-            {% elif req.status == 'processing' %}bg-blue-100 text-blue-700
-            {% elif req.status == 'approved' %}bg-green-100 text-green-700
-            {% else %}bg-red-100 text-red-700{% endif %}">
-            {% if req.status == 'pending' %}En attente{% elif req.status == 'processing' %}En traitement{% elif req.status == 'approved' %}Approuvée{% elif req.status == 'rejected' %}Rejetée{% endif %}
-          </span>
-          <p class="text-xs text-gray-500 mt-1">{{ req.created_at|date:"d/m/Y à H:i" }}</p>
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">{{ req.get_request_type_display }}</span>
+          <span id="m-status-badge" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"></span>
+          <p id="m-date" class="text-xs text-gray-500 mt-1"></p>
+          <span id="m-type" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"></span>
         </div>
       </div>
       <hr class="border-gray-100">
       <div>
         <p class="text-xs font-medium text-gray-500 mb-1">Sujet</p>
-        <p class="text-sm text-gray-700">{{ req.subject }}</p>
+        <p id="m-subject" class="text-sm text-gray-700"></p>
       </div>
       <div>
         <p class="text-xs font-medium text-gray-500 mb-1">Description</p>
-        <div class="bg-gray-50 rounded-md p-3 text-sm text-gray-700">{{ req.description|linebreaks }}</div>
+        <div id="m-description" class="bg-gray-50 rounded-md p-3 text-sm text-gray-700 whitespace-pre-wrap"></div>
       </div>
-      {% if req.attachment %}
-      <div>
+      <div id="m-attachment-wrap" style="display:none">
         <p class="text-xs font-medium text-gray-500 mb-1">Pièce jointe</p>
-        <a href="{{ req.attachment.url }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+        <a id="m-attachment-link" href="#" target="_blank"
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
           Télécharger le fichier
         </a>
       </div>
-      {% endif %}
-      {% if req.response %}
-      <div class="response-content">
-        <p class="text-xs font-medium text-gray-500 mb-1">Réponse</p>
-        <div class="bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700">{{ req.response }}</div>
+      <div id="m-response-wrap" style="display:none">
+        <p class="text-xs font-medium text-gray-500 mb-1">Réponse actuelle</p>
+        <div id="m-response-text" class="bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700"></div>
       </div>
-      {% else %}
-      <div class="response-content"></div>
-      {% endif %}
       <div>
         <p class="text-xs font-medium text-gray-500 mb-1">Répondre à l'étudiant</p>
-        <form method="post" class="response-form" data-request-id="{{ req.id }}">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="respond">
-          <input type="hidden" name="request_id" value="{{ req.id }}">
-          <textarea name="response" rows="3" placeholder="Saisissez votre réponse ici..."
-                    class="response-message w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition mb-2"></textarea>
-          <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
+        <form id="modal-response-form" class="space-y-2">
+          <input type="hidden" id="m-req-id" value="">
+          <textarea id="m-response-input" rows="3" placeholder="Saisissez votre réponse ici..."
+                    class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#033050]/30 focus:border-[#033050] transition"></textarea>
+          <button type="submit"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#033050] text-white text-xs font-semibold rounded-md hover:opacity-90 transition">
             Envoyer la réponse
           </button>
         </form>
       </div>
     </div>
     <div class="flex justify-end px-5 py-4 border-t border-gray-100">
-      <button onclick="closeDetailModal({{ req.id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
+      <button onclick="closeDetail()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-50 transition">
         Fermer
       </button>
     </div>
   </div>
 </div>
-{% endfor %}
-
 {% endblock %}
 
 {% block extra_js %}
@@ -217,71 +220,139 @@ const STATUS_BADGE = {
   rejected:   'bg-red-100 text-red-700',
 };
 const STATUS_LABEL = {
-  pending: 'En attente', processing: 'En traitement',
-  approved: 'Approuvée', rejected: 'Rejetée',
+  pending:    'En attente',
+  processing: 'En traitement',
+  approved:   'Approuvée',
+  rejected:   'Rejetée',
 };
 
+const REQ_MAP = JSON.parse(document.getElementById('req-json').textContent);
+
 function getCsrf() {
-  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const m = document.querySelector('meta[name="csrf-token"]');
+  if (m) return m.content;
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+  return cookie ? decodeURIComponent(cookie.trim().split('=')[1]) : '';
 }
 
-function openDetailModal(id) {
-  const m = document.getElementById('detailModal' + id);
-  m.classList.remove('hidden'); m.classList.add('flex');
-}
-function closeDetailModal(id) {
-  const m = document.getElementById('detailModal' + id);
-  m.classList.add('hidden'); m.classList.remove('flex');
+function openDetail(id) {
+  const r = REQ_MAP[String(id)];
+  if (!r) return;
+
+  document.getElementById('m-student').textContent = r.student_name;
+  document.getElementById('m-matricule').textContent = 'Matricule : ' + r.matricule;
+  document.getElementById('m-email').textContent = r.email;
+  document.getElementById('m-date').textContent = r.created_at;
+  document.getElementById('m-subject').textContent = r.subject;
+  document.getElementById('m-description').textContent = r.description;
+  document.getElementById('m-type').textContent = r.type_display;
+  document.getElementById('m-req-id').value = id;
+  document.getElementById('m-response-input').value = '';
+
+  const badge = document.getElementById('m-status-badge');
+  badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + (STATUS_BADGE[r.status] || 'bg-gray-100 text-gray-600');
+  badge.textContent = STATUS_LABEL[r.status] || r.status;
+
+  const attWrap = document.getElementById('m-attachment-wrap');
+  if (r.attachment_url) {
+    document.getElementById('m-attachment-link').href = r.attachment_url;
+    attWrap.style.display = 'block';
+  } else {
+    attWrap.style.display = 'none';
+  }
+
+  const resWrap = document.getElementById('m-response-wrap');
+  if (r.response) {
+    document.getElementById('m-response-text').textContent = r.response;
+    resWrap.style.display = 'block';
+  } else {
+    resWrap.style.display = 'none';
+  }
+
+  const modal = document.getElementById('detailModal');
+  modal.style.display = 'flex';
 }
 
+function closeDetail() {
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetail();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDetail();
+});
+
+// Status dropdown — save to DB on change
 document.querySelectorAll('.req-status-select').forEach(function(sel) {
   sel.addEventListener('change', function() {
     const reqId = this.dataset.requestId;
-    const action = this.value;
-    const orig = this.options[this.selectedIndex === 0 ? 1 : 0].value; // fallback
+    const newStatus = this.value;
+    const prevStatus = this.dataset.current;
+
     fetch('{% url "update_request_status" %}', {
       method: 'POST',
-      headers: {'X-CSRFToken': getCsrf(), 'Content-Type': 'application/x-www-form-urlencoded'},
-      body: `request_id=${reqId}&action=${action}`,
+      headers: {
+        'X-CSRFToken': getCsrf(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'request_id=' + encodeURIComponent(reqId) + '&action=' + encodeURIComponent(newStatus),
     })
-    .then(r => r.json())
-    .then(d => {
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
       if (d.success) {
+        sel.dataset.current = newStatus;
         const row = document.getElementById('request-row-' + reqId);
-        if (row) {
-          const badge = row.querySelector('.status-badge');
-          if (badge) {
-            badge.className = 'status-badge inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + (STATUS_BADGE[action] || '');
-            badge.textContent = STATUS_LABEL[action] || action;
-          }
+        const badge = row && row.querySelector('.status-badge');
+        if (badge) {
+          badge.className = 'status-badge inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ' + (STATUS_BADGE[newStatus] || '');
+          badge.textContent = STATUS_LABEL[newStatus] || newStatus;
+        }
+        if (REQ_MAP[String(reqId)]) {
+          REQ_MAP[String(reqId)].status = newStatus;
         }
       } else {
-        alert(d.error || 'Erreur');
-        this.value = orig;
+        alert(d.error || 'Erreur lors de la mise à jour');
+        sel.value = prevStatus;
       }
-    }.bind(this));
+    })
+    .catch(function() {
+      alert('Erreur réseau');
+      sel.value = prevStatus;
+    });
   });
 });
 
-document.querySelectorAll('.response-form').forEach(function(form) {
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const msg = form.querySelector('.response-message').value.trim();
-    if (!msg) { alert('Veuillez saisir un message.'); return; }
-    fetch('{% url "add_request_response" %}', {
-      method: 'POST',
-      headers: {'X-CSRFToken': getCsrf()},
-      body: new FormData(form),
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.success) {
-        form.closest('.fixed').querySelector('.response-content').innerHTML =
-          '<p class="text-xs font-medium text-gray-500 mb-1">Réponse</p><div class="bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700">' + d.response + '</div>';
-        form.querySelector('.response-message').value = '';
-      } else alert(d.error || 'Erreur');
-    });
-  });
+// Response form inside modal
+document.getElementById('modal-response-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const reqId = document.getElementById('m-req-id').value;
+  const msg = document.getElementById('m-response-input').value.trim();
+  if (!msg) { alert('Veuillez saisir un message.'); return; }
+
+  const fd = new FormData();
+  fd.append('request_id', reqId);
+  fd.append('response', msg);
+
+  fetch('{% url "add_request_response" %}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrf() },
+    body: fd,
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      document.getElementById('m-response-text').textContent = msg;
+      document.getElementById('m-response-wrap').style.display = 'block';
+      document.getElementById('m-response-input').value = '';
+      if (REQ_MAP[String(reqId)]) REQ_MAP[String(reqId)].response = msg;
+    } else {
+      alert(d.error || 'Erreur');
+    }
+  })
+  .catch(function() { alert('Erreur réseau'); });
 });
 </script>
 {% endblock %}

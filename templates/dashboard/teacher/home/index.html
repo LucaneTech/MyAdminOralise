@@ -25,12 +25,15 @@
 
 {% block content %}
 <!-- ═══ BANNIÈRE FORMATEUR ════════════════════════════════════ -->
-<div class="teacher-banner rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-0">
+<div class="teacher-banner rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-0" >
+  {# Motif lignes diagonales — style tech/blueprint #}
+  <div class="absolute inset-0 pointer-events-none" style="background-image:repeating-linear-gradient(135deg, rgba(56,189,248,0.05) 0px, rgba(56,189,248,0.05) 1px, transparent 1px, transparent 40px);"></div>
+  <div class="absolute inset-0 pointer-events-none" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='30' fill='none' stroke='rgba(56,189,248,0.05)' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='15' fill='none' stroke='rgba(56,189,248,0.04)' stroke-width='1'/%3E%3C/svg%3E\");"></div>
   <div class="relative z-10">
     <div class="flex items-start justify-between mb-6">
       <div>
         <p class="text-sky-400 text-xs font-semibold uppercase tracking-widest mb-1">Espace Formateur</p>
-        <h1 class="text-2xl font-bold text-white">Bonjour, {{ teacher.user.first_name|default:teacher.user.username }} 👋</h1>
+        <h1 class="text-2xl font-bold text-white">Bonjour, {{ teacher.user.first_name|default:teacher.user.username }} !!</h1>
         <p class="text-white/50 text-sm mt-1">{{ teacher.speciality }} · {{ teacher.get_statut_display }}</p>
       </div>
       <a href="{% url 'profile_view' %}" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-medium px-3 py-2 rounded-sm transition">
@@ -40,7 +43,7 @@
   </div>
 
   <!-- Stat cards -->
-  <div class="relative z-10 grid grid-cols-2 md:grid-cols-3 gap-4 translate-y-8">
+  <div class="relative z-40 grid grid-cols-2 md:grid-cols-3 gap-4 translate-y-8">
     <div class="bg-white rounded-sm shadow-xl p-5 border border-gray-100">
       <div class="flex items-center justify-between mb-3">
         <div class="w-10 h-10 rounded-sm bg-cyan-100 flex items-center justify-center">

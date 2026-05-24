@@ -716,9 +716,14 @@ def update_request_status(request):
         
         # Récupérer l'enseignant connecté
         teacher = Teacher.objects.get(user=request.user)
-        
-        # Récupérer la demande (vérifier qu'elle appartient à cet enseignant)
-        req = Request.objects.get(id=request_id, teacher=teacher)
+
+        # Récupérer la demande — autorisé si la demande est envoyée à ce prof
+        # OU si l'étudiant fait partie de ses élèves (cohérent avec la liste)
+        req = Request.objects.filter(id=request_id).filter(
+            Q(teacher=teacher) | Q(student__current_teachers=teacher)
+        ).distinct().first()
+        if req is None:
+            raise Request.DoesNotExist
         
         # Mettre à jour le statut selon l'action
         status_map = {
@@ -843,6 +848,25 @@ def add_request_response(request):
             'success': False,
             'error': f'Erreur serveur: {str(e)}'
         }, status=500)
+
+
+@login_required
+@require_POST
+def delete_request(request, request_id):
+    req = get_object_or_404(Request, id=request_id)
+    user = request.user
+    if user.role == 'student':
+        if req.student.user != user:
+            return JsonResponse({'success': False, 'error': 'Non autorisé'}, status=403)
+    elif user.role == 'teacher':
+        teacher = get_object_or_404(Teacher, user=user)
+        allowed = (req.teacher_id == teacher.pk) or req.student.current_teachers.filter(pk=teacher.pk).exists()
+        if not allowed:
+            return JsonResponse({'success': False, 'error': 'Non autorisé'}, status=403)
+    else:
+        return JsonResponse({'success': False, 'error': 'Non autorisé'}, status=403)
+    req.delete()
+    return JsonResponse({'success': True})
 
 
 def settings_view(request):

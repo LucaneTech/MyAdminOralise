@@ -94,6 +94,13 @@
                 {% else %}
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">Pas de réponse</span>
                 {% endif %}
+                <form method="post" action="{% url 'delete_request' request.id %}" onsubmit="return confirm('Supprimer cette demande ?')">
+                  {% csrf_token %}
+                  <button type="submit"
+                    class="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-md hover:bg-red-100 transition">
+                    Supprimer
+                  </button>
+                </form>
               </div>
             </td>
           </tr>

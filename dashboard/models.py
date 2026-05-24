@@ -461,6 +461,13 @@ class Session(models.Model):
         verbose_name="lien de réunion"
     )
 
+    event_color = models.CharField(
+        max_length=7,
+        blank=True,
+        default='',
+        verbose_name="couleur de la séance",
+    )
+
     # --- Contenu pédagogique ---
     theme_cours = models.CharField(
         max_length=200,

@@ -9,13 +9,13 @@
 
   {# ── Hero card ─────────────────────────────────────────────────── #}
   <div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
-    <div class="h-20 bg-gradient-to-r from-[#056f77] to-[#26b2bd]"></div>
+    <div class="h-20  bg-[#033050]"></div>
     <div class="px-6 pb-6">
       <div class="flex items-end justify-between -mt-10 mb-4">
         <img src="{{ request.user.profile_picture_url }}" alt="avatar"
-             class="w-20 h-20 rounded-sm object-cover ring-4 ring-white shadow-sm">
+             class="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-sm">
         <a href="{% url 'profile_edit' %}"
-           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#056f77] text-white text-xs font-semibold rounded-sm hover:bg-[#045f66] transition">
+           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#033050] text-white text-xs font-semibold rounded-sm  transition">
           {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier le profil
         </a>
       </div>

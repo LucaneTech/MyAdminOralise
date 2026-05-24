@@ -4,83 +4,246 @@
 
 {% block title %}Mon Profil{% endblock %}
 
-{% block content %}
-<div class="max-w-3xl mx-auto space-y-6">
+{% block extra_css %}
+<style>
+  .profile-banner {
+    background: linear-gradient(135deg, #033050 0%, #0f3460 60%, #1a4a7a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Ccircle cx='15' cy='15' r='1.5' fill='rgba(251,191,36,0.12)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .profile-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 85% 40%, rgba(251,191,36,0.10) 0%, transparent 55%),
+                radial-gradient(circle at 10% 80%, rgba(56,189,248,0.08) 0%, transparent 45%);
+    pointer-events: none;
+  }
+</style>
+{% endblock %}
 
-  <!-- Header profil -->
-  <div class="bg-white rounded-md shadow-xl p-6 flex items-start gap-6">
-    <div class="relative shrink-0">
-      <img src="{{ request.user.profile_picture_url }}" alt="avatar"
-           class="w-24 h-24 rounded-md object-cover ring-4 ring-[#d9a505]/30">
-    </div>
-    <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-3 flex-wrap mb-1">
-        <h1 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name }}</h1>
-        <span class="px-2 py-0.5 text-xs font-semibold bg-[#d9a505] text-white rounded-md">Étudiant</span>
-        {% if student.matricule %}
-          <span class="text-xs text-gray-400 font-mono">{{ student.matricule }}</span>
-        {% endif %}
+{% block content %}
+<div class="space-y-5">
+
+  <!-- ═══ BANNIÈRE PROFIL ═══════════════════════════════════════ -->
+  <div class="profile-banner rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-16">
+    <div class="relative z-10 flex items-end gap-5">
+      <div class="relative shrink-0">
+        <img src="{{ request.user.profile_picture_url }}" alt="avatar"
+             class="w-24 h-24 rounded-sm object-cover ring-4 ring-white/20 shadow-xl">
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white"></span>
       </div>
-      <p class="text-sm text-gray-500">
-        {{ profile.city }}{% if profile.city and profile.country %} · {% endif %}{{ profile.country }}
-        {% if profile.number %} · {{ profile.number }}{% endif %}
-      </p>
+      <div class="flex-1 min-w-0 pb-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-2xl font-bold text-white">{{ request.user.get_full_name }}</h1>
+          <span class="px-2 py-0.5 text-xs font-semibold bg-[#d9a505] text-white rounded-sm">Étudiant</span>
+        </div>
+        {% if student.matricule %}
+        <p class="text-sm text-white/60 font-mono mt-0.5">{{ student.matricule }}</p>
+        {% endif %}
+        <p class="text-sm text-white/50 mt-0.5">
+          {{ request.user.email }}
+          {% if profile.city %} · {{ profile.city }}{% endif %}
+          {% if profile.country %}, {{ profile.country }}{% endif %}
+        </p>
+      </div>
+      <a href="{% url 'profile_edit' %}"
+         class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-sm transition">
+        {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier
+      </a>
     </div>
-    <a href="{% url 'profile_edit' %}"
-       class="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#d9a505] text-white text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
-      {% lucide "pencil" class="w-3.5 h-3.5" %} Modifier
-    </a>
   </div>
 
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-4">
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#d9a505]">{{ total_sessions }}</p>
-      <p class="text-xs text-gray-500 mt-1 font-medium">Séances totales</p>
+  <!-- ═══ STATS KPI ════════════════════════════════════════════ -->
+  <div class="grid grid-cols-3 gap-4 -mt-10 relative z-10 px-0">
+    <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="w-9 h-9 rounded-sm bg-sky-100 flex items-center justify-center">
+          {% lucide "calendar-check" class="w-4.5 h-4.5 text-sky-600" %}
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ total_sessions }}</p>
+      <p class="text-xs text-gray-500 mt-1 font-medium">Séances réalisées</p>
     </div>
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#d9a505]">{{ student.hours_remaining|default:"0" }}</p>
+    <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="w-9 h-9 rounded-sm bg-amber-100 flex items-center justify-center">
+          {% lucide "clock" class="w-4.5 h-4.5 text-amber-600" %}
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ student.hours_remaining|default:"0" }}<span class="text-base font-normal text-gray-400">h</span></p>
       <p class="text-xs text-gray-500 mt-1 font-medium">Heures restantes</p>
     </div>
-    <div class="bg-white rounded-md shadow-xl p-5 text-center">
-      <p class="text-3xl font-bold text-[#d9a505]">{{ avg_rating|default:"—" }}</p>
+    <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <div class="w-9 h-9 rounded-sm bg-violet-100 flex items-center justify-center">
+          {% lucide "star" class="w-4.5 h-4.5 text-violet-600" %}
+        </div>
+      </div>
+      <p class="text-2xl font-bold text-gray-900">{{ avg_rating|default:"—" }}</p>
       <p class="text-xs text-gray-500 mt-1 font-medium">Note moyenne</p>
     </div>
   </div>
 
-  <!-- Corps -->
-  <div class="bg-white rounded-md shadow-xl p-6 space-y-5">
-    {% if profile.about and profile.about.strip %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "user" class="w-4 h-4 text-[#d9a505]" %} À propos
-      </h3>
-      <p class="text-sm text-gray-600 leading-relaxed">{{ profile.about }}</p>
-    </div>
-    {% endif %}
+  <!-- ═══ CONTENU PRINCIPAL ════════════════════════════════════ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-    {% if student.languages.all %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "globe" class="w-4 h-4 text-[#d9a505]" %} Langues
-      </h3>
-      <div class="flex flex-wrap gap-2">
-        {% for lang in student.languages.all %}
-          <span class="px-3 py-1 text-xs font-medium bg-[#d9a505]/10 text-[#d9a505] rounded-md">{{ lang.name }}</span>
-        {% endfor %}
+    <!-- Colonne gauche : infos clés -->
+    <div class="space-y-4">
+
+      <!-- Coordonnées -->
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "contact" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Coordonnées</span>
+        </div>
+        <div class="p-4 space-y-2.5">
+          {% if request.user.email %}
+          <div class="flex items-center gap-2.5 text-sm text-gray-700">
+            {% lucide "mail" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span class="truncate">{{ request.user.email }}</span>
+          </div>
+          {% endif %}
+          {% if profile.number %}
+          <div class="flex items-center gap-2.5 text-sm text-gray-700">
+            {% lucide "smartphone" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.number }}</span>
+          </div>
+          {% endif %}
+          {% if profile.city or profile.country %}
+          <div class="flex items-center gap-2.5 text-sm text-gray-700">
+            {% lucide "map-pin" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}</span>
+          </div>
+          {% endif %}
+          {% if profile.address %}
+          <div class="flex items-center gap-2.5 text-sm text-gray-700">
+            {% lucide "home" class="w-4 h-4 text-gray-400 shrink-0" %}
+            <span>{{ profile.address }}</span>
+          </div>
+          {% endif %}
+          {% if not request.user.email and not profile.number and not profile.city and not profile.address %}
+          <p class="text-xs text-gray-400 italic">Aucune coordonnée renseignée</p>
+          {% endif %}
+        </div>
       </div>
-    </div>
-    {% endif %}
 
-    {% if student.objectif_formation %}
-    <div>
-      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-        {% lucide "target" class="w-4 h-4 text-[#d9a505]" %} Objectif de formation
-      </h3>
-      <p class="text-sm text-gray-600 leading-relaxed">{{ student.objectif_formation }}</p>
+      <!-- Langues -->
+      {% if student.languages.all %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "globe" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Langues</span>
+        </div>
+        <div class="p-4 flex flex-wrap gap-2">
+          {% for lang in student.languages.all %}
+          <span class="px-3 py-1 text-xs font-semibold bg-[#d9a505]/10 text-[#d9a505] rounded-sm">{{ lang.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Formateurs -->
+      {% if student.current_teachers.all %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "users" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Mes formateurs</span>
+        </div>
+        <div class="divide-y divide-gray-50">
+          {% for teacher in student.current_teachers.all %}
+          <div class="px-4 py-2.5 flex items-center gap-3">
+            <img src="{{ teacher.user.profile_picture_url }}" alt="{{ teacher.user.get_full_name }}"
+                 class="w-8 h-8 rounded-sm object-cover">
+            <div>
+              <p class="text-sm font-medium text-gray-800">{{ teacher.user.get_full_name }}</p>
+              <p class="text-xs text-gray-400">{{ teacher.speciality|default:"Formateur" }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
+
+    <!-- Colonne droite : infos détaillées -->
+    <div class="lg:col-span-2 space-y-4">
+
+      <!-- À propos -->
+      {% if profile.about and profile.about.strip %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "user" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">À propos</span>
+        </div>
+        <div class="p-4">
+          <p class="text-sm text-gray-600 leading-relaxed">{{ profile.about }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Objectif de formation -->
+      {% if student.objectif_formation %}
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "target" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Objectif de formation</span>
+        </div>
+        <div class="p-4">
+          <p class="text-sm text-gray-600 leading-relaxed">{{ student.objectif_formation }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Heures & progression -->
+      <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+          {% lucide "bar-chart-2" class="w-4 h-4 text-[#d9a505]" %}
+          <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Progression</span>
+        </div>
+        <div class="p-4 grid grid-cols-2 gap-4">
+          <div class="bg-gray-50 rounded-sm p-4 text-center">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Heures utilisées</p>
+            <p class="text-2xl font-bold text-gray-800">{{ student.total_hours_used|default:"0" }}<span class="text-base font-normal text-gray-400">h</span></p>
+          </div>
+          <div class="bg-gray-50 rounded-sm p-4 text-center">
+            <p class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Heures restantes</p>
+            <p class="text-2xl font-bold text-[#d9a505]">{{ student.hours_remaining|default:"0" }}<span class="text-base font-normal text-gray-400">h</span></p>
+          </div>
+          {% if student.total_hours_purchased %}
+          <div class="col-span-2">
+            <p class="text-xs text-gray-500 mb-1.5">Progression du forfait</p>
+            {% with pct=student.total_hours_used|default:0 total=student.total_hours_purchased %}
+            <div class="w-full bg-gray-100 rounded-full h-2">
+              <div class="bg-[#d9a505] h-2 rounded-full transition-all" style="width: {% widthratio student.total_hours_used|default:0 total 100 %}%"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">{{ student.total_hours_used|default:0 }} / {{ total }} heures</p>
+            {% endwith %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions rapides -->
+      <div class="flex gap-3">
+        <a href="{% url 'profile_edit' %}"
+           class="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#d9a505] text-white text-sm font-semibold rounded-sm hover:opacity-90 transition">
+          {% lucide "pencil" class="w-4 h-4" %} Modifier le profil
+        </a>
+        <a href="{% url 'requests_view' %}"
+           class="flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">
+          {% lucide "inbox" class="w-4 h-4" %} Mes demandes
+        </a>
+      </div>
+
+    </div>
   </div>
-
 </div>
 {% endblock %}

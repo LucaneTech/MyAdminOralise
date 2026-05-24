@@ -11,7 +11,8 @@
       "Bash(python manage.py test dashboard.tests.SessionSeriesServiceTest -v 2)",
       "Bash(python manage.py test dashboard.tests.AdminSessionSeriesViewTest.test_create_series_generates_occurrences -v 2)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(python manage.py test dashboard --verbosity=1)"
     ]
   }
 }

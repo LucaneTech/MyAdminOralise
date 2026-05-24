@@ -187,7 +187,7 @@ class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
         fields = ['students', 'language', 'date', 'start_time', 'end_time',
-                  'type_seance', 'status', 'meeting_link']
+                  'type_seance', 'status', 'meeting_link', 'event_color']
         widgets = {
             'students': forms.SelectMultiple(attrs={'class': TW_SELECT, 'size': '5'}),
             'language': forms.Select(attrs={'class': TW_SELECT}),
@@ -198,6 +198,7 @@ class SessionForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': TW_SELECT}),
             'meeting_link': forms.URLInput(attrs={'class': TW_INPUT,
                                                    'placeholder': 'https://meet.google.com/...'}),
+            'event_color': forms.TextInput(attrs={'type': 'color', 'class': TW_INPUT}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -428,7 +429,7 @@ class SessionAdminForm(forms.ModelForm):
         model = Session
         fields = [
             'students', 'teacher', 'language', 'date', 'start_time', 'end_time',
-            'duree_minutes', 'type_seance', 'status', 'meeting_link',
+            'duree_minutes', 'type_seance', 'status', 'meeting_link', 'event_color',
             'theme_cours', 'comp_oral', 'comp_comprehension', 'comp_ecrit',
             'comp_grammaire', 'comp_vocabulaire',
             'participation', 'comprehension_score', 'engagement',
@@ -448,6 +449,7 @@ class SessionAdminForm(forms.ModelForm):
             'type_seance': forms.Select(attrs=W),
             'status': forms.Select(attrs=W),
             'meeting_link': forms.URLInput(attrs=W),
+            'event_color': forms.TextInput(attrs={'type': 'color', **W}),
             'theme_cours': forms.TextInput(attrs=W),
             'participation': forms.Select(attrs=W),
             'comprehension_score': forms.Select(attrs=W),

@@ -39,7 +39,7 @@ def _session_to_event(session, role='admin'):
         'title': title,
         'start': start_dt.isoformat(),
         'end': end_dt.isoformat(),
-        'color': STATUS_COLORS.get(session.status, '#6b7280'),
+        'color': session.event_color if session.event_color else STATUS_COLORS.get(session.status, '#6b7280'),
         'extendedProps': {
             'status': session.status,
             'status_display': session.get_status_display(),
