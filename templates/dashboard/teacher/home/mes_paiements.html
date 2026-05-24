@@ -12,10 +12,10 @@
 
 <!-- KPIs -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-  <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
+  {% comment %} <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">À recevoir</p>
     <p class="text-2xl font-bold text-gray-900">{{ total_attente|floatformat:2 }} MAD</p>
-  </div>
+  </div> {% endcomment %}
   <div class="bg-white rounded-md border border-gray-100 shadow-sm p-5">
     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Total reçu</p>
     <p class="text-2xl font-bold text-gray-900">{{ total_recu|floatformat:2 }} MAD</p>

@@ -22,18 +22,17 @@ STATUS_COLORS = {
 def _session_to_event(session, role='admin'):
     start_dt = datetime.combine(session.date, session.start_time)
     end_dt = datetime.combine(session.date, session.end_time)
-    time_str = start_dt.strftime('%H:%M')
     student_names = ', '.join(
         s.user.get_full_name() for s in session.students.select_related('user').all()
     )
     teacher_name = session.teacher.user.get_full_name() if session.teacher else '—'
     lang = str(session.language)
     if role == 'teacher':
-        title = f"{time_str} · {lang} · {student_names or '—'}"
+        title = f"{lang} · {student_names or '—'}"
     elif role == 'student':
-        title = f"{time_str} · {lang} · {teacher_name}"
+        title = f"{lang} · {teacher_name}"
     else:  # admin
-        title = f"{time_str} · {lang} · {teacher_name} · {student_names or '—'}"
+        title = f"{lang} · {teacher_name} · {student_names or '—'}"
     return {
         'id': session.id,
         'title': title,

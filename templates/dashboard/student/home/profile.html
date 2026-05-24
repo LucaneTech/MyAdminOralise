@@ -33,12 +33,12 @@
 <div class="space-y-5">
 
   <!-- ═══ BANNIÈRE PROFIL ═══════════════════════════════════════ -->
-  <div class="profile-banner rounded-sm -mx-6 -mt-6 px-6 pt-8 pb-16">
+  <div class="profile-banner  -mx-6 -mt-6 px-6 pt-8 pb-16">
     <div class="relative z-10 flex items-end gap-5">
       <div class="relative shrink-0">
         <img src="{{ request.user.profile_picture_url }}" alt="avatar"
-             class="w-24 h-24 rounded-sm object-cover ring-4 ring-white/20 shadow-xl">
-        <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white"></span>
+             class="w-24 h-24 rounded-full object-cover ring-4 ring-white/20 shadow-xl">
+        <span class="absolute bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white"></span>
       </div>
       <div class="flex-1 min-w-0 pb-1">
         <div class="flex items-center gap-2 flex-wrap">
@@ -65,7 +65,7 @@
   <div class="grid grid-cols-3 gap-4 -mt-10 relative z-10 px-0">
     <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
       <div class="flex items-center justify-between mb-2">
-        <div class="w-9 h-9 rounded-sm bg-sky-100 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center">
           {% lucide "calendar-check" class="w-4.5 h-4.5 text-sky-600" %}
         </div>
       </div>
@@ -74,7 +74,7 @@
     </div>
     <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
       <div class="flex items-center justify-between mb-2">
-        <div class="w-9 h-9 rounded-sm bg-amber-100 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center">
           {% lucide "clock" class="w-4.5 h-4.5 text-amber-600" %}
         </div>
       </div>
@@ -83,7 +83,7 @@
     </div>
     <div class="bg-white rounded-sm shadow-xl border border-gray-100 p-5">
       <div class="flex items-center justify-between mb-2">
-        <div class="w-9 h-9 rounded-sm bg-violet-100 flex items-center justify-center">
+        <div class="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
           {% lucide "star" class="w-4.5 h-4.5 text-violet-600" %}
         </div>
       </div>
@@ -161,7 +161,7 @@
           {% for teacher in student.current_teachers.all %}
           <div class="px-4 py-2.5 flex items-center gap-3">
             <img src="{{ teacher.user.profile_picture_url }}" alt="{{ teacher.user.get_full_name }}"
-                 class="w-8 h-8 rounded-sm object-cover">
+                 class="w-8 h-8 rounded-full object-cover">
             <div>
               <p class="text-sm font-medium text-gray-800">{{ teacher.user.get_full_name }}</p>
               <p class="text-xs text-gray-400">{{ teacher.speciality|default:"Formateur" }}</p>
