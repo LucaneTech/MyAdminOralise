@@ -1,33 +1,29 @@
 {% extends 'dashboard/teacher/layouts/base.html' %}
 {% load lucide %}
 
-{% block title %}Mon reporting{% endblock %}
+{% block title %}Mon rapport{% endblock %}
 
 {% block content %}
 <!-- Header -->
-<div class="mb-6">
-  <h1 class="text-xl font-bold text-gray-900">Mon reporting pédagogique</h1>
-  <p class="text-sm text-gray-400 mt-0.5">
-    Analyse de votre activité — {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}
-  </p>
-</div>
-
-<!-- Filtre période -->
-<div class="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-6">
-  <form method="get" class="flex flex-wrap items-end gap-3">
+<div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+  <div>
+    <h1 class="text-lg font-bold text-gray-900">Mon rapport pédagogique</h1>
+    <p class="text-xs text-gray-400 mt-0.5">{{ date_debut|date:"d/m/Y" }} → {{ date_fin|date:"d/m/Y" }}</p>
+  </div>
+  <!-- Filtre période -->
+  <form method="get" class="flex flex-wrap items-end gap-2">
     <div>
-      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">Du</label>
+      <label class="block text-xs font-medium text-gray-400 mb-1">Du</label>
       <input type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}"
-             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition">
+             class="px-3 py-1.5 border border-gray-200 rounded-sm text-xs focus:outline-none focus:border-sky-500 transition">
     </div>
     <div>
-      <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-widest">au</label>
+      <label class="block text-xs font-medium text-gray-400 mb-1">au</label>
       <input type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}"
-             class="px-3 py-2 border border-gray-200 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition">
+             class="px-3 py-1.5 border border-gray-200 rounded-sm text-xs focus:outline-none focus:border-sky-500 transition">
     </div>
     <button type="submit"
-            class="px-5 py-2 bg-[#0c1e35] text-white text-sm font-semibold rounded-sm hover:bg-[#0c1e35]/90 transition flex items-center gap-2">
-      {% lucide "search" class="w-3.5 h-3.5" %}
+            class="px-4 py-1.5 bg-[#0c1e35] text-white text-xs font-semibold rounded-sm hover:bg-[#0c1e35]/90 transition">
       Analyser
     </button>
   </form>
@@ -35,32 +31,23 @@
 
 <!-- KPIs -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
-    <div class="flex items-center justify-between mb-3">
-      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Séances réalisées</p>
-      <span class="w-8 h-8 rounded-sm bg-sky-50 flex items-center justify-center shrink-0">
-        {% lucide "calendar-check" class="w-4 h-4 text-sky-500" %}
-      </span>
-    </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 border-l-4 border-l-sky-500">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Séances réalisées</p>
     <p class="text-3xl font-bold text-gray-900">{{ total_sessions }}</p>
+    <p class="text-xs text-gray-400 mt-1">sur la période sélectionnée</p>
   </div>
-  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
-    <div class="flex items-center justify-between mb-3">
-      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Séances validées</p>
-      <span class="w-8 h-8 rounded-sm bg-emerald-50 flex items-center justify-center shrink-0">
-        {% lucide "check-circle" class="w-4 h-4 text-emerald-500" %}
-      </span>
-    </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 border-l-4 border-l-emerald-500">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Séances validées</p>
     <p class="text-3xl font-bold text-emerald-600">{{ sessions_validees }}</p>
+    <p class="text-xs text-gray-400 mt-1">
+      {% if total_sessions %}{% widthratio sessions_validees total_sessions 100 %}%{% else %}0%{% endif %}
+      du total
+    </p>
   </div>
-  <div class="bg-white rounded-sm shadow-sm border border-gray-100 p-5">
-    <div class="flex items-center justify-between mb-3">
-      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Étudiants suivis</p>
-      <span class="w-8 h-8 rounded-sm bg-violet-50 flex items-center justify-center shrink-0">
-        {% lucide "graduation-cap" class="w-4 h-4 text-violet-500" %}
-      </span>
-    </div>
+  <div class="bg-white rounded-sm border border-gray-100 shadow-sm p-5 border-l-4 border-l-violet-500">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Étudiants suivis</p>
     <p class="text-3xl font-bold text-gray-900">{{ student_stats|length }}</p>
+    <p class="text-xs text-gray-400 mt-1">étudiants actifs</p>
   </div>
 </div>
 
@@ -68,95 +55,85 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
   <!-- Table étudiants -->
-  <div class="lg:col-span-2">
-    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-700">Suivi individuel des étudiants</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
-              <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide w-16">Séances</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Participation</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Compréhension</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for stat in student_stats %}
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-5 py-3 font-semibold text-gray-800">{{ stat.student }}</td>
-              <td class="px-5 py-3 text-center text-gray-500 text-xs tabular-nums">{{ stat.nb_sessions }}</td>
-              <td class="px-5 py-3">
-                {% if stat.avg_participation %}
-                <div class="flex items-center gap-2 min-w-[100px]">
-                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full
-                      {% if stat.avg_participation >= 3 %}bg-emerald-500
-                      {% elif stat.avg_participation >= 2 %}bg-amber-400
-                      {% else %}bg-red-400{% endif %}"
-                         style="width:{% widthratio stat.avg_participation 4 100 %}%"></div>
-                  </div>
-                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_participation }}</span>
+  <div class="lg:col-span-2 bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
+      {% lucide "graduation-cap" class="w-4 h-4 text-gray-400 shrink-0" %}
+      <h2 class="text-sm font-semibold text-gray-700">Suivi individuel</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Étudiant</th>
+            <th class="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Séances</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Participation</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Compréhension</th>
+            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for stat in student_stats %}
+          <tr class="hover:bg-gray-50/60 transition-colors">
+            <td class="px-5 py-3 font-medium text-gray-800 whitespace-nowrap">{{ stat.student }}</td>
+            <td class="px-3 py-3 text-center text-xs font-bold text-gray-500 tabular-nums">{{ stat.nb_sessions }}</td>
+            <td class="px-5 py-3">
+              {% if stat.avg_participation %}
+              <div class="flex items-center gap-2 min-w-[90px]">
+                <div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full {% if stat.avg_participation >= 3 %}bg-emerald-500{% elif stat.avg_participation >= 2 %}bg-amber-400{% else %}bg-red-400{% endif %}"
+                       style="width:{% widthratio stat.avg_participation 4 100 %}%"></div>
                 </div>
-                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
-              </td>
-              <td class="px-5 py-3">
-                {% if stat.avg_comprehension %}
-                <div class="flex items-center gap-2 min-w-[100px]">
-                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full
-                      {% if stat.avg_comprehension >= 3 %}bg-emerald-500
-                      {% elif stat.avg_comprehension >= 2 %}bg-amber-400
-                      {% else %}bg-red-400{% endif %}"
-                         style="width:{% widthratio stat.avg_comprehension 4 100 %}%"></div>
-                  </div>
-                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_comprehension }}</span>
+                <span class="text-xs font-semibold text-gray-500 w-6 tabular-nums">{{ stat.avg_participation }}</span>
+              </div>
+              {% else %}<span class="text-gray-300 text-xs">—</span>{% endif %}
+            </td>
+            <td class="px-5 py-3">
+              {% if stat.avg_comprehension %}
+              <div class="flex items-center gap-2 min-w-[90px]">
+                <div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full {% if stat.avg_comprehension >= 3 %}bg-emerald-500{% elif stat.avg_comprehension >= 2 %}bg-amber-400{% else %}bg-red-400{% endif %}"
+                       style="width:{% widthratio stat.avg_comprehension 4 100 %}%"></div>
                 </div>
-                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
-              </td>
-              <td class="px-5 py-3">
-                {% if stat.avg_engagement %}
-                <div class="flex items-center gap-2 min-w-[100px]">
-                  <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full
-                      {% if stat.avg_engagement >= 3 %}bg-emerald-500
-                      {% elif stat.avg_engagement >= 2 %}bg-amber-400
-                      {% else %}bg-red-400{% endif %}"
-                         style="width:{% widthratio stat.avg_engagement 4 100 %}%"></div>
-                  </div>
-                  <span class="text-xs font-bold text-gray-500 shrink-0 tabular-nums w-7">{{ stat.avg_engagement }}</span>
+                <span class="text-xs font-semibold text-gray-500 w-6 tabular-nums">{{ stat.avg_comprehension }}</span>
+              </div>
+              {% else %}<span class="text-gray-300 text-xs">—</span>{% endif %}
+            </td>
+            <td class="px-5 py-3">
+              {% if stat.avg_engagement %}
+              <div class="flex items-center gap-2 min-w-[90px]">
+                <div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full {% if stat.avg_engagement >= 3 %}bg-emerald-500{% elif stat.avg_engagement >= 2 %}bg-amber-400{% else %}bg-red-400{% endif %}"
+                       style="width:{% widthratio stat.avg_engagement 4 100 %}%"></div>
                 </div>
-                {% else %}<span class="text-gray-200 text-xs">—</span>{% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="px-5 py-14 text-center text-sm text-gray-400">
-                Aucune donnée sur cette période.
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+                <span class="text-xs font-semibold text-gray-500 w-6 tabular-nums">{{ stat.avg_engagement }}</span>
+              </div>
+              {% else %}<span class="text-gray-300 text-xs">—</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-400">
+              Aucune donnée pédagogique sur cette période.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
   <!-- Side panels -->
   <div class="space-y-4">
     {% if students_en_difficulte %}
-    <div class="bg-white rounded-sm shadow-sm border border-red-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-red-100 bg-red-50 flex items-center gap-2">
-        {% lucide "alert-triangle" class="w-4 h-4 text-red-500 shrink-0" %}
-        <h2 class="text-sm font-semibold text-red-700">Étudiants en difficulté</h2>
+    <div class="bg-white rounded-sm border border-red-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-red-100 bg-red-50 flex items-center gap-2">
+        {% lucide "alert-triangle" class="w-3.5 h-3.5 text-red-500 shrink-0" %}
+        <h2 class="text-xs font-semibold text-red-700 uppercase tracking-widest">En difficulté</h2>
       </div>
       <ul class="divide-y divide-gray-100">
         {% for s in students_en_difficulte %}
-        <li class="px-5 py-3 text-sm text-gray-700 flex items-center gap-2">
-          {% lucide "user" class="w-3.5 h-3.5 text-gray-300 shrink-0" %}
+        <li class="px-5 py-2.5 text-sm text-gray-700 flex items-center gap-2">
+          <div class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></div>
           {{ s }}
         </li>
         {% endfor %}
@@ -164,20 +141,21 @@
     </div>
     {% endif %}
 
-    <div class="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-700">Points faibles récurrents</h2>
+    <div class="bg-white rounded-sm border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
+        {% lucide "bar-chart-2" class="w-4 h-4 text-gray-400 shrink-0" %}
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">Points faibles</h2>
       </div>
-      <div class="p-5 space-y-3">
+      <div class="p-5 space-y-3.5">
         {% for comp, count in comp_faibles.items %}
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs font-semibold text-gray-600">{{ comp }}</span>
+            <span class="text-xs font-medium text-gray-600">{{ comp }}</span>
             <span class="text-xs font-bold text-gray-400 tabular-nums">{{ count }}</span>
           </div>
-          <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
             {% if total_sessions %}
-            <div class="h-full bg-[#0c1e35]/50 rounded-full"
+            <div class="h-full bg-[#0c1e35]/40 rounded-full"
                  style="width:{% widthratio count total_sessions 100 %}%"></div>
             {% endif %}
           </div>

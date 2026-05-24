@@ -30,7 +30,7 @@
   <div class="absolute inset-0 pointer-events-none" style="background-image:repeating-linear-gradient(135deg, rgba(56,189,248,0.05) 0px, rgba(56,189,248,0.05) 1px, transparent 1px, transparent 40px);"></div>
   <div class="absolute inset-0 pointer-events-none" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='30' fill='none' stroke='rgba(56,189,248,0.05)' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='15' fill='none' stroke='rgba(56,189,248,0.04)' stroke-width='1'/%3E%3C/svg%3E\");"></div>
   <div class="relative z-10">
-    <div class="flex items-start justify-between mb-6">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
       <div>
         <p class="text-sky-400 text-xs font-semibold uppercase tracking-widest mb-1">Espace Formateur</p>
         <h1 class="text-2xl font-bold text-white">Bonjour, {{ teacher.user.first_name|default:teacher.user.username }} !!</h1>
@@ -114,6 +114,19 @@
         </div>
       {% endfor %}
     </div>
+    {% if recent_completed_sessions.has_other_pages %}
+    <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+      <span class="text-xs text-gray-400">Page {{ recent_completed_sessions.number }} / {{ recent_completed_sessions.paginator.num_pages }}</span>
+      <div class="flex gap-2">
+        {% if recent_completed_sessions.has_previous %}
+        <a href="?sessions_page={{ recent_completed_sessions.previous_page_number }}" class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-sm text-gray-600 hover:bg-gray-50 transition">← Préc.</a>
+        {% endif %}
+        {% if recent_completed_sessions.has_next %}
+        <a href="?sessions_page={{ recent_completed_sessions.next_page_number }}" class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-sm text-gray-600 hover:bg-gray-50 transition">Suiv. →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Panneau droite -->

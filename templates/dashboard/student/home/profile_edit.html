@@ -22,7 +22,7 @@
     <div class="bg-white rounded-md border border-gray-100 shadow-sm p-6 text-center">
       <div class="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-2 border-gray-100">
         <img id="avatar-preview"
-             src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{% static 'assets/img/profile.png' %}{% endif %}"
+             src="{{ request.user.profile_picture_url }}"
              alt="Photo de profil" class="w-full h-full object-cover">
       </div>
       <h3 class="text-sm font-semibold text-gray-900">{{ user.get_full_name }}</h3>

@@ -42,8 +42,12 @@ class CustomUser(AbstractUser):
     
     @property
     def profile_picture_url(self):
-        if hasattr(self, 'user_profile') and self.user_profile.profile_picture:
-            return self.user_profile.profile_picture.url
+        try:
+            pic = self.user_profile.profile_picture
+            if pic:
+                return pic.url
+        except Exception:
+            pass
         return static('assets/img/profile.png')
 
 

@@ -30,14 +30,21 @@
   <div class="absolute inset-0 pointer-events-none" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Ccircle cx='14' cy='14' r='1.8' fill='rgba(251,191,36,0.13)'/%3E%3C/svg%3E\");"></div>
   <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(circle at 80% 30%, rgba(251,191,36,0.10) 0%, transparent 55%);"></div>
   <div class="relative z-10">
-    <div class="flex items-start justify-between mb-6">
-      <div>
-        <p class="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">Mon espace</p>
-        <h1 class="text-2xl font-bold text-white">Bonjour, {{ student.user.first_name|default:student.user.username }} </h1>
-        <p class="text-white/50 text-sm mt-1">Matricule : {{ student.matricule }}</p>
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="relative shrink-0">
+          <img src="{{ request.user.profile_picture_url }}" alt="avatar"
+               class="w-14 h-14 rounded-full object-cover ring-2 ring-white/20 shadow-lg">
+          <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#033050]"></span>
+        </div>
+        <div>
+          <p class="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-0.5">Mon espace</p>
+          <h1 class="text-2xl font-bold text-white">Bonjour, {{ student.user.first_name|default:student.user.username }}</h1>
+          <p class="text-white/50 text-sm mt-0.5">Matricule : {{ student.matricule }}</p>
+        </div>
       </div>
       <a href="{% url 'profile_view' %}" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-medium px-3 py-2 rounded-sm transition">
-        {% lucide "user" class="w-3.5 h-3.5" %} Mon profil
+        {% lucide "pencil" class="w-3.5 h-3.5" %} Mon profil
       </a>
     </div>
   </div>
@@ -88,7 +95,7 @@
       <a href="{% url 'student_sessions' %}" class="text-xs text-amber-600 hover:underline font-medium">Voir tout →</a>
     </div>
     <div class="divide-y divide-gray-50">
-      {% for session in student.recent_sessions %}
+      {% for session in recent_sessions %}
       <div class="px-5 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-sm bg-amber-50 flex items-center justify-center shrink-0">
@@ -96,7 +103,7 @@
           </div>
           <div>
             <p class="text-sm font-medium text-gray-800">{{ session.language }} — {{ session.teacher }}</p>
-            <p class="text-xs text-gray-400">{{ session.date }} · {{ session.start_time|time:"H:i" }}</p>
+            <p class="text-xs text-gray-400">{{ session.date|date:"j F Y" }} · {{ session.start_time|time:"H:i" }}</p>
           </div>
         </div>
         <span class="px-2 py-0.5 text-xs font-semibold rounded-sm
@@ -110,10 +117,23 @@
       {% empty %}
         <div class="px-5 py-10 text-center">
           {% lucide "calendar-x" class="w-8 h-8 text-gray-300 mx-auto mb-2" %}
-          <p class="text-sm text-gray-400">Aucune séance récente</p>
+          <p class="text-sm text-gray-400">Aucune séance enregistrée</p>
         </div>
       {% endfor %}
     </div>
+    {% if recent_sessions.has_other_pages %}
+    <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+      <span class="text-xs text-gray-400">Page {{ recent_sessions.number }} / {{ recent_sessions.paginator.num_pages }}</span>
+      <div class="flex gap-2">
+        {% if recent_sessions.has_previous %}
+        <a href="?sessions_page={{ recent_sessions.previous_page_number }}" class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-sm text-gray-600 hover:bg-gray-50 transition">← Préc.</a>
+        {% endif %}
+        {% if recent_sessions.has_next %}
+        <a href="?sessions_page={{ recent_sessions.next_page_number }}" class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-sm text-gray-600 hover:bg-gray-50 transition">Suiv. →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Panneau droite -->

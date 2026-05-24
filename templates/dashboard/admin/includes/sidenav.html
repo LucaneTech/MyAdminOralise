@@ -1,7 +1,7 @@
 {% load static %}
 {% load lucide %}
 {% load tailwind_tags %}
-<aside class="fixed top-0 left-0 h-screen w-64 bg-[#056f77] text-white flex flex-col z-100 shadow-2xl">
+<aside id="sidenav" class="fixed top-0 left-0 h-screen w-64 bg-[#056f77] text-white flex flex-col z-50 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
   <!-- Logo -->
   <div class="flex items-start pl-5 py-5 border-b border-white/10">
       <img src="{% static 'assets/img/brand/white.png' %}" alt="Oralise" class="object-cover w-32 h-auto">
@@ -114,30 +114,31 @@
     
     
   </nav>
-     <span class= "text-sm text-gray-300 py-2 pl-3">Autres élements</span>
-   <div class= 'border-t border-white/10'>
-
+  <!-- Liens externes -->
+  <div class="border-t border-white/10 pt-2 pb-1">
+    <p class="text-xs text-white/30 uppercase tracking-widest px-4 py-1.5 font-semibold">Autres</p>
     <a href="https://www.oralise.pro" target="_blank"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 "
-    >
-     
-      <span class="text-white/90">Site Web</span>
+       class="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all hover:bg-white/10">
+      <span class="w-7 h-7 rounded-full border border-gray-200/30 bg-white/5 flex items-center justify-center shrink-0">
+        <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </span>
+      <span class="text-white/70">Site Oralise</span>
     </a>
-    <a href="https://www.facebook.com/tonprofil" target="_blank"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 "
-    >
-      
-      <span class="text-white/90">Facebook</span>
+    <a href="https://www.facebook.com/oralise" target="_blank"
+       class="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all hover:bg-white/10">
+      <span class="w-7 h-7 rounded-full border border-gray-200/30 bg-white/5 flex items-center justify-center shrink-0">
+        <svg class="w-3.5 h-3.5 text-white/60" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      </span>
+      <span class="text-white/70">Facebook</span>
     </a>
-
-     <a href="https://www.instagram.com/tonprofil" target="_blank"
-    class="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all hover:bg-white/10 "
-    >
-    
-      <span class="text-white/90">Instagram</span>
+    <a href="https://www.instagram.com/oralise" target="_blank"
+       class="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all hover:bg-white/10">
+      <span class="w-7 h-7 rounded-full border border-gray-200/30 bg-white/5 flex items-center justify-center shrink-0">
+        <svg class="w-3.5 h-3.5 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="text-white/70">Instagram</span>
     </a>
-             
-    </div>
+  </div>
 
   <!-- User -->
   <div class="border-t border-white/10 px-4 py-4">

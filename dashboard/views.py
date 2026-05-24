@@ -119,6 +119,15 @@ def dashboard_view(request, username=None):
         ).order_by("-date")[:5]
         context["rescheduled_sessions"] = rescheduled_sessions
 
+        # Séances : passées les plus récentes d'abord, futures les plus proches ensuite
+        sessions_page_num = request.GET.get('sessions_page', 1)
+        base_qs = Session.objects.filter(students=student).select_related('language', 'teacher__user')
+        past_sessions = list(base_qs.filter(date__lte=today).order_by('-date', '-start_time'))
+        future_sessions = list(base_qs.filter(date__gt=today).order_by('date', 'start_time'))
+        all_sessions = past_sessions + future_sessions
+        sessions_paginator = Paginator(all_sessions, 8)
+        context["recent_sessions"] = sessions_paginator.get_page(sessions_page_num)
+
         # Séances du jour
         today_sessions = Session.objects.filter(students=student, date=today).order_by(
             "start_time"
@@ -222,10 +231,13 @@ def teacher_view(request, username=None):
         context["weekly_sessions"] = weekly_sessions
 
         # Séances récentes (faites)
-        recent_completed_sessions = Session.objects.filter(
-            teacher=teacher, 
+        sessions_page_num = request.GET.get('sessions_page', 1)
+        recent_completed_sessions_qs = Session.objects.filter(
+            teacher=teacher,
             status="completed"
-        ).order_by("-date")[:10]
+        ).order_by("-date", "-start_time")
+        sessions_paginator = Paginator(recent_completed_sessions_qs, 5)
+        recent_completed_sessions = sessions_paginator.get_page(sessions_page_num)
         context["recent_completed_sessions"] = recent_completed_sessions
 
         # Séances à cocher (prévues pour aujourd'hui)
@@ -2078,9 +2090,12 @@ def admin_dashboard(request):
     sessions_today_count = Session.objects.filter(date=today).count()
     revenue_total = Payment.objects.filter(status='paid').aggregate(
         total=Sum('amount'))['total'] or 0
-    recent_sessions = Session.objects.select_related(
-        'teacher__user', 'language'
-    ).filter(date__gte=today).order_by('date', 'start_time')[:8]
+    sessions_page_num = request.GET.get('sessions_page', 1)
+    base_qs = Session.objects.select_related('teacher__user', 'language')
+    past_sessions = list(base_qs.filter(date__lte=today).order_by('-date', '-start_time'))
+    future_sessions = list(base_qs.filter(date__gt=today).order_by('date', 'start_time'))
+    sessions_paginator = Paginator(past_sessions + future_sessions, 8)
+    recent_sessions = sessions_paginator.get_page(sessions_page_num)
 
     # ── Graphes : séances sur 6 mois ─────────────────────────────
     labels = []

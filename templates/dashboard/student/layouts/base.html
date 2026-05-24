@@ -17,8 +17,9 @@
 
   <div class="flex h-full">
     {% include "dashboard/student/includes/sidenav.html" %}
+    <div id="sidenav-overlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" onclick="closeSidenav()"></div>
 
-    <div class="flex-1 flex flex-col min-h-screen ml-64">
+    <div class="flex-1 flex flex-col min-h-screen ml-0 lg:ml-64">
       {% include "dashboard/student/includes/navigation.html" %}
 
       <main class="flex-1 p-6">
@@ -48,5 +49,9 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   {% include "dashboard/student/includes/scripts.html" %}
   {% block extra_js %}{% endblock %}
+  <script>
+    function openSidenav(){document.getElementById('sidenav').classList.remove('-translate-x-full');document.getElementById('sidenav-overlay').classList.remove('hidden');}
+    function closeSidenav(){document.getElementById('sidenav').classList.add('-translate-x-full');document.getElementById('sidenav-overlay').classList.add('hidden');}
+  </script>
 </body>
 </html>
