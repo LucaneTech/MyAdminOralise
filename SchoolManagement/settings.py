@@ -28,10 +28,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    
-
 INSTALLED_APPS = [
     # customise django-admin with django-jazzmin
     "jazzmin",
@@ -64,7 +60,7 @@ INSTALLED_APPS = [
     # django-compressor to compress css and js files
     "compressor",
     # bucket of railway
-    # "storages",
+    "storages",
 ]
 
 TAILWIND_APP_NAME = "theme"
@@ -87,7 +83,6 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    os.path.join(BASE_DIR, "static/assets"),
 ]
 COMPRESS_ROOT = STATIC_ROOT
 MEDIA_URL = 'media/'
@@ -98,22 +93,25 @@ _s3_endpoint = os.getenv('AWS_S3_ENDPOINT_URL')
 if DEBUG:
     pass
 elif _s3_endpoint:
-    # Production with bucket Railway (S3-compatible)
+    # Production avec bucket Railway (S3-compatible)
     STORAGES = {
         'default': {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'},
-        'staticfiles': {'BACKEND': 'contact_filter.storage.RelaxedManifestStaticFilesStorage'},
+        'staticfiles': {'BACKEND': 'SchoolManagement.storage.RelaxedManifestStaticFilesStorage'},
     }
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_ENDPOINT_URL = _s3_endpoint
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'auto')
-    AWS_DEFAULT_ACL = 'private'
+    AWS_DEFAULT_ACL = os.getenv('AWS_DEFAULT_ACL', 'public-read')
+    AWS_QUERYSTRING_AUTH = os.getenv('AWS_QUERYSTRING_AUTH', 'False') == 'True'
     AWS_S3_FILE_OVERWRITE = False
     MEDIA_URL = f"{_s3_endpoint}/{os.getenv('AWS_STORAGE_BUCKET_NAME')}/"
 else:
-    # Production without bucket (fallback filesystem —  no way in railway)
-    STATICFILES_STORAGE = 'SchoolManagement.storage.RelaxedManifestStaticFilesStorage'
+    # Production sans bucket — whitenoise seul
+    STORAGES = {
+        'staticfiles': {'BACKEND': 'SchoolManagement.storage.RelaxedManifestStaticFilesStorage'},
+    }
 
 
 
