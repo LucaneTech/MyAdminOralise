@@ -80,17 +80,16 @@ COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False
 
 # STATIC_URL = "/static/"
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, "static"),
-#     os.path.join(BASE_DIR, "static/assets"),
-# ]
 # STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Static & Media
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "static/assets"),
+]
 COMPRESS_ROOT = STATIC_ROOT
-STATICFILES_DIRS = [BASE_DIR / 'theme' / 'static'] if (BASE_DIR / 'theme' / 'static').exists() else []
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
