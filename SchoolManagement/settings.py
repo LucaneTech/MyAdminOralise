@@ -75,17 +75,14 @@ STATICFILES_FINDERS = [
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False
 
-# STATIC_URL = "/static/"
-# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
 # Static & Media
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 COMPRESS_ROOT = STATIC_ROOT
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 _s3_endpoint = os.getenv('AWS_S3_ENDPOINT_URL')
@@ -182,7 +179,6 @@ WSGI_APPLICATION = "SchoolManagement.wsgi.application"
 # Database
 _database_url = os.getenv('DATABASE_URL')
 if _database_url:
-    import dj_database_url
     DATABASES = {'default': dj_database_url.parse(_database_url, conn_max_age=600)}
 else:
     DATABASES = {
