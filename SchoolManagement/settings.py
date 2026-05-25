@@ -79,13 +79,44 @@ STATICFILES_FINDERS = [
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False
 
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-    os.path.join(BASE_DIR, "static/assets"),
-]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# STATIC_URL = "/static/"
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static"),
+#     os.path.join(BASE_DIR, "static/assets"),
+# ]
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Static & Media
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 COMPRESS_ROOT = STATIC_ROOT
+STATICFILES_DIRS = [BASE_DIR / 'theme' / 'static'] if (BASE_DIR / 'theme' / 'static').exists() else []
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+_s3_endpoint = os.getenv('AWS_S3_ENDPOINT_URL')
+
+if DEBUG:
+    pass
+elif _s3_endpoint:
+    # Production with bucket Railway (S3-compatible)
+    STORAGES = {
+        'default': {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'},
+        'staticfiles': {'BACKEND': 'contact_filter.storage.RelaxedManifestStaticFilesStorage'},
+    }
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = _s3_endpoint
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'auto')
+    AWS_DEFAULT_ACL = 'private'
+    AWS_S3_FILE_OVERWRITE = False
+    MEDIA_URL = f"{_s3_endpoint}/{os.getenv('AWS_STORAGE_BUCKET_NAME')}/"
+else:
+    # Production without bucket (fallback filesystem —  no way in railway)
+    STATICFILES_STORAGE = 'SchoolManagement.storage.RelaxedManifestStaticFilesStorage'
+
+
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -151,20 +182,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "SchoolManagement.wsgi.application"
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# Database
+_database_url = os.getenv('DATABASE_URL')
+if _database_url:
+    import dj_database_url
+    DATABASES = {'default': dj_database_url.parse(_database_url, conn_max_age=600)}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # delete admin django notifications
 MESSAGE_LEVEL = messages.ERROR
