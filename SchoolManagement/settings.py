@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     # django-compressor to compress css and js files
     "compressor",
     # bucket of railway
-    "storages",
+    # "storages",
 ]
 
 TAILWIND_APP_NAME = "theme"
