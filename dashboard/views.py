@@ -2016,125 +2016,119 @@ def test_template_tags(request):
 def admin_dashboard(request):
     import json as _json
     from datetime import date as _date
-    # Statistiques principales
+    from collections import defaultdict
+
+    today = timezone.now().date()
+    this_month_start = today.replace(day=1)
+
+    # ── Compteurs basiques (3 queries) ───────────────────────────
     total_teachers = Teacher.objects.count()
     total_students = Student.objects.count()
     total_languages = Language.objects.filter(is_active=True).count()
 
-    # Séances
-    today = timezone.now().date()
-    completed_sessions = Session.objects.filter(status='completed').count()
-    scheduled_sessions = Session.objects.filter(status='scheduled').count()
-    
-    # Calcul du taux de présence
-    total_sessions = Session.objects.filter(status__in=['completed', 'absent']).count()
-    if total_sessions > 0:
-        attendance_rate = round((Session.objects.filter(status='completed').count() / total_sessions) * 100, 1)
-    else:
-        attendance_rate = 0
-    
-    # Paiements
-    total_revenue = Payment.objects.filter(status='paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    pending_payments = Payment.objects.filter(status='pending').count()
-    
-    # Demandes en attente
-    pending_requests = Request.objects.filter(status='pending').count()
-    
-    # Certificats récents (7 derniers jours)
-    recent_certificates = Certificate.objects.filter(
-        issued_date__gte=today - timedelta(days=7)
-    ).order_by('-issued_date')[:5]
-    
-    # Évaluations récentes
-    recent_evaluations = Evaluation.objects.order_by('-evaluation_date')[:5]
-    
-    # Notifications non lues
-    unread_notifications = Notification.objects.filter(is_read=False).order_by('-created_at')[:5]
-    
-    # Séances à venir (pour montrer l'agenda global)
-    upcoming_sessions = Session.objects.filter(
-        date__gte=today,
-        status='scheduled'
-    ).order_by('date', 'start_time')[:10]
-    
-    # Séances du jour
-    today_sessions = Session.objects.filter(
-        date=today,
-        status='scheduled'
-    ).order_by('start_time')
-    
-    # Nouveaux étudiants (inscrits ce mois-ci)
-    this_month_start = today.replace(day=1)
-    new_students_this_month = Student.objects.filter(
-        date_joined__gte=this_month_start
-    ).count()
-    
-    # Nouveaux KPIs pédagogiques
-    active_students = Student.objects.filter(statuts='actif').count()
-    active_teachers = Teacher.objects.filter(statut__in=['actif', 'disponible']).count()
-    total_sessions_all = Session.objects.filter(seance_realisee=True).count()
-    fiches_completees = Session.objects.filter(fiche_completee=True).count()
-    taux_completion_fiches = round((fiches_completees / total_sessions_all * 100), 1) if total_sessions_all > 0 else 0
-    total_heures_enseignees = Session.objects.filter(
-        seance_realisee=True
-    ).aggregate(total=Sum('duree_minutes'))['total'] or 0
-    total_heures_enseignees = round(total_heures_enseignees / 60, 1)
+    # ── Status séances en 1 query ─────────────────────────────────
+    _sc = defaultdict(int, Session.objects.values_list('status').annotate(c=Count('id')))
+    completed_sessions = _sc['completed']
+    scheduled_sessions = _sc['scheduled']
+    _attend_total = _sc['completed'] + _sc['absent']
+    attendance_rate = round(completed_sessions / _attend_total * 100, 1) if _attend_total else 0
+
+    # ── KPIs séances en 1 aggregate ───────────────────────────────
+    _sagg = Session.objects.aggregate(
+        total_all=Count('id', filter=Q(seance_realisee=True)),
+        fiches_ok=Count('id', filter=Q(fiche_completee=True)),
+        heures=Sum('duree_minutes', filter=Q(seance_realisee=True)),
+        en_attente=Count('id', filter=Q(fiche_completee=True, statut_validation='en_attente')),
+        today_count=Count('id', filter=Q(date=today)),
+    )
+    total_sessions_all = _sagg['total_all'] or 0
+    _fiches = _sagg['fiches_ok'] or 0
+    taux_completion_fiches = round(_fiches / total_sessions_all * 100, 1) if total_sessions_all else 0
+    total_heures_enseignees = round((_sagg['heures'] or 0) / 60, 1)
+    sessions_en_attente_validation = _sagg['en_attente'] or 0
+    sessions_today_count = _sagg['today_count'] or 0
+
+    # ── Paiements en 1 aggregate ──────────────────────────────────
+    _pagg = Payment.objects.aggregate(
+        paid=Sum('amount', filter=Q(status='paid')),
+        pending_count=Count('id', filter=Q(status='pending')),
+    )
+    revenue_total = total_revenue = float(_pagg['paid'] or 0)
+    pending_payments = _pagg['pending_count'] or 0
+
+    # ── Formateurs + demandes (2 queries) ────────────────────────
     total_paiements_formateurs = PaiementFormateur.objects.filter(
         statut='paye'
     ).aggregate(total=Sum('montant'))['total'] or 0
-    sessions_en_attente_validation = Session.objects.filter(
-        fiche_completee=True, statut_validation='en_attente'
-    ).count()
+    pending_requests = Request.objects.filter(status='pending').count()
 
-    # Variables for new Tailwind dashboard
-    sessions_today_count = Session.objects.filter(date=today).count()
-    revenue_total = Payment.objects.filter(status='paid').aggregate(
-        total=Sum('amount'))['total'] or 0
+    # ── Compteurs additionnels (3 queries) ───────────────────────
+    active_students = Student.objects.filter(statuts='actif').count()
+    active_teachers = Teacher.objects.filter(statut__in=['actif', 'disponible']).count()
+    new_students_this_month = Student.objects.filter(date_joined__gte=this_month_start).count()
+
+    # ── Listes récentes (5 queries lazy) ─────────────────────────
+    recent_certificates = Certificate.objects.filter(
+        issued_date__gte=today - timedelta(days=7)
+    ).order_by('-issued_date')[:5]
+    recent_evaluations = Evaluation.objects.order_by('-evaluation_date')[:5]
+    unread_notifications = Notification.objects.filter(is_read=False).order_by('-created_at')[:5]
+    upcoming_sessions = Session.objects.filter(
+        date__gte=today, status='scheduled'
+    ).order_by('date', 'start_time')[:10]
+    today_sessions = Session.objects.filter(
+        date=today, status='scheduled'
+    ).order_by('start_time')
+
+    # ── Séances paginées — DB gère le LIMIT (1 query lazy) ───────
     sessions_page_num = request.GET.get('sessions_page', 1)
-    base_qs = Session.objects.select_related('teacher__user', 'language')
-    past_sessions = list(base_qs.filter(date__lte=today).order_by('-date', '-start_time'))
-    future_sessions = list(base_qs.filter(date__gt=today).order_by('date', 'start_time'))
-    sessions_paginator = Paginator(past_sessions + future_sessions, 8)
-    recent_sessions = sessions_paginator.get_page(sessions_page_num)
+    recent_sessions = Paginator(
+        Session.objects.select_related('teacher__user', 'language').order_by('-date', '-start_time'),
+        8,
+    ).get_page(sessions_page_num)
 
-    # ── Graphes : séances sur 6 mois ─────────────────────────────
-    labels = []
-    completed_data = []
-    scheduled_data = []
-    revenue_data = []
-    new_students_data = []
+    marge_nette = revenue_total - float(total_paiements_formateurs)
+
+    # ── Graphes 6 mois : 3 queries au lieu de 24 ─────────────────
+    labels, months = [], []
     for i in range(5, -1, -1):
-        ref = today.replace(day=1)
-        # rewind i months
-        m = ref.month - i
-        y = ref.year
+        m, y = today.month - i, today.year
         while m <= 0:
             m += 12
             y -= 1
-        first_day = _date(y, m, 1)
-        # last day of month
-        if m == 12:
-            last_day = _date(y + 1, 1, 1)
-        else:
-            last_day = _date(y, m + 1, 1)
-        labels.append(first_day.strftime('%b %Y'))
-        completed_data.append(
-            Session.objects.filter(status='completed', date__gte=first_day, date__lt=last_day).count()
-        )
-        scheduled_data.append(
-            Session.objects.filter(status='scheduled', date__gte=first_day, date__lt=last_day).count()
-        )
-        rev = Payment.objects.filter(
-            status='paid', payment_date__date__gte=first_day, payment_date__date__lt=last_day
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        revenue_data.append(float(rev))
+        fd = _date(y, m, 1)
+        ld = _date(y + 1, 1, 1) if m == 12 else _date(y, m + 1, 1)
+        labels.append(fd.strftime('%b %Y'))
+        months.append((fd, ld))
 
-        ns = Student.objects.filter(
-            date_joined__gte=first_day, date_joined__lt=last_day
-        ).count()
-        new_students_data.append(ns)
+    period_start, period_end = months[0][0], months[-1][1]
 
-    marge_nette = float(revenue_total) - float(total_paiements_formateurs)
+    session_mo = defaultdict(lambda: defaultdict(int))
+    for d, status in Session.objects.filter(
+        date__gte=period_start, date__lt=period_end,
+        status__in=['completed', 'scheduled'],
+    ).values_list('date', 'status'):
+        session_mo[d.replace(day=1)][status] += 1
+
+    rev_mo = defaultdict(float)
+    for d, amt in Payment.objects.filter(
+        status='paid',
+        payment_date__date__gte=period_start,
+        payment_date__date__lt=period_end,
+    ).values_list('payment_date__date', 'amount'):
+        rev_mo[d.replace(day=1)] += float(amt or 0)
+
+    ns_mo = defaultdict(int)
+    for val in Student.objects.filter(
+        date_joined__gte=period_start, date_joined__lt=period_end,
+    ).values_list('date_joined', flat=True):
+        d = val.date() if hasattr(val, 'hour') else val
+        ns_mo[d.replace(day=1)] += 1
+
+    completed_data  = [session_mo[fd]['completed']  for fd, _ in months]
+    scheduled_data  = [session_mo[fd]['scheduled']  for fd, _ in months]
+    revenue_data    = [rev_mo[fd]                   for fd, _ in months]
+    new_students_data = [ns_mo[fd]                  for fd, _ in months]
 
     context = {
         'total_teachers': total_teachers,
@@ -2152,7 +2146,6 @@ def admin_dashboard(request):
         'upcoming_sessions': upcoming_sessions,
         'today_sessions': today_sessions,
         'new_students_this_month': new_students_this_month,
-        # Nouveaux KPIs
         'active_students': active_students,
         'active_teachers': active_teachers,
         'total_sessions_all': total_sessions_all,
@@ -2160,11 +2153,9 @@ def admin_dashboard(request):
         'total_heures_enseignees': total_heures_enseignees,
         'total_paiements_formateurs': total_paiements_formateurs,
         'sessions_en_attente_validation': sessions_en_attente_validation,
-        # Tailwind dashboard variables
         'sessions_today': sessions_today_count,
         'revenue_total': revenue_total,
         'recent_sessions': recent_sessions,
-        # Graphes
         'sessions_labels': _json.dumps(labels),
         'sessions_completed_data': _json.dumps(completed_data),
         'sessions_scheduled_data': _json.dumps(scheduled_data),
@@ -2174,7 +2165,6 @@ def admin_dashboard(request):
         'new_students_labels': _json.dumps(labels),
         'new_students_data': _json.dumps(new_students_data),
     }
-
     return render(request, 'dashboard/admin/home/index.html', context)
 
 

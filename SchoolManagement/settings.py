@@ -71,12 +71,13 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "compressor.finders.CompressorFinder",
 ]
-COMPRESS_ENABLED = True
+COMPRESS_ENABLED = bool(DEBUG)
 COMPRESS_OFFLINE = False
 
 # Static & Media
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_MAX_AGE = 31536000  # 1 an — Cache-Control immutable pour les fichiers statiques
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
