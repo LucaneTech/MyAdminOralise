@@ -2190,8 +2190,8 @@ def admin_teacher_view(request):
         total_students_count=Count('current_students', distinct=True),
         active_sessions_count=Count('sessions', filter=Q(sessions__status='scheduled')),
         completed_sessions_count=Count('sessions', filter=Q(sessions__status='completed'))
-    ).all()
-    
+    ).order_by('user__last_name', 'user__first_name')
+
     # Pagination
     paginator = Paginator(teachers, 10)
     page_number = request.GET.get('page')
@@ -2244,9 +2244,8 @@ def admin_student_view(request):
         paid_hours_purchased=Sum('payments__hours_purchased', filter=Q(payments__status='paid')),  # Renommé
         active_teachers_count=Count('current_teachers', distinct=True),
         completed_sessions_count=Count('sessions', filter=Q(sessions__status='completed'))
-    ).all()
-   
-        
+    ).order_by('user__last_name', 'user__first_name')
+
     # Filtres
     filter_status = request.GET.get('status', 'all')
     

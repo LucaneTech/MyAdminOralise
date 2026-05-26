@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     # Tailwind CSS
     "tailwind",
     "theme",
-    "django_browser_reload",
     # Dashboard app
     "dashboard",
     "widget_tweaks",
@@ -131,8 +130,11 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # django-allauth middleware
     "allauth.account.middleware.AccountMiddleware",
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ["django_browser_reload"]
+    MIDDLEWARE += ["django_browser_reload.middleware.BrowserReloadMiddleware"]
 
 SOCIALACCOUNT_PROVIDERS = {}
 

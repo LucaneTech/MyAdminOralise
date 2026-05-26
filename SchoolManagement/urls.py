@@ -7,10 +7,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('', include('dashboard.urls')),
-    path('__reload__/', include('django_browser_reload.urls')),
 ]
 
 if settings.DEBUG:
+    urlpatterns += [path('__reload__/', include('django_browser_reload.urls'))]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Page 404 personnalisée
