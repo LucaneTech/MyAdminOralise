@@ -181,7 +181,7 @@ WSGI_APPLICATION = "SchoolManagement.wsgi.application"
 
 # Database
 _database_url = os.getenv('DATABASE_URL')
-
+# _database_url = False
 if _database_url:
     DATABASES = {'default': dj_database_url.parse(_database_url, conn_max_age=600)}
 else:
