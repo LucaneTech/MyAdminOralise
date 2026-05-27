@@ -2433,6 +2433,9 @@ def admin_valider_session(request, session_id):
             session.statut_validation = 'refusee'
             messages.warning(request, f"Séance du {session.date} refusée.")
         session.save()
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
     return redirect('admin_sessions_list')
 
 

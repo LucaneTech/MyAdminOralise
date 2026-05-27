@@ -223,7 +223,7 @@ class FichePedagogiqueForm(forms.ModelForm):
             'participation', 'comprehension_score', 'engagement',
             'difficultes', 'observations_formateur', 'prochaine_etape',
             'devoir_donne', 'description_devoir',
-            'seance_realisee', 'fiche_completee', 'statut_validation',
+            'seance_realisee',
         ]
         widgets = {
             'duree_minutes': forms.NumberInput(attrs={'class': TW_INPUT, 'placeholder': 'Ex: 60'}),
@@ -236,7 +236,6 @@ class FichePedagogiqueForm(forms.ModelForm):
             'observations_formateur': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
             'prochaine_etape': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
             'description_devoir': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 2}),
-            'statut_validation': forms.Select(attrs={'class': TW_SELECT}),
         }
         labels = {
             'duree_minutes': 'Durée (minutes)',
@@ -256,8 +255,6 @@ class FichePedagogiqueForm(forms.ModelForm):
             'devoir_donne': 'Devoir donné',
             'description_devoir': 'Description du devoir',
             'seance_realisee': 'Séance réalisée',
-            'fiche_completee': 'Fiche complétée',
-            'statut_validation': 'Statut de validation',
         }
 
 
@@ -432,12 +429,6 @@ class SessionAdminForm(forms.ModelForm):
         fields = [
             'students', 'teacher', 'language', 'date', 'start_time', 'end_time',
             'duree_minutes', 'type_seance', 'status', 'meeting_link', 'event_color',
-            'theme_cours', 'comp_oral', 'comp_comprehension', 'comp_ecrit',
-            'comp_grammaire', 'comp_vocabulaire',
-            'participation', 'comprehension_score', 'engagement',
-            'difficultes', 'observations_formateur', 'prochaine_etape',
-            'devoir_donne', 'description_devoir',
-            'seance_realisee', 'fiche_completee', 'statut_validation',
             'notes', 'feedback',
         ]
         widgets = {
@@ -452,15 +443,6 @@ class SessionAdminForm(forms.ModelForm):
             'status': forms.Select(attrs=W),
             'meeting_link': forms.URLInput(attrs=W),
             'event_color': forms.TextInput(attrs={'type': 'color', **W}),
-            'theme_cours': forms.TextInput(attrs=W),
-            'participation': forms.Select(attrs=W),
-            'comprehension_score': forms.Select(attrs=W),
-            'engagement': forms.Select(attrs=W),
-            'difficultes': forms.Textarea(attrs=WTA),
-            'observations_formateur': forms.Textarea(attrs=WTA),
-            'prochaine_etape': forms.Textarea(attrs=WTA),
-            'description_devoir': forms.Textarea(attrs=WTA),
-            'statut_validation': forms.Select(attrs=W),
             'notes': forms.Textarea(attrs=WTA),
             'feedback': forms.Textarea(attrs=WTA),
         }

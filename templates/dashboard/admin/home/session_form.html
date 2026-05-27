@@ -79,54 +79,6 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
-        {% lucide "book-open" class="w-4 h-4 text-[#26b2bd]" %}
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contenu pédagogique</span>
-      </div>
-      <div class="p-5 space-y-4">
-        {% for field in form %}{% if field.html_name in 'theme_cours,observations_formateur,prochaine_etape' %}
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
-        </div>
-        {% endif %}{% endfor %}
-      </div>
-    </div>
-
-    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
-        {% lucide "bar-chart-2" class="w-4 h-4 text-[#26b2bd]" %}
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Compétences évaluées</span>
-      </div>
-      <div class="p-5 grid grid-cols-2 md:grid-cols-3 gap-4">
-        {% for field in form %}{% if 'comp_' in field.html_name or field.html_name in 'participation,comprehension_score,engagement' %}
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
-        </div>
-        {% endif %}{% endfor %}
-      </div>
-    </div>
-
-    <div class="bg-white rounded-sm border border-gray-100 shadow-sm">
-      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-gray-100 bg-gray-50/60">
-        {% lucide "clipboard-check" class="w-4 h-4 text-[#26b2bd]" %}
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Devoirs & Validation</span>
-      </div>
-      <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {% for field in form %}{% if field.html_name in 'difficultes,devoir_donne,description_devoir,seance_realisee,fiche_completee,statut_validation' %}
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
-        </div>
-        {% endif %}{% endfor %}
-      </div>
-    </div>
-
   </div>
   <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 py-4 flex justify-between items-center mt-6">
     <a href="{% url 'admin_sessions_list' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">Annuler</a>

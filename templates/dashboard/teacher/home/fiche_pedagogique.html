@@ -157,20 +157,19 @@
       <h2 class="text-sm font-semibold text-white">F. Validation</h2>
     </div>
     <div class="p-5 space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="flex items-center gap-2">
-          {{ form.seance_realisee }}
-          <label for="{{ form.seance_realisee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.seance_realisee.label }}</label>
-        </div>
-        <div class="flex items-center gap-2">
-          {{ form.fiche_completee }}
-          <label for="{{ form.fiche_completee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.fiche_completee.label }}</label>
-        </div>
+      <div class="flex items-center gap-2">
+        {{ form.seance_realisee }}
+        <label for="{{ form.seance_realisee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.seance_realisee.label }}</label>
       </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.statut_validation.label }}</label>
-        {{ form.statut_validation }}
-        {% if form.statut_validation.errors %}{% for e in form.statut_validation.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
+      <div class="flex items-center gap-3 pt-1">
+        <span class="text-xs font-medium text-gray-500">Statut de validation :</span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold
+          {% if session.statut_validation == 'validee' %}bg-emerald-100 text-emerald-700
+          {% elif session.statut_validation == 'refusee' %}bg-red-100 text-red-700
+          {% else %}bg-amber-100 text-amber-700{% endif %}">
+          {{ session.get_statut_validation_display }}
+        </span>
+        <span class="text-xs text-gray-400 italic">Géré par l'administrateur</span>
       </div>
     </div>
   </div>
