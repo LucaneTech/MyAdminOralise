@@ -2439,6 +2439,22 @@ def admin_valider_session(request, session_id):
     return redirect('admin_sessions_list')
 
 
+@admin_required
+def admin_update_statut_session(request, session_id):
+    """Endpoint AJAX — met à jour statut_validation d'une séance."""
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    session = get_object_or_404(Session, id=session_id)
+    statut = request.POST.get('statut', '')
+    valid = {v for v, _ in Session.VALIDATION_CHOICES}
+    if statut not in valid:
+        return JsonResponse({'ok': False, 'error': 'Statut invalide'}, status=400)
+    session.statut_validation = statut
+    session.save(update_fields=['statut_validation'])
+    label = dict(Session.VALIDATION_CHOICES).get(statut, statut)
+    return JsonResponse({'ok': True, 'statut': statut, 'label': label})
+
+
 def _parse_date_range(request, default_days=14):
     today = timezone.now().date()
     date_debut_default = today - timedelta(days=default_days)

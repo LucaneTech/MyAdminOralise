@@ -295,35 +295,23 @@
               <span class="px-2 py-0.5 rounded text-xs font-medium {% if s.fiche_completee %}bg-emerald-100 text-emerald-700{% else %}bg-gray-100 text-gray-500{% endif %}">
                 Fiche {% if s.fiche_completee %}complétée{% else %}incomplète{% endif %}
               </span>
-              <span class="px-2 py-0.5 rounded text-xs font-medium
-                {% if s.statut_validation == 'validee' %}bg-emerald-100 text-emerald-700
-                {% elif s.statut_validation == 'refusee' %}bg-red-100 text-red-700
-                {% else %}bg-amber-100 text-amber-700{% endif %}">
-                {{ s.get_statut_validation_display }}
-              </span>
             </div>
-            {% if s.fiche_completee and s.statut_validation != 'validee' %}
-            <form method="post" action="{% url 'admin_valider_session' s.id %}" class="inline">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="valider">
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit"
-                      class="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-sm hover:bg-emerald-700 transition">
-                Valider
-              </button>
-            </form>
-            {% endif %}
-            {% if s.statut_validation != 'refusee' and s.statut_validation != 'en_attente' %}
-            <form method="post" action="{% url 'admin_valider_session' s.id %}" class="inline ml-1">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="refuser">
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit"
-                      class="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-sm hover:bg-red-600 transition">
-                Refuser
-              </button>
-            </form>
-            {% endif %}
+            <!-- Dropdown statut dynamique -->
+            <div class="flex items-center gap-2">
+              <select
+                data-session-id="{{ s.id }}"
+                data-url="{% url 'admin_update_statut_session' s.id %}"
+                onchange="updateStatut(this)"
+                class="statut-select text-xs font-semibold border rounded-sm px-2 py-1 focus:outline-none focus:ring-1 cursor-pointer transition
+                  {% if s.statut_validation == 'validee' %}border-emerald-300 bg-emerald-50 text-emerald-700
+                  {% elif s.statut_validation == 'refusee' %}border-red-300 bg-red-50 text-red-700
+                  {% else %}border-amber-300 bg-amber-50 text-amber-700{% endif %}">
+                <option value="en_attente" {% if s.statut_validation == 'en_attente' %}selected{% endif %}>En attente</option>
+                <option value="validee"    {% if s.statut_validation == 'validee'    %}selected{% endif %}>Validée</option>
+                <option value="refusee"    {% if s.statut_validation == 'refusee'    %}selected{% endif %}>Refusée</option>
+              </select>
+              <span class="statut-feedback-{{ s.id }} text-xs text-gray-400 hidden">✓</span>
+            </div>
           </div>
         </div>
       </div>
@@ -342,6 +330,52 @@ function toggleFiche(id) {
   const chevron = document.getElementById('chevron-' + id);
   const hidden = panel.classList.toggle('hidden');
   chevron.style.transform = hidden ? '' : 'rotate(180deg)';
+}
+
+const STATUT_CLASSES = {
+  en_attente: ['border-amber-300',  'bg-amber-50',   'text-amber-700'],
+  validee:    ['border-emerald-300', 'bg-emerald-50', 'text-emerald-700'],
+  refusee:    ['border-red-300',    'bg-red-50',     'text-red-700'],
+};
+
+function updateStatut(select) {
+  const sessionId = select.dataset.sessionId;
+  const url = select.dataset.url;
+  const statut = select.value;
+  const feedback = document.querySelector('.statut-feedback-' + sessionId);
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // Mise à jour visuelle immédiate
+  Object.values(STATUT_CLASSES).flat().forEach(c => select.classList.remove(c));
+  STATUT_CLASSES[statut].forEach(c => select.classList.add(c));
+
+  // Mise à jour du badge dans la ligne résumé
+  const badge = document.querySelector('#fiche-' + sessionId)
+    ?.closest('div[class*="border-t"]')
+    ?.previousElementSibling
+    ?.querySelector('span.inline-flex');
+  if (badge) {
+    const labels = {en_attente: 'En attente', validee: 'Validée', refusee: 'Refusée'};
+    badge.textContent = labels[statut] || statut;
+    badge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0 '
+      + (statut === 'validee' ? 'bg-emerald-100 text-emerald-700'
+       : statut === 'refusee' ? 'bg-red-100 text-red-700'
+       : 'bg-amber-100 text-amber-700');
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'statut=' + encodeURIComponent(statut),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && feedback) {
+      feedback.classList.remove('hidden');
+      setTimeout(() => feedback.classList.add('hidden'), 1500);
+    }
+  })
+  .catch(() => {});
 }
 </script>
 {% endblock %}
