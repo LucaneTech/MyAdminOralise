@@ -395,6 +395,17 @@ def profile_edit(request):
         form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            update_fields = []
+            if first_name:
+                user.first_name = first_name
+                update_fields.append('first_name')
+            if last_name:
+                user.last_name = last_name
+                update_fields.append('last_name')
+            if update_fields:
+                user.save(update_fields=update_fields)
             return redirect("profile_view")
     else:
         form = ProfileUpdateForm(instance=profile)
@@ -2821,6 +2832,16 @@ def admin_certificates_list(request):
     return render(request, 'dashboard/admin/home/certificates_list.html', {
         'certs': certs,
     })
+
+
+@admin_required
+def admin_certificate_delete(request, cert_id):
+    cert = get_object_or_404(Certificate, id=cert_id)
+    if request.method == 'POST':
+        cert.delete()
+        messages.success(request, "Certificat supprimé.")
+        return redirect('admin_certificates_list')
+    return render(request, 'dashboard/admin/home/certificate_confirm_delete.html', {'cert': cert})
 
 
 def certificate_public_view(request, certificate_id):
