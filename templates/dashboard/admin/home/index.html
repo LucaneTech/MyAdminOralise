@@ -287,7 +287,6 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
 (function() {
   // ── Graphe séances (line chart) ───────────────────────────────
   const sessionsCtx = document.getElementById('sessionsChart');
@@ -381,6 +380,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 })();
-});
 </script>
 {% endblock %}
