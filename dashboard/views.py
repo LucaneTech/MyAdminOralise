@@ -30,6 +30,7 @@ from dashboard.models import (
     Assignment,
     Submission,
     Session,
+    SessionSeries,
     Payment,
     Certificate,
     Evaluation,
@@ -37,7 +38,8 @@ from dashboard.models import (
     Comment,
     PaiementFormateur,
 )
-from .forms import ProfileUpdateForm, SessionForm, ResourceForm, FichePedagogiqueForm, CertificateForm, PaiementFormateurForm, AssignmentAdminForm
+from .forms import ProfileUpdateForm, SessionForm, SessionSeriesTeacherForm, ResourceForm, FichePedagogiqueForm, CertificateForm, PaiementFormateurForm, AssignmentAdminForm
+from dashboard.services import generate_series_occurrences as _teacher_generate_series
 import json
 
 
@@ -1844,16 +1846,31 @@ def teacher_session_create(request):
         raise Http404
     teacher = get_object_or_404(Teacher, user=request.user)
     profile = get_object_or_404(Profile, user=request.user)
+    is_recurring = False
 
     if request.method == 'POST':
-        form = SessionForm(request.POST, teacher=teacher)
-        if form.is_valid():
-            session = form.save(commit=False)
-            session.teacher = teacher
-            session.save()
-            form.save_m2m()
-            messages.success(request, "Séance créée avec succès.")
-            return redirect('teacher_sessions')
+        is_recurring = request.POST.get('is_recurring') == 'on'
+        if is_recurring:
+            series_form = SessionSeriesTeacherForm(request.POST, teacher=teacher)
+            if series_form.is_valid():
+                series = series_form.save(commit=False)
+                series.teacher = teacher
+                series.save()
+                series_form.save_m2m()
+                occurrences = _teacher_generate_series(series)
+                messages.success(request, f"Série créée — {len(occurrences)} séances générées.")
+                return redirect('teacher_sessions')
+            form = SessionForm(teacher=teacher)
+        else:
+            form = SessionForm(request.POST, teacher=teacher)
+            series_form = SessionSeriesTeacherForm(teacher=teacher)
+            if form.is_valid():
+                session = form.save(commit=False)
+                session.teacher = teacher
+                session.save()
+                form.save_m2m()
+                messages.success(request, "Séance créée avec succès.")
+                return redirect('teacher_sessions')
     else:
         from datetime import date as _date
         initial = {}
@@ -1865,9 +1882,12 @@ def teacher_session_create(request):
         if end:
             initial['end_time'] = end[11:16] if len(end) > 10 else ''
         form = SessionForm(initial=initial, teacher=teacher)
+        series_form = SessionSeriesTeacherForm(teacher=teacher)
 
     return render(request, 'dashboard/teacher/home/session_form.html', {
         'form': form,
+        'series_form': series_form,
+        'is_recurring': is_recurring,
         'titre': 'Nouvelle séance',
         'teacher': teacher,
         'profile': profile,
@@ -2318,17 +2338,19 @@ def student_detail_view(request, student_id):
 
 @login_required
 def fiche_pedagogique_edit(request, session_id):
-    """Permet au formateur de remplir la fiche pédagogique d'une séance."""
+    """Permet au formateur de remplir la fiche pédagogique d'une séance (teacher uniquement)."""
     session = get_object_or_404(Session, id=session_id)
 
-    if request.user.role == 'teacher':
-        teacher = get_object_or_404(Teacher, user=request.user)
-        if session.teacher != teacher:
-            messages.error(request, "Vous n'êtes pas autorisé à modifier cette fiche.")
-            return redirect('teacher_sessions')
-    elif request.user.role != 'admin':
+    if request.user.role in ('admin', 'student'):
+        raise Http404
+    if request.user.role != 'teacher':
         messages.error(request, "Accès refusé.")
         return redirect('dashboard')
+
+    teacher = get_object_or_404(Teacher, user=request.user)
+    if session.teacher != teacher:
+        messages.error(request, "Vous n'êtes pas autorisé à modifier cette fiche.")
+        return redirect('teacher_sessions')
 
     if request.method == 'POST':
         form = FichePedagogiqueForm(request.POST, instance=session)
@@ -2337,9 +2359,7 @@ def fiche_pedagogique_edit(request, session_id):
             fiche.fiche_completee = True
             fiche.save()
             messages.success(request, "Fiche pédagogique enregistrée avec succès.")
-            if request.user.role == 'teacher':
-                return redirect('teacher_sessions')
-            return redirect('admin_sessions_list')
+            return redirect('teacher_sessions')
     else:
         form = FichePedagogiqueForm(instance=session)
 
@@ -2362,6 +2382,8 @@ def fiche_pedagogique_detail(request, session_id):
         student = get_object_or_404(Student, user=request.user)
         if not session.students.filter(id=student.id).exists():
             raise Http404
+    else:
+        raise Http404
 
     return render(request, 'dashboard/teacher/home/fiche_pedagogique_detail.html', {
         'session': session,
@@ -2543,6 +2565,10 @@ def admin_reporting_detail(request, teacher_id):
         'Vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
     }
 
+    sessions_list = sessions_qs.select_related(
+        'teacher__user', 'language'
+    ).prefetch_related('students__user').order_by('-date', '-start_time')
+
     return render(request, 'dashboard/admin/home/reporting_detail.html', {
         'teacher': teacher,
         'date_debut': date_debut,
@@ -2552,6 +2578,7 @@ def admin_reporting_detail(request, teacher_id):
         'student_stats': student_stats,
         'students_en_difficulte': students_en_difficulte,
         'comp_faibles': comp_faibles,
+        'sessions_list': sessions_list,
     })
 
 
@@ -2601,6 +2628,10 @@ def teacher_reporting(request):
         'Vocabulaire': sessions_qs.filter(comp_vocabulaire=True).count(),
     }
 
+    sessions_list = sessions_qs.select_related(
+        'teacher__user', 'language'
+    ).prefetch_related('students__user').order_by('-date', '-start_time')
+
     return render(request, 'dashboard/teacher/home/reporting.html', {
         'teacher': teacher,
         'date_debut': date_debut,
@@ -2610,6 +2641,7 @@ def teacher_reporting(request):
         'student_stats': student_stats,
         'students_en_difficulte': students_en_difficulte,
         'comp_faibles': comp_faibles,
+        'sessions_list': sessions_list,
     })
 
 

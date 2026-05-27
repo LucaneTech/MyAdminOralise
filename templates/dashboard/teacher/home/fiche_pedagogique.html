@@ -156,7 +156,7 @@
     <div class="px-5 py-4 border-b border-gray-100" style="background-color:#033050;">
       <h2 class="text-sm font-semibold text-white">F. Validation</h2>
     </div>
-    <div class="p-5">
+    <div class="p-5 space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex items-center gap-2">
           {{ form.seance_realisee }}
@@ -166,6 +166,11 @@
           {{ form.fiche_completee }}
           <label for="{{ form.fiche_completee.id_for_label }}" class="text-sm text-gray-700 cursor-pointer">{{ form.fiche_completee.label }}</label>
         </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ form.statut_validation.label }}</label>
+        {{ form.statut_validation }}
+        {% if form.statut_validation.errors %}{% for e in form.statut_validation.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
       </div>
     </div>
   </div>

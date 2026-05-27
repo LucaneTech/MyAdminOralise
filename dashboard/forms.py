@@ -223,7 +223,7 @@ class FichePedagogiqueForm(forms.ModelForm):
             'participation', 'comprehension_score', 'engagement',
             'difficultes', 'observations_formateur', 'prochaine_etape',
             'devoir_donne', 'description_devoir',
-            'seance_realisee', 'fiche_completee',
+            'seance_realisee', 'fiche_completee', 'statut_validation',
         ]
         widgets = {
             'duree_minutes': forms.NumberInput(attrs={'class': TW_INPUT, 'placeholder': 'Ex: 60'}),
@@ -236,6 +236,7 @@ class FichePedagogiqueForm(forms.ModelForm):
             'observations_formateur': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
             'prochaine_etape': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
             'description_devoir': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 2}),
+            'statut_validation': forms.Select(attrs={'class': TW_SELECT}),
         }
         labels = {
             'duree_minutes': 'Durée (minutes)',
@@ -256,6 +257,7 @@ class FichePedagogiqueForm(forms.ModelForm):
             'description_devoir': 'Description du devoir',
             'seance_realisee': 'Séance réalisée',
             'fiche_completee': 'Fiche complétée',
+            'statut_validation': 'Statut de validation',
         }
 
 
@@ -570,3 +572,34 @@ class SessionSeriesAdminForm(forms.ModelForm):
             'meeting_link': forms.URLInput(attrs={'class': TW_INPUT}),
             'notes': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
         }
+
+
+class SessionSeriesTeacherForm(forms.ModelForm):
+    class Meta:
+        model = SessionSeries
+        fields = [
+            'language', 'students',
+            'day_of_week', 'start_time', 'end_time',
+            'recurrence_start', 'recurrence_end',
+            'type_seance', 'meeting_link', 'notes',
+        ]
+        widgets = {
+            'language': forms.Select(attrs={'class': TW_SELECT}),
+            'students': forms.SelectMultiple(attrs={'class': TW_SELECT + ' h-32'}),
+            'day_of_week': forms.Select(attrs={'class': TW_SELECT}),
+            'start_time': forms.TimeInput(attrs={'class': TW_INPUT, 'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'class': TW_INPUT, 'type': 'time'}),
+            'recurrence_start': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'recurrence_end': forms.DateInput(attrs={'class': TW_INPUT, 'type': 'date'}),
+            'type_seance': forms.Select(attrs={'class': TW_SELECT}),
+            'meeting_link': forms.URLInput(attrs={'class': TW_INPUT}),
+            'notes': forms.Textarea(attrs={'class': TW_TEXTAREA, 'rows': 3}),
+        }
+
+    def __init__(self, *args, teacher=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if teacher:
+            self.fields['language'].queryset = teacher.languages.all()
+            self.fields['students'].queryset = Student.objects.filter(
+                current_teachers=teacher
+            ).select_related('user')

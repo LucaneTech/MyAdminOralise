@@ -46,6 +46,8 @@ def _session_to_event(session, role='admin'):
             'language': lang,
             'students': [s.user.get_full_name() for s in session.students.all()],
             'session_id': session.id,
+            'fiche_completee': session.fiche_completee,
+            'seance_realisee': session.seance_realisee,
         },
     }
 

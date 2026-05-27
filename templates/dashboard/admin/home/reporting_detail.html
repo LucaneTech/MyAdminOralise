@@ -190,4 +190,137 @@
   </div>
 
 </div>
+
+<!-- Détail des séances (lecture seule) -->
+<div class="mt-4 bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden">
+  <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+    {% lucide "list" class="w-4 h-4 text-gray-400 shrink-0" %}
+    <h2 class="text-sm font-semibold text-gray-700">Détail des séances</h2>
+    <span class="ml-auto text-xs text-gray-400 tabular-nums">{{ sessions_list|length }} séance{{ sessions_list|length|pluralize }}</span>
+  </div>
+  {% if sessions_list %}
+  <div class="divide-y divide-gray-100">
+    {% for s in sessions_list %}
+    <div>
+      <!-- Ligne résumé cliquable -->
+      <button type="button" onclick="toggleFiche({{ s.id }})"
+              class="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors text-left">
+        <span class="text-sm font-semibold text-gray-800 tabular-nums whitespace-nowrap w-24 shrink-0">{{ s.date|date:"d/m/Y" }}</span>
+        <span class="text-sm text-gray-700 flex-1 truncate">
+          {% for st in s.students.all %}{{ st.user.get_full_name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        </span>
+        <span class="text-xs text-gray-400 hidden sm:inline whitespace-nowrap shrink-0">{{ s.teacher.user.get_full_name }}</span>
+        <span class="text-xs text-gray-400 hidden sm:inline whitespace-nowrap shrink-0">{{ s.language }}</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0
+          {% if s.statut_validation == 'validee' %}bg-emerald-100 text-emerald-700
+          {% elif s.statut_validation == 'refusee' %}bg-red-100 text-red-700
+          {% else %}bg-amber-100 text-amber-700{% endif %}">
+          {{ s.get_statut_validation_display }}
+        </span>
+        <span class="text-xs text-gray-400 shrink-0">{% if s.fiche_completee %}✓{% else %}—{% endif %}</span>
+        <span id="chevron-{{ s.id }}" class="text-gray-400 shrink-0 transition-transform text-xs">▼</span>
+      </button>
+
+      <!-- Détail fiche expandable -->
+      <div id="fiche-{{ s.id }}" class="hidden border-t border-gray-100 bg-gray-50/60 px-5 py-4">
+        <!-- Identification -->
+        <div class="mb-4 pb-4 border-b border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Identification</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div><span class="text-gray-400">Formateur</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.teacher.user.get_full_name }}</p></div>
+            <div><span class="text-gray-400">Étudiant(s)</span>
+              <p class="font-semibold text-gray-800 mt-0.5">{% for st in s.students.all %}{{ st.user.get_full_name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</p>
+            </div>
+            <div><span class="text-gray-400">Langue</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.language }}</p></div>
+            <div><span class="text-gray-400">Type</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.get_type_seance_display }}</p></div>
+            <div><span class="text-gray-400">Date</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.date|date:"d/m/Y" }}</p></div>
+            <div><span class="text-gray-400">Heure</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.start_time|time:"H:i" }} → {{ s.end_time|time:"H:i" }}</p></div>
+            <div><span class="text-gray-400">Durée</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.duree_minutes|default:"—" }} min</p></div>
+            <div><span class="text-gray-400">Thème</span><p class="font-semibold text-gray-800 mt-0.5">{{ s.theme_cours|default:"—" }}</p></div>
+          </div>
+        </div>
+        <!-- Compétences & Évaluation -->
+        <div class="mb-4 pb-4 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Compétences travaillées</p>
+            <div class="flex flex-wrap gap-1.5">
+              {% if s.comp_oral %}<span class="px-2 py-0.5 rounded bg-[#033050]/10 text-[#033050] text-xs font-medium">Oral</span>{% endif %}
+              {% if s.comp_comprehension %}<span class="px-2 py-0.5 rounded bg-[#033050]/10 text-[#033050] text-xs font-medium">Compréhension</span>{% endif %}
+              {% if s.comp_ecrit %}<span class="px-2 py-0.5 rounded bg-[#033050]/10 text-[#033050] text-xs font-medium">Écrit</span>{% endif %}
+              {% if s.comp_grammaire %}<span class="px-2 py-0.5 rounded bg-[#033050]/10 text-[#033050] text-xs font-medium">Grammaire</span>{% endif %}
+              {% if s.comp_vocabulaire %}<span class="px-2 py-0.5 rounded bg-[#033050]/10 text-[#033050] text-xs font-medium">Vocabulaire</span>{% endif %}
+              {% if not s.comp_oral and not s.comp_comprehension and not s.comp_ecrit and not s.comp_grammaire and not s.comp_vocabulaire %}<span class="text-gray-400 text-xs">Aucune</span>{% endif %}
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Évaluation</p>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Participation</p>
+                <p class="text-lg font-bold {% if s.participation >= 3 %}text-emerald-600{% elif s.participation >= 2 %}text-amber-500{% elif s.participation %}text-red-500{% else %}text-gray-300{% endif %}">{{ s.participation|default:"—" }}</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Compréhension</p>
+                <p class="text-lg font-bold {% if s.comprehension_score >= 3 %}text-emerald-600{% elif s.comprehension_score >= 2 %}text-amber-500{% elif s.comprehension_score %}text-red-500{% else %}text-gray-300{% endif %}">{{ s.comprehension_score|default:"—" }}</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xs text-gray-400 mb-0.5">Engagement</p>
+                <p class="text-lg font-bold {% if s.engagement >= 3 %}text-emerald-600{% elif s.engagement >= 2 %}text-amber-500{% elif s.engagement %}text-red-500{% else %}text-gray-300{% endif %}">{{ s.engagement|default:"—" }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Analyse -->
+        <div class="mb-4 pb-4 border-b border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Analyse pédagogique</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div><span class="text-gray-400">Difficultés</span><p class="text-gray-700 mt-0.5">{{ s.difficultes|default:"—" }}</p></div>
+            <div><span class="text-gray-400">Observations</span><p class="text-gray-700 mt-0.5">{{ s.observations_formateur|default:"—" }}</p></div>
+            <div><span class="text-gray-400">Prochaine étape</span><p class="text-gray-700 mt-0.5">{{ s.prochaine_etape|default:"—" }}</p></div>
+          </div>
+        </div>
+        <!-- Devoirs & Validation -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Devoir</p>
+            {% if s.devoir_donne %}<p class="text-gray-700">{{ s.description_devoir|default:"Devoir donné (sans description)" }}</p>
+            {% else %}<p class="text-gray-400">Aucun devoir</p>{% endif %}
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Validation</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-2 py-0.5 rounded text-xs font-medium {% if s.seance_realisee %}bg-emerald-100 text-emerald-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                Séance {% if s.seance_realisee %}réalisée{% else %}non réalisée{% endif %}
+              </span>
+              <span class="px-2 py-0.5 rounded text-xs font-medium {% if s.fiche_completee %}bg-emerald-100 text-emerald-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                Fiche {% if s.fiche_completee %}complétée{% else %}incomplète{% endif %}
+              </span>
+              <span class="px-2 py-0.5 rounded text-xs font-medium
+                {% if s.statut_validation == 'validee' %}bg-emerald-100 text-emerald-700
+                {% elif s.statut_validation == 'refusee' %}bg-red-100 text-red-700
+                {% else %}bg-amber-100 text-amber-700{% endif %}">
+                {{ s.get_statut_validation_display }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-5 py-10 text-center text-sm text-gray-400">Aucune séance sur cette période.</p>
+  {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+function toggleFiche(id) {
+  const panel = document.getElementById('fiche-' + id);
+  const chevron = document.getElementById('chevron-' + id);
+  const hidden = panel.classList.toggle('hidden');
+  chevron.style.transform = hidden ? '' : 'rotate(180deg)';
+}
+</script>
+{% endblock %}
 {% endblock %}

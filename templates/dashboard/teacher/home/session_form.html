@@ -13,6 +13,28 @@
   </div>
 </div>
 
+{% if messages %}{% for msg in messages %}
+<div class="mb-4 px-4 py-3 rounded-sm text-sm font-medium
+  {% if msg.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+  {% elif msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+  {% else %}bg-sky-50 text-sky-700 border border-sky-200{% endif %}">{{ msg }}</div>
+{% endfor %}{% endif %}
+
+{% if not session %}
+<div class="flex gap-1 mb-5 p-1 bg-gray-100 rounded-sm w-fit">
+  <button type="button" id="tab-single" onclick="switchTab('single')"
+    class="px-4 py-1.5 text-xs font-semibold rounded-sm transition bg-white shadow-sm text-gray-800">
+    Séance unique
+  </button>
+  <button type="button" id="tab-recurring" onclick="switchTab('recurring')"
+    class="px-4 py-1.5 text-xs font-semibold rounded-sm transition text-gray-500 hover:text-gray-700">
+    Série récurrente
+  </button>
+</div>
+{% endif %}
+
+<!-- ─── Formulaire séance unique ──────────────────────────────── -->
+<div id="form-single" {% if is_recurring %}class="hidden"{% endif %}>
 <div class="max-w-2xl">
 <form method="post">
   {% csrf_token %}
@@ -75,4 +97,75 @@
   </div>
 </form>
 </div>
+</div>
+
+<!-- ─── Formulaire série récurrente ─────────────────────────── -->
+<div id="form-recurring" {% if not is_recurring %}class="hidden"{% endif %}>
+<div class="max-w-2xl">
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="is_recurring" value="on">
+  <div class="space-y-4">
+    <div class="bg-white rounded-sm border border-[#26b2bd]/30 shadow-sm">
+      <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#26b2bd]/20 bg-[#26b2bd]/5">
+        {% lucide "repeat" class="w-4 h-4 text-[#26b2bd]" %}
+        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Planification récurrente</span>
+        <span class="ml-auto text-xs text-[#26b2bd] font-medium">Toutes les semaines</span>
+      </div>
+      <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in series_form %}
+        <div {% if field.html_name in 'notes,students' %}class="md:col-span-2"{% endif %}>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.errors %}{% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="px-5 pb-4">
+        <p class="text-xs text-gray-400 bg-gray-50 px-3 py-2 rounded-sm border border-gray-100">
+          {% lucide "info" class="w-3 h-3 inline mr-1" %}
+          Les séances seront générées automatiquement chaque semaine jusqu'à la date de fin (ou 12 mois si vide).
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 py-4 flex justify-between items-center mt-6">
+    <a href="{% url 'teacher_sessions' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-sm hover:bg-gray-50 transition">Annuler</a>
+    <button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#26b2bd] text-white text-sm font-semibold rounded-sm hover:opacity-90 transition">
+      {% lucide "calendar-range" class="w-4 h-4" %} Créer la série
+    </button>
+  </div>
+</form>
+</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab) {
+  const single = document.getElementById('form-single');
+  const recurring = document.getElementById('form-recurring');
+  const tabSingle = document.getElementById('tab-single');
+  const tabRecurring = document.getElementById('tab-recurring');
+  if (!single || !recurring) return;
+  if (tab === 'single') {
+    single.classList.remove('hidden');
+    recurring.classList.add('hidden');
+    tabSingle.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+    tabSingle.classList.remove('text-gray-500', 'hover:text-gray-700');
+    tabRecurring.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+    tabRecurring.classList.add('text-gray-500', 'hover:text-gray-700');
+  } else {
+    single.classList.add('hidden');
+    recurring.classList.remove('hidden');
+    tabRecurring.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+    tabRecurring.classList.remove('text-gray-500', 'hover:text-gray-700');
+    tabSingle.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+    tabSingle.classList.add('text-gray-500', 'hover:text-gray-700');
+  }
+}
+</script>
 {% endblock %}
