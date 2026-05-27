@@ -343,7 +343,7 @@ function updateStatut(select) {
   const url = select.dataset.url;
   const statut = select.value;
   const feedback = document.querySelector('.statut-feedback-' + sessionId);
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const csrfToken = '{{ csrf_token }}';
 
   // Mise à jour visuelle immédiate
   Object.values(STATUT_CLASSES).flat().forEach(c => select.classList.remove(c));

@@ -2446,12 +2446,12 @@ def admin_update_statut_session(request, session_id):
         return JsonResponse({'ok': False}, status=405)
     session = get_object_or_404(Session, id=session_id)
     statut = request.POST.get('statut', '')
-    valid = {v for v, _ in Session.VALIDATION_CHOICES}
-    if statut not in valid:
+    valid_choices = dict(session._meta.get_field('statut_validation').choices)
+    if statut not in valid_choices:
         return JsonResponse({'ok': False, 'error': 'Statut invalide'}, status=400)
     session.statut_validation = statut
     session.save(update_fields=['statut_validation'])
-    label = dict(Session.VALIDATION_CHOICES).get(statut, statut)
+    label = valid_choices.get(statut, statut)
     return JsonResponse({'ok': True, 'statut': statut, 'label': label})
 
 
