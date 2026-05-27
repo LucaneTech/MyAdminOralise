@@ -100,10 +100,13 @@ elif _s3_endpoint:
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_ENDPOINT_URL = _s3_endpoint
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'auto')
+    AWS_S3_ADDRESSING_STYLE = 'path'
     AWS_DEFAULT_ACL = os.getenv('AWS_DEFAULT_ACL', 'public-read')
     AWS_QUERYSTRING_AUTH = os.getenv('AWS_QUERYSTRING_AUTH', 'False') == 'True'
     AWS_S3_FILE_OVERWRITE = False
-    MEDIA_URL = f"{_s3_endpoint}/{os.getenv('AWS_STORAGE_BUCKET_NAME')}/"
+    # URL publique du bucket Railway (différente de l'endpoint API S3)
+    _bucket_public_url = os.getenv('AWS_S3_PUBLIC_URL')
+    MEDIA_URL = f"{_bucket_public_url}/" if _bucket_public_url else f"{_s3_endpoint}/{os.getenv('AWS_STORAGE_BUCKET_NAME')}/"
 else:
     # Production sans bucket — whitenoise seul
     STORAGES = {
