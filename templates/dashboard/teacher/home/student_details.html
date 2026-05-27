@@ -126,13 +126,13 @@
           <div class="flex justify-between text-xs text-gray-500 mb-1">
             <span>Utilisation</span>
             <span>
-              {% widthratio student.total_hours_used student.total_hours_purchased 100 as used_percent %}
+              {% widthratio student.computed_hours_used student.total_hours_purchased 100 as used_percent %}
               {{ used_percent|floatformat:0 }}%
             </span>
           </div>
           <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div class="h-full bg-[#033050] rounded-full transition-all duration-700"
-                 style="width: {% widthratio student.total_hours_used student.total_hours_purchased 100 %}%"></div>
+                 style="width: {% widthratio student.computed_hours_used student.total_hours_purchased 100 %}%"></div>
           </div>
         </div>
         <div class="grid grid-cols-3 gap-4 text-center text-sm mt-4">
@@ -141,7 +141,7 @@
             <p class="text-xs text-gray-500">Restantes</p>
           </div>
           <div>
-            <p class="text-lg font-bold text-yellow-500">{{ student.total_hours_used }}h</p>
+            <p class="text-lg font-bold text-yellow-500">{{ student.computed_hours_used }}h</p>
             <p class="text-xs text-gray-500">Utilisées</p>
           </div>
           <div>

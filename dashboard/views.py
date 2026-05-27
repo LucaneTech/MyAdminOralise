@@ -98,7 +98,7 @@ def dashboard_view(request, username=None):
                 "student": student,
                 "hours_remaining": student.hours_remaining,
                 "total_hours_purchased": student.total_hours_purchased,
-                "total_hours_used": student.total_hours_used,
+                "total_hours_used": student.computed_hours_used,
                 "languages": student.languages.all(),
                 "current_teachers": student.current_teachers.all(),
             }
